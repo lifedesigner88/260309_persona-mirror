@@ -1,8 +1,12 @@
 {
   "folders": [
     {
-      "name": "root",
-      "path": "."
+      "name": "infra",
+      "path": "infrastructure/terraform"
+    },
+    {
+      "name": "ai-worker",
+      "path": "apps/ai-worker"
     },
     {
       "name": "frontend",
@@ -13,9 +17,9 @@
       "path": "apps/backend"
     },
     {
-      "name": "ai-worker",
-      "path": "apps/ai-worker"
-    }
+      "name": "root",
+      "path": "."
+    },
   ],
   "settings": {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

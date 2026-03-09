@@ -1,12 +1,19 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import {
+  AdminUsersPage,
   App,
   CapturePage,
   HomePage,
+  LoginPage,
   RouteErrorBoundary,
+  SignupPage,
+  adminUsersLoader,
   homeAction,
-  homeLoader
+  homeLoader,
+  loginAction,
+  logoutAction,
+  signupAction
 } from "./App";
 
 export const router = createBrowserRouter([
@@ -24,8 +31,26 @@ export const router = createBrowserRouter([
       {
         path: "capture",
         element: <CapturePage />
+      },
+      {
+        path: "auth/signup",
+        element: <SignupPage />,
+        action: signupAction
+      },
+      {
+        path: "auth/login",
+        element: <LoginPage />,
+        action: loginAction
+      },
+      {
+        path: "auth/logout",
+        action: logoutAction
+      },
+      {
+        path: "admin/users",
+        element: <AdminUsersPage />,
+        loader: adminUsersLoader
       }
     ]
   }
 ]);
-

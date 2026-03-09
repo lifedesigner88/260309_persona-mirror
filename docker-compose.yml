@@ -4,9 +4,12 @@ services:
   frontend:
     image: node:24-alpine
     working_dir: /workspace
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile=false && pnpm --dir apps/frontend dev"
+    command: sh -c "corepack enable && CI=true pnpm install --frozen-lockfile=false && pnpm --dir apps/frontend dev"
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     volumes:
       - ./:/workspace
+      - frontend_node_modules:/workspace/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -15,7 +18,14 @@ services:
   backend:
     image: python:3.11-slim
     working_dir: /workspace
-    command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend --env-file .env"
+    command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend"
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql+psycopg://persona:persona@db:5432/persona_mirror}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-persona-mirror-dev-secret-key-2026}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000}
+      UV_PROJECT_ENVIRONMENT: /tmp/persona-backend-venv
+      UV_LINK_MODE: copy
     volumes:
       - ./:/workspace
     ports:
@@ -28,6 +38,9 @@ services:
     image: python:3.11-slim
     working_dir: /workspace
     command: sh -c "pip install uv && echo 'ai-worker scaffold pending (Phase 1, uv ready)' && tail -f /dev/null"
+    environment:
+      UV_PROJECT_ENVIRONMENT: /tmp/persona-ai-worker-venv
+      UV_LINK_MODE: copy
     volumes:
       - ./:/workspace
     depends_on:
@@ -36,9 +49,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: persona_mirror
-      POSTGRES_USER: persona
-      POSTGRES_PASSWORD: persona
+      POSTGRES_DB: ${POSTGRES_DB:-persona_mirror}
+      POSTGRES_USER: ${POSTGRES_USER:-persona}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-persona}
     ports:
       - "5432:5432"
     volumes:
@@ -51,3 +64,4 @@ services:
 
 volumes:
   postgres_data:
+  frontend_node_modules:

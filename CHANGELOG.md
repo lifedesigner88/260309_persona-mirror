@@ -69,3 +69,54 @@
 - `apps/frontend`에 Tailwind 스타일 시스템 추가
 - `components.json`, `src/index.css`, `src/lib/utils.ts` 추가
 - shadcn 스타일 `Button` 컴포넌트 추가 후 Home 화면에 적용
+
+### 15) 인증/권한 기반 초기 기능
+- Backend: 회원가입/로그인/JWT 인증 토큰 검증 API 추가
+- Backend: PostgreSQL `users` 테이블 생성 및 `admin/1234` 시드 추가
+- Backend: Admin 전용 회원조회 API(`/admin/users`) 추가
+- Frontend: 로그인/회원가입/admin 회원조회 라우트 분리 (React Router loader/action)
+
+### 16) Docker DB 연결/암호화 안정화
+- backend 컨테이너 실행에서 `.env` 덮어쓰기를 제거해 compose `DATABASE_URL(db host)` 우선 사용
+- 비밀번호 해시 스킴을 `pbkdf2_sha256`으로 변경해 bcrypt 충돌 로그 제거
+
+### 17) Compose 환경변수 치환
+- `docker-compose.yml`의 backend/frontend/db 설정을 `${...}` 치환 방식으로 변경
+- `.env.example`에 `DATABASE_URL_DOCKER`, `POSTGRES_*` 키 추가
+
+### 18) Admin 시드 계정 강화
+- 기본 시드 비밀번호를 `Admin#2026!Mirror`로 상향
+- `ADMIN_SEED_USER_ID`, `ADMIN_SEED_PASSWORD` 환경변수로 시드 계정 제어 가능하도록 변경
+
+### 19) Docker/로컬 venv 권한 충돌 방지
+- backend/ai-worker 컨테이너의 uv 프로젝트 환경을 `/tmp/...`로 분리
+- 로컬 `apps/*/.venv`를 컨테이너가 건드리지 않도록 조정
+
+### 20) VS Code 인터프리터 폴더별 고정
+- `apps/backend/.vscode/settings.json` 추가
+- `apps/ai-worker/.vscode/settings.json` 추가
+- 각 폴더에서 `${workspaceFolder}/.venv/bin/python` 사용
+
+### 21) VS Code 워크스페이스 확장
+- 멀티 루트 워크스페이스에 `infrastructure/terraform`(`infra`) 폴더 추가
+
+### 22) 단일 개발 실행 명령 정리
+- `package.json`에 `infra:up`, `infra:down` 스크립트 추가
+- `pnpm dev`가 DB/Redis 기동 후 Nx로 frontend/backend를 함께 실행하도록 변경
+
+### 23) Frontend node_modules 권한 충돌 방지
+- Docker frontend에 named volume(`/workspace/node_modules`) 추가
+- 로컬 `pnpm`과 컨테이너 `pnpm`이 같은 host `node_modules`를 공유하지 않도록 조정
+
+### 24) Vite 캐시 경로 분리
+- frontend Vite `cacheDir`를 `.cache/vite/frontend`로 이동
+- `apps/frontend/node_modules/.vite` 권한 충돌을 피하도록 조정
+
+### 25) Nx dev 순서 대기 추가
+- backend `dev`는 `db:5432` 준비 전까지 대기
+- frontend `dev`는 backend `8000` 준비 전까지 대기
+- `pnpm dev` 한 번으로 인프라 기동 후 순차 개발 실행 가능하도록 조정
+
+### 26) JWT secret 기본값 강화
+- JWT 기본 secret을 32바이트 이상 값으로 상향
+- `.env.example`, docker-compose, README에 동일 기준 반영

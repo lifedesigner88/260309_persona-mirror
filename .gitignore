@@ -1,13 +1,14 @@
 # OS / Editor
 .DS_Store
 .idea/
-.vscode/
 
 # Node / Nx
 node_modules/
+.pnpm-store/
 dist/
 tmp/
 .nx/
+.cache/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -30,4 +31,3 @@ venv/
 data/
 outputs/
 artifacts/
-

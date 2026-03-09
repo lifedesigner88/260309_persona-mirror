@@ -5,9 +5,11 @@
   "packageManager": "pnpm@10.31.0",
   "scripts": {
     "nx": "nx",
+    "infra:up": "docker compose up -d db redis",
+    "infra:down": "docker compose down",
     "dev:frontend": "nx run frontend:dev",
     "dev:backend": "nx run backend:dev",
-    "dev": "nx run-many -t dev -p frontend,backend",
+    "dev": "pnpm infra:up && nx run-many -t dev -p frontend,backend",
     "lint:frontend": "pnpm exec eslint apps/frontend/src --ext .ts,.tsx --max-warnings=0",
     "lint:python": "uvx ruff check apps/backend apps/ai-worker",
     "lint": "pnpm lint:frontend && pnpm lint:python",
