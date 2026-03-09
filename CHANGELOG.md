@@ -55,3 +55,17 @@
 - `pnpm lint`, `pnpm format` 스크립트 추가
 - `.pre-commit-config.yaml` 추가 (frontend lint, python ruff, 문서 prettier check)
 - README Phase 0 체크리스트에서 품질 전략 항목 완료 처리
+
+### 12) React Router Data API 적용
+- frontend 라우팅을 `loader/action` 기반으로 전환
+- Home 헬스체크 요청을 `action`으로 이동하고 `Form` 제출로 처리
+- 라우트 에러 출력용 `errorElement` 추가
+
+### 13) 라우터 파일 분리
+- 코드 기반 라우팅 정의를 `apps/frontend/src/router.tsx`로 분리
+- `main.tsx`는 `RouterProvider` 마운트 전용으로 단순화
+
+### 14) Tailwind + shadcn 초기 세팅
+- `apps/frontend`에 Tailwind 스타일 시스템 추가
+- `components.json`, `src/index.css`, `src/lib/utils.ts` 추가
+- shadcn 스타일 `Button` 컴포넌트 추가 후 Home 화면에 적용

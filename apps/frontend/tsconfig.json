@@ -8,6 +8,10 @@
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
@@ -15,4 +19,3 @@
   },
   "include": ["src"]
 }
-

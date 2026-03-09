@@ -1,19 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 
-import { App, CapturePage, HomePage } from "./App";
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: "capture", element: <CapturePage /> }
-    ]
-  }
-]);
+import { router } from "./router";
+import "./index.css";
 
 const root = document.getElementById("root");
 
@@ -26,4 +16,3 @@ createRoot(root).render(
     <RouterProvider router={router} />
   </StrictMode>
 );
-

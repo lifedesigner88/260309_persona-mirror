@@ -26,6 +26,7 @@
   - `infrastructure/terraform`: IaC
 - 인터페이스/스키마 변경 시 관련 소비자(frontend/backend/worker)를 함께 점검한다.
 - AI 추론과 웹 요청 처리는 분리하고, 긴 작업은 비동기로 처리하는 방향을 우선한다.
+- Frontend는 React Router의 `loader`/`action` 패턴을 기본으로 사용하고, 데이터 요청 로직은 라우트 계층에 배치한다.
 - 런타임 기준:
   - Node는 기본 `latest LTS`를 사용하고 `.nvmrc`에 고정한다.
   - 현재 기준값은 `24`이다.
