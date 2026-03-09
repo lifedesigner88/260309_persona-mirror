@@ -31,8 +31,14 @@
   - 공용 UI 컴포넌트는 `apps/frontend/src/common/components` 아래에 둔다.
   - shadcn/ui 기반 공용 컴포넌트는 `apps/frontend/src/common/components/ui/*`에 두고, 외부 import 진입점은 `apps/frontend/src/common/components/index.ts`로 통일한다.
   - feature 전용 컴포넌트는 각 feature 내부 `components/` 아래에 둔다.
-  - feature 내부 `index.ts`는 진입점만 담당하고, 실제 `.tsx` 파일은 가능하면 하위 폴더가 아니라 같은 `components/` 또는 명확한 역할 폴더(`pages/`, `layout/`, `utils/`)에 둔다.
+  - feature 내부 `index.ts`는 진입점만 담당하고, 실제 `.tsx` 파일은 같은 `components/` 또는 명확한 역할 폴더(`pages/`, `layout/`, `utils/`)에 둔다.
   - 불필요한 중첩(`components/ui/ui` 같은 구조)은 만들지 않는다.
+- Backend 폴더 구조 원칙:
+  - 공통 인프라/설정 코드는 `apps/backend/app/common` 아래에 둔다.
+  - 기능 코드는 `apps/backend/app/features/<domain>` 아래에 둔다.
+  - 각 backend feature는 필요에 따라 `router.py`, `service.py`, `schemas.py`, `models.py`로 나눈다.
+  - 루트 `apps/backend/main.py`는 uvicorn 진입점만 담당하고, 실제 앱 조립은 `apps/backend/app/main.py`에서 수행한다.
+  - frontend와 backend는 가능한 한 같은 도메인 이름(`auth`, `admin`, `capture`)을 공유한다.
 - 인증/세션 기본 원칙:
   - 브라우저 토큰 저장은 `localStorage`보다 `httpOnly` cookie를 우선한다.
   - 인증 secret은 코드 fallback 없이 환경변수로 강제한다.

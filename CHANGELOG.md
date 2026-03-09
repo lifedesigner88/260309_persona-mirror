@@ -195,3 +195,17 @@
 ### 42) 멀티 루트 Python 인터프리터 경고 정리
 - `persona-mirror-python.code-workspace`의 전역 `python.defaultInterpreterPath` 제거
 - backend/ai-worker는 폴더별 `.vscode/settings.json`만 사용하고, `infra`/`frontend`/`root`에서는 잘못된 `.venv` 경고가 뜨지 않도록 조정
+
+### 43) Backend capture job API 시작
+- `capture_jobs` 테이블 추가 (`owner_user_id`, `status`, `payload`, timestamps`)
+- 인증 사용자 기준 `POST /capture/jobs`, `GET /capture/jobs`, `GET /capture/jobs/{job_id}` 추가
+- 현재 프론트 capture draft 구조(JSON)를 그대로 저장하고, 이후 ai-worker 큐 연결의 기준 데이터로 사용하도록 구성
+
+### 44) Frontend/Backend 도메인 구조 정렬
+- backend를 `app/common` + `app/features/{auth,admin,capture}` 구조로 재배치
+- frontend auth를 `features/auth`로 이동하고, admin 페이지도 `features/admin`로 분리
+- 이후 양쪽 모두 같은 도메인 이름을 기준으로 파일을 찾을 수 있도록 구조를 통일
+
+### 45) FastAPI startup deprecated 경고 정리
+- `@app.on_event("startup")`를 제거하고 `lifespan` 기반 초기화로 전환
+- 테이블 생성과 admin 시드 동기화는 그대로 유지하면서 최신 FastAPI 방식에 맞춤

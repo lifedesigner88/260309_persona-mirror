@@ -1,19 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import {
-  AdminUsersPage,
-  App,
-  HomePage,
-  LoginPage,
-  RouteErrorBoundary,
-  SignupPage,
-  adminUsersLoader,
-  homeAction,
-  homeLoader,
-  loginAction,
-  rootLoader,
-  signupAction
-} from "./App";
+import { App, HomePage, RouteErrorBoundary, homeAction, homeLoader } from "./App";
+import { AdminUsersPage, adminUsersLoader } from "./features/admin";
+import { LoginPage, SignupPage, loginAction, rootLoader, signupAction } from "./features/auth";
 import {
   CaptureLayout,
   CaptureOverviewPage,

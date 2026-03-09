@@ -1,28 +1,22 @@
-import { useState } from "react";
 import {
   Form,
   NavLink,
   Outlet,
-  redirect,
   useActionData,
   useLoaderData,
-  useNavigate,
   useNavigation,
-  useRevalidator,
   useRouteLoaderData,
   useRouteError
 } from "react-router-dom";
 
-import { Button, Field, Input, ShellCard, StatusPill } from "@/common/components";
+import { Button, ShellCard, StatusPill } from "@/common/components";
+import { LogoutButton, type RootLoaderData } from "@/features/auth";
 import { cn } from "@/lib/utils";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 type HealthLoaderData = { initialStatus: string };
 type HealthActionData = { result: string };
-type AuthActionData = { error?: string };
-type AdminUser = { user_id: string; is_admin: boolean; created_at: string };
-type RootLoaderData = { sessionUser: AdminUser | null };
 
 async function requestHealthStatus(): Promise<string> {
   const response = await fetch(`${API_BASE_URL}/health`, {
@@ -33,55 +27,6 @@ async function requestHealthStatus(): Promise<string> {
   }
   const data = (await response.json()) as { status?: string };
   return data.status ?? "unknown";
-}
-
-export async function rootLoader(): Promise<RootLoaderData> {
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    credentials: "include",
-  });
-
-  if (response.status === 401) {
-    return { sessionUser: null };
-  }
-  if (!response.ok) {
-    throw new Error(`Failed to load session (${response.status})`);
-  }
-
-  return {
-    sessionUser: (await response.json()) as AdminUser,
-  };
-}
-
-function LogoutButton({
-  className,
-  variant = "outline",
-}: {
-  className?: string;
-  variant?: "default" | "secondary" | "outline" | "ghost";
-}) {
-  const navigate = useNavigate();
-  const revalidator = useRevalidator();
-  const [loading, setLoading] = useState(false);
-
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-      revalidator.revalidate();
-      navigate("/", { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Button className={className} disabled={loading} onClick={handleLogout} type="button" variant={variant}>
-      {loading ? "Logging out..." : "Logout"}
-    </Button>
-  );
 }
 
 export function App() {
@@ -274,175 +219,6 @@ export function HomePage() {
         ))}
       </div>
     </div>
-  );
-}
-
-export async function signupAction({ request }: { request: Request }): Promise<AuthActionData | Response> {
-  const formData = await request.formData();
-  const user_id = String(formData.get("user_id") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-
-  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id, password }),
-    credentials: "include",
-  });
-
-  if (response.ok) {
-    return redirect("/auth/login");
-  }
-
-  const data = (await response.json().catch(() => null)) as { detail?: string } | null;
-  return { error: data?.detail ?? "Signup failed" };
-}
-
-export function SignupPage() {
-  const actionData = useActionData() as AuthActionData | undefined;
-
-  return (
-    <ShellCard className="mx-auto max-w-xl bg-white/92">
-      <div className="space-y-2">
-        <StatusPill label="New member" />
-        <h2 className="text-2xl font-semibold tracking-[-0.03em]">Create a local test identity</h2>
-        <p className="text-sm leading-6 text-muted-foreground">
-          This creates a normal member account. Admin access remains reserved for the seeded operator account.
-        </p>
-      </div>
-      <Form className="mt-6 space-y-4" method="post">
-        <Field label="User ID">
-          <Input autoComplete="username" name="user_id" required />
-        </Field>
-        <Field label="Password">
-          <Input autoComplete="new-password" minLength={8} name="password" required type="password" />
-        </Field>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">Use 8+ characters. This account is for local dev testing.</p>
-          <Button type="submit">Create account</Button>
-        </div>
-      </Form>
-      {actionData?.error ? (
-        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionData.error}
-        </div>
-      ) : null}
-    </ShellCard>
-  );
-}
-
-export async function loginAction({ request }: { request: Request }): Promise<AuthActionData | Response> {
-  const formData = await request.formData();
-  const user_id = String(formData.get("user_id") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id, password }),
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const data = (await response.json().catch(() => null)) as { detail?: string } | null;
-    return { error: data?.detail ?? "Login failed" };
-  }
-
-  return redirect("/");
-}
-
-export function LoginPage() {
-  const actionData = useActionData() as AuthActionData | undefined;
-
-  return (
-    <ShellCard className="mx-auto max-w-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,248,248,0.95))]">
-      <div className="space-y-2">
-        <StatusPill label="Session access" />
-        <h2 className="text-2xl font-semibold tracking-[-0.03em]">Sign in to continue</h2>
-        <p className="text-sm leading-6 text-muted-foreground">
-          Session state is stored in an httpOnly cookie, so the browser cannot read the token directly.
-        </p>
-      </div>
-      <Form className="mt-6 space-y-4" method="post">
-        <Field label="User ID">
-          <Input autoComplete="username" name="user_id" required />
-        </Field>
-        <Field label="Password">
-          <Input autoComplete="current-password" minLength={8} name="password" required type="password" />
-        </Field>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">Seeded admin is documented in the project env template.</p>
-          <Button type="submit">Login</Button>
-        </div>
-      </Form>
-      {actionData?.error ? (
-        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionData.error}
-        </div>
-      ) : null}
-    </ShellCard>
-  );
-}
-
-export async function adminUsersLoader(): Promise<AdminUser[] | Response> {
-  const response = await fetch(`${API_BASE_URL}/admin/users`, {
-    credentials: "include",
-  });
-
-  if (response.status === 401) {
-    return redirect("/auth/login");
-  }
-  if (response.status === 403) {
-    throw new Error("Admin only");
-  }
-  if (!response.ok) {
-    throw new Error(`Failed to load users (${response.status})`);
-  }
-
-  return (await response.json()) as AdminUser[];
-}
-
-export function AdminUsersPage() {
-  const users = useLoaderData() as AdminUser[];
-
-  return (
-    <ShellCard className="overflow-hidden bg-white/92 p-0">
-      <div className="border-b border-border/80 bg-[linear-gradient(180deg,rgba(248,246,241,0.95),rgba(255,255,255,0.92))] px-6 py-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-2">
-            <StatusPill label="Admin only" />
-            <h2 className="text-2xl font-semibold tracking-[-0.03em]">All members</h2>
-            <p className="text-sm text-muted-foreground">
-              Lightweight operator view for checking who can access the current starter environment.
-            </p>
-          </div>
-          <div className="shrink-0">
-            <LogoutButton />
-          </div>
-        </div>
-      </div>
-      <div className="overflow-x-auto px-6 py-4">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/80 text-left text-muted-foreground">
-              <th className="py-3 font-medium">User ID</th>
-              <th className="py-3 font-medium">Role</th>
-              <th className="py-3 font-medium">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr className="border-b border-border/60 last:border-b-0" key={user.user_id}>
-                <td className="py-4 font-medium text-foreground">{user.user_id}</td>
-                <td className="py-4">
-                  <StatusPill label={user.is_admin ? "admin" : "member"} tone={user.is_admin ? "success" : "default"} />
-                </td>
-                <td className="py-4 text-muted-foreground">{new Date(user.created_at).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </ShellCard>
   );
 }
 
