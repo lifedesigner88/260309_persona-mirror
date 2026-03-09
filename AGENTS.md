@@ -29,7 +29,9 @@
 - 런타임 기준:
   - Node는 기본 `latest LTS`를 사용하고 `.nvmrc`에 고정한다.
   - 현재 기준값은 `24`이다.
+  - Node 패키지 매니저는 `pnpm`을 사용한다.
   - Python은 기본 `3.11`을 사용한다.
+  - Python 패키지/가상환경 관리는 `uv`를 사용한다.
   - 이유: FastAPI/LangChain/AI 패키지 호환성과 안정성을 우선하기 위함.
 
 ## Documentation Rules

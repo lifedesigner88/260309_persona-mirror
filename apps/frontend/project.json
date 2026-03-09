@@ -7,9 +7,8 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm --prefix apps/frontend run dev"
+        "command": "pnpm --dir apps/frontend dev"
       }
     }
   }
 }
-

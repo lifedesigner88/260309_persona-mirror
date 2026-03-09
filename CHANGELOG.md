@@ -30,3 +30,9 @@
 - `apps/backend` FastAPI 최소 앱 추가 (`/health`)
 - `apps/frontend` React + React Router 기반 최소 구조 추가
 - `docker-compose.yml`을 placeholder에서 실제 dev 명령으로 변경
+
+### 7) 패키지 매니저 표준화
+- Node는 `pnpm`, Python은 `uv` 기준으로 전환
+- `pnpm-workspace.yaml` 추가
+- `apps/backend` 의존성 관리를 `requirements.txt`에서 `pyproject.toml`로 전환
+- `docker-compose.yml`과 Nx 실행 명령을 `pnpm/uv` 기준으로 수정

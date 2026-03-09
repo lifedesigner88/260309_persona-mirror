@@ -4,7 +4,7 @@ services:
   frontend:
     image: node:24-alpine
     working_dir: /workspace
-    command: sh -c "cd apps/frontend && npm install && npm run dev"
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile=false && pnpm --dir apps/frontend dev"
     volumes:
       - ./:/workspace
     ports:
@@ -15,7 +15,7 @@ services:
   backend:
     image: python:3.11-slim
     working_dir: /workspace
-    command: sh -c "pip install -r apps/backend/requirements.txt && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend"
+    command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend"
     volumes:
       - ./:/workspace
     ports:
@@ -27,7 +27,7 @@ services:
   ai-worker:
     image: python:3.11-slim
     working_dir: /workspace
-    command: sh -c "echo 'ai-worker scaffold pending (Phase 1)' && tail -f /dev/null"
+    command: sh -c "pip install uv && echo 'ai-worker scaffold pending (Phase 1, uv ready)' && tail -f /dev/null"
     volumes:
       - ./:/workspace
     depends_on:
