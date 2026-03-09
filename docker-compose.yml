@@ -15,7 +15,7 @@ services:
   backend:
     image: python:3.11-slim
     working_dir: /workspace
-    command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend"
+    command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend --env-file .env"
     volumes:
       - ./:/workspace
     ports:

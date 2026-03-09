@@ -39,5 +39,13 @@
 
 ### 8) VS Code Python 인터프리터 고정
 - `persona-mirror-python.code-workspace` 추가 (backend, ai-worker 멀티 루트)
-- 각 폴더에 `.vscode/settings.json` 추가
 - 인터프리터를 `${workspaceFolder}/.venv/bin/python`으로 고정
+
+### 9) Health Check + CORS(.env)
+- backend에 CORS 미들웨어 추가
+- `BACKEND_CORS_ORIGINS`를 `.env`에서 읽도록 설정
+- frontend Home 화면에 `/health` 호출 버튼 추가
+- backend 실행 명령에 `--env-file .env` 반영
+
+### 10) pnpm 버전 상향
+- `package.json`의 `packageManager`를 `pnpm@10.31.0`으로 업데이트

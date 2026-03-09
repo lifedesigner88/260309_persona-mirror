@@ -105,6 +105,11 @@ MVP 완료 기준 (DoD):
 - [ ] backend(FastAPI) + frontend(React) 의존성 설치(`uv`, `pnpm`) 및 실행 검증
 - [ ] ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성
 
+## 10) Environment Variables
+- 루트 `.env` 파일 사용
+- 현재 키:
+  - `BACKEND_CORS_ORIGINS` (예: `http://localhost:3000`)
+
 ## 9) Git Workflow (Learning Mode)
 브랜치 전략:
 - `main`: 항상 실행 가능한 안정 브랜치 유지

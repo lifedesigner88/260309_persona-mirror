@@ -2,7 +2,7 @@
   "name": "persona-mirror",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.6.0",
+  "packageManager": "pnpm@10.31.0",
   "scripts": {
     "nx": "nx",
     "dev:frontend": "nx run frontend:dev",
