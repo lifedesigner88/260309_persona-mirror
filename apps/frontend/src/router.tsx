@@ -13,13 +13,16 @@ import {
   homeLoader,
   loginAction,
   logoutAction,
+  rootLoader,
   signupAction
 } from "./App";
 
 export const router = createBrowserRouter([
   {
+    id: "root",
     path: "/",
     element: <App />,
+    loader: rootLoader,
     errorElement: <RouteErrorBoundary />,
     children: [
       {

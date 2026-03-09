@@ -131,3 +131,17 @@
 - frontend/backend `dev` 대기를 bash `/dev/tcp`에서 Node 기반 포트 대기 스크립트로 전환
 - Windows/macOS/Linux에서 같은 `pnpm dev` 흐름을 사용할 수 있도록 조정
 - Docker DB는 healthcheck 기반으로 backend 시작을 지연하도록 보강
+
+### 29) 프론트 UI 톤 정리
+- 기존 auth/admin 화면 레이아웃을 더 정돈된 사이드바 + 카드 구조로 리디자인
+- API/라우팅은 유지하고, 표현 계층만 조정
+- 글로벌 배경/색감/상태 배지 스타일을 템플릿 기본 톤에 맞게 조정
+
+### 30) 관리자 메뉴 표시 조건 분리
+- 루트 라우트에서 `/auth/me`로 현재 세션을 확인하도록 loader 추가
+- 사이드바의 `Admin users` 메뉴는 관리자 세션일 때만 노출되도록 변경
+- 관리자 페이지 접근 제어는 기존 backend 권한 검사 + route loader 검사 그대로 유지
+
+### 31) Frontend VS Code Tailwind 경고 정리
+- `apps/frontend/.vscode/settings.json` 추가
+- frontend 폴더를 단독으로 열어도 `@theme`, `@apply` 같은 Tailwind at-rule 경고가 뜨지 않도록 조정
