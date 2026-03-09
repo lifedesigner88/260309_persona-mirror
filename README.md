@@ -108,9 +108,10 @@ MVP 완료 기준 (DoD):
 - 완료된 항목은 체크박스로 상태 갱신
 
 ## 8) Next Immediate Tasks
-- [x] Nx 초기화 및 기본 앱/라이브러리 스캐폴딩
-- [ ] backend(FastAPI) + frontend(React) 의존성 설치(`uv`, `pnpm`) 및 실행 검증
+- [x] backend(FastAPI) + frontend(React) 의존성 설치(`uv`, `pnpm`) 및 실행 검증
+- [ ] backend 인증/API smoke test 추가
 - [ ] ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성
+- [ ] 인터뷰/음성/이미지 입력 플로우 설계 및 화면 초안
 
 ## 10) Environment Variables
 - 루트 `.env` 파일 사용
@@ -132,6 +133,10 @@ Compose note:
 - Docker frontend는 named volume으로 `/workspace/node_modules`를 분리해,
   로컬 `node_modules` 소유권 충돌이 나지 않도록 구성함.
 
+Auth note:
+- 브라우저 세션은 `httpOnly` cookie 기반으로 처리하고, 프론트는 `credentials: "include"`로 통신함.
+- 템플릿 기본값으로 `localStorage` 토큰 저장은 사용하지 않음.
+
 ## 11) Quality Commands
 - lint:
   - `pnpm lint` (frontend ESLint + python Ruff check)
@@ -150,6 +155,12 @@ Compose note:
   - `pnpm infra:up`
 - 인프라 종료:
   - `pnpm infra:down`
+
+## 13) Template Notes
+- 템플릿 기본값은 "로컬 개발 편의"보다 "복제 후 안전한 기본값"을 우선한다.
+- 인증 관련 secret은 fallback 없이 환경변수로 강제한다.
+- 입력값은 저장 전에 정규화하고 검증한다.
+- OS 종속 bash 트릭 대신 Node/Python 스크립트 기반 실행 보조를 우선한다.
 
 ## 9) Git Workflow (Learning Mode)
 브랜치 전략:
