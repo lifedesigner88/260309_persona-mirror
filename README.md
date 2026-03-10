@@ -266,8 +266,8 @@ docker compose down
 - [ ] 운영 관측성
 
 ## Next Recommended Work
-- backend smoke test 기본 세트 추가
 - `capture review` 단계에서 backend `POST /capture/jobs` 연결
+- Postgres 기반 backend integration test 추가
 - frontend route 상태 분기 테스트 추가
 - ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성
 - 실제 파일 업로드 처리(오디오 / 이미지) 추가
@@ -305,6 +305,8 @@ uvx pre-commit run --all-files
 - 작은 단위 커밋 유지
 - 최종 커밋 전 변경 요약 확인
 - 승인 후 현재 브랜치를 원격까지 푸시
+- PR은 항상 `main` 최신 기준 새 브랜치에서 생성
+- 이미 PR을 올린 브랜치는 다음 작업에 재사용하지 않음
 
 ## Why This Repo Is Useful For Learners
 이 저장소는 단순한 튜토리얼이 아니라 아래를 같이 보여줍니다.
