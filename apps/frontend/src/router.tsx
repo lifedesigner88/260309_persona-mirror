@@ -14,6 +14,7 @@ import {
   imageAction,
   interviewAction,
   resetCaptureAction,
+  submitCaptureAction,
   voiceAction,
 } from "./features/capture";
 
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
           {
             path: "review",
             element: <CaptureReviewPage />,
+            action: submitCaptureAction,
           },
           {
             path: "reset",

@@ -1,53 +1,32 @@
 import { EMPTY_DRAFT, type CaptureCompletion, type CaptureDraft } from "./types";
 
-const CAPTURE_DRAFT_KEY = "persona-mirror.capture-draft.v1";
+let captureDraft: CaptureDraft = cloneDraft(EMPTY_DRAFT);
+
+function cloneDraft(draft: CaptureDraft): CaptureDraft {
+  return {
+    interview: {
+      ...draft.interview,
+    },
+    voice: {
+      ...draft.voice,
+    },
+    image: {
+      ...draft.image,
+    },
+    updatedAt: draft.updatedAt,
+  };
+}
 
 export function readCaptureDraft(): CaptureDraft {
-  if (typeof window === "undefined") {
-    return EMPTY_DRAFT;
-  }
-
-  const raw = window.sessionStorage.getItem(CAPTURE_DRAFT_KEY);
-  if (!raw) {
-    return EMPTY_DRAFT;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<CaptureDraft>;
-    return {
-      interview: {
-        ...EMPTY_DRAFT.interview,
-        ...parsed.interview,
-      },
-      voice: {
-        ...EMPTY_DRAFT.voice,
-        ...parsed.voice,
-      },
-      image: {
-        ...EMPTY_DRAFT.image,
-        ...parsed.image,
-      },
-      updatedAt: parsed.updatedAt ?? null,
-    };
-  } catch {
-    return EMPTY_DRAFT;
-  }
+  return cloneDraft(captureDraft);
 }
 
 export function writeCaptureDraft(draft: CaptureDraft) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.sessionStorage.setItem(CAPTURE_DRAFT_KEY, JSON.stringify(draft));
+  captureDraft = cloneDraft(draft);
 }
 
 export function clearCaptureDraft() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.sessionStorage.removeItem(CAPTURE_DRAFT_KEY);
+  captureDraft = cloneDraft(EMPTY_DRAFT);
 }
 
 export function saveDraft(nextDraft: CaptureDraft) {

@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-import { StatusPill } from "@/common/components";
+import { Badge } from "@/common/components";
 import { cn } from "@/lib/utils";
 
 export function StepLink({
@@ -18,16 +18,21 @@ export function StepLink({
       to={to}
       className={({ isActive }) =>
         cn(
-          "rounded-2xl border px-4 py-3 text-sm transition",
+          "rounded-3xl border px-4 py-4 text-sm transition-all",
           isActive
-            ? "border-foreground bg-foreground text-background"
-            : "border-border/80 bg-white/75 text-foreground/80 hover:border-foreground/30 hover:bg-white"
+            ? "border-primary bg-[linear-gradient(180deg,rgba(38,96,118,0.98),rgba(25,73,93,0.98))] text-primary-foreground shadow-[0_24px_48px_-36px_rgba(30,41,59,0.55)]"
+            : "border-border/80 bg-card text-foreground/80 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white"
         )
       }
     >
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium">{title}</span>
-        <StatusPill label={done ? "done" : "pending"} tone={done ? "success" : "default"} />
+        <Badge
+          className={cn(done ? "" : "bg-slate-50", "capitalize")}
+          variant={done ? "success" : "outline"}
+        >
+          {done ? "done" : "pending"}
+        </Badge>
       </div>
     </NavLink>
   );

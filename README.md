@@ -184,7 +184,7 @@ docker compose down
 - `POST /capture/jobs`
 - `GET /capture/jobs`
 - `GET /capture/jobs/{job_id}`
-- 프론트는 step-based capture UI를 제공하며, 현재는 review 단계 전까지 draft를 client side에 보관
+- 프론트는 step-based capture UI를 제공하며, draft는 브라우저 메모리에서 관리하고 review 단계에서 backend job API로 제출한다
 
 ### Health
 - `GET /health`
@@ -226,6 +226,7 @@ docker compose down
 - 공용 UI는 `src/common/components`
 - feature 코드는 `src/features/<domain>`
 - React Router `loader` / `action`을 기본 패턴으로 사용
+- 새 페이지는 먼저 `src/common/components`의 공용 UI를 조합해서 만들고, 반복 패턴이 확인될 때만 feature 전용 컴포넌트를 추가
 
 현재 주요 도메인:
 - `auth`
@@ -255,7 +256,7 @@ docker compose down
 - [x] admin 조회 화면
 - [x] capture UI 초안
 - [x] capture job API
-- [ ] capture review -> backend job API 연결
+- [x] capture review -> backend job API 연결
 - [ ] 파일 업로드 처리
 - [ ] AI 분석 / 생성 파이프라인 연결
 
@@ -266,7 +267,7 @@ docker compose down
 - [ ] 운영 관측성
 
 ## Next Recommended Work
-- `capture review` 단계에서 backend `POST /capture/jobs` 연결
+- backend auth / capture smoke test 추가
 - Postgres 기반 backend integration test 추가
 - frontend route 상태 분기 테스트 추가
 - ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성

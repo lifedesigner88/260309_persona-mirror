@@ -33,6 +33,8 @@
 - React Router의 `loader` / `action` 패턴을 기본으로 사용한다.
 - 공용 UI는 `apps/frontend/src/common/components` 아래에 둔다.
 - shadcn/ui 기반 공용 컴포넌트는 `apps/frontend/src/common/components/ui/*`에 두고, 외부 진입점은 `apps/frontend/src/common/components/index.ts`로 통일한다.
+- 새 페이지나 새 섹션을 만들 때는 먼저 `apps/frontend/src/common/components`의 공용 UI로 조합 가능한지 확인하고, 충분하지 않을 때만 새 feature 컴포넌트를 추가한다.
+- 같은 패턴이 두 번 이상 반복되면 페이지 안에서 직접 복붙하지 말고 feature `components/` 또는 공용 `common/components`로 끌어올린다.
 - feature 코드는 `apps/frontend/src/features/<domain>` 아래에 둔다.
 - feature 내부 `index.ts`는 진입점만 담당한다.
 - 실제 `.tsx` 파일은 `components/`, `pages/`, `layout/`, `utils/`처럼 역할이 드러나는 폴더에 둔다.

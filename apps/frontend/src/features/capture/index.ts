@@ -1,4 +1,4 @@
-export { captureLoader, imageAction, interviewAction, resetCaptureAction, voiceAction } from "./utils/actions";
+export { captureLoader, imageAction, interviewAction, resetCaptureAction, submitCaptureAction, voiceAction } from "./utils/actions";
 export { CaptureLayout } from "./layout/capture-layout";
 export { CaptureOverviewPage } from "./pages/capture-overview-page";
 export { InterviewCapturePage } from "./pages/interview-capture-page";

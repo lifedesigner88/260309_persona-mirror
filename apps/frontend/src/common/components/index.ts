@@ -1,4 +1,6 @@
+export { Badge } from "./ui/badge";
 export { Button, buttonVariants } from "./ui/button";
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 export { Field } from "./ui/field";
 export { Input } from "./ui/input";
 export { ShellCard } from "./ui/shell-card";

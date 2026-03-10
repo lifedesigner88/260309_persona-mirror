@@ -29,6 +29,11 @@ export type CaptureLoaderData = {
   completion: CaptureCompletion;
   progressCount: number;
   nextPath: string;
+  submittedJobId: string | null;
+};
+
+export type CaptureSubmitActionData = {
+  error?: string;
 };
 
 export const EMPTY_DRAFT: CaptureDraft = {
