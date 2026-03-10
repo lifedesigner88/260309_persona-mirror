@@ -105,10 +105,12 @@
   - 실행 방법이 바뀌면 관련 문서
   - API가 바뀌면 요청/응답 예시
   - `docs/changelog/YYYY-MM-DD.md`
+- changelog 운영 규칙의 정본은 `docs/changelog/README.md`로 본다.
 - changelog는 두 단계로 관리한다.
-  - 작업 중: 한 줄 메모 누적
+  - 작업 중: 해당 날짜 파일에 한 줄 메모 누적
   - 최종 커밋 직전: 이번 커밋 범위 기준으로 다시 요약
-- changelog 인덱스는 `docs/changelog/README.md`를 사용한다.
+- changelog 인덱스와 규칙 문서는 `docs/changelog/README.md`를 사용한다.
+- 커밋 후에는 중간 메모를 남기지 않고, 커밋 히스토리와 맞는 최종 요약만 유지한다.
 - backend API의 실행 시점 정본은 FastAPI OpenAPI(`/docs`, `/openapi.json`)로 본다.
 - 수동 backend API endpoint 문서는 기본적으로 유지하지 않는다.
 - backend 테스트 계획은 README가 아니라 `apps/backend/docs/api/testing.md`에서 관리한다.
