@@ -1,4 +1,11 @@
 
+from sqlalchemy import select
+
+from app.common.db import SessionLocal
+from app.features.auth.models import User
+from app.features.capture.models import CaptureJob
+
+
 def login(client, user_id: str, password: str):
     return client.post("/auth/login", json={"user_id": user_id, "password": password})
 
@@ -47,6 +54,24 @@ def test_capture_job_create_list_and_get(client):
     get_response = client.get(f"/capture/jobs/{created_job['id']}")
     assert get_response.status_code == 200
     assert get_response.json()["id"] == created_job["id"]
+
+
+def test_capture_job_is_linked_to_user_by_foreign_key(client):
+    client.post("/auth/signup", json={"user_id": "alice", "password": "strong-pass-123"})
+    login(client, "alice", "strong-pass-123")
+
+    create_response = client.post("/capture/jobs", json=build_capture_payload())
+    assert create_response.status_code == 201
+    created_job = create_response.json()
+
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.user_id == "alice"))
+        job = db.scalar(select(CaptureJob).where(CaptureJob.id == created_job["id"]))
+
+        assert user is not None
+        assert job is not None
+        assert job.owner_id == user.id
+        assert job.owner.user_id == "alice"
 
 
 def test_capture_job_requires_authentication(client):

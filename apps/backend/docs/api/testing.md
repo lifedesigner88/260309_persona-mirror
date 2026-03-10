@@ -17,6 +17,7 @@ pnpm test:backend
 - 회원가입 / 로그인 / 로그아웃 / `/auth/me`
 - admin 권한 검사
 - capture job 생성 / 목록 / 단건 조회
+- capture job owner FK 저장 확인
 - admin의 타 사용자 capture job 조회
 - 비로그인 capture 접근 거부
 
