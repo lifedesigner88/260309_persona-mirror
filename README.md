@@ -1,195 +1,300 @@
 # PersonaMirror
 
-## 1) Elevator Pitch
 `나의 외형을 넘어, 가치관과 말투까지 담아내는 멀티모달 AI 디지털 페르소나 생성 서비스`
 
-## 2) Project Overview
-PersonaMirror는 텍스트(성격/가치관), 보이스(어조/화법), 비전(외형) 데이터를 통합 분석해 사용자와 닮은 예술적 디지털 자아를 생성하는 프로젝트입니다.
+## What This Repository Is
+PersonaMirror는 텍스트, 음성, 이미지 입력을 바탕으로 사용자의 디지털 페르소나를 생성하는 서비스를 단계적으로 구현하는 학습용 모노레포입니다.
 
-핵심 목표:
-- 인터뷰 텍스트에서 페르소나 핵심 특성 추출
-- 음성 입력에서 어조/화법 특성 반영
-- Stable Diffusion + ControlNet 기반 스타일 아바타 생성
-- Nx 모노레포 기반 TS + Python 폴리글랏 개발 환경 운영
+이 저장소는 두 가지 목표를 함께 가집니다.
+- 실제 서비스 구조를 갖춘 프로젝트를 단계적으로 구현한다.
+- 왜 이런 구조를 선택했는지 이해할 수 있도록, 코드와 문서를 함께 정리한다.
 
-## 3) Monorepo Target Structure
-```text
-/persona-mirror (Root)
-├── apps/
-│   ├── frontend/          # React Router 7 (UI, camera/mic control)
-│   ├── backend/           # FastAPI (API, orchestration, DB)
-│   └── ai-worker/         # Python worker (heavy inference)
-├── libs/
-│   ├── shared-interfaces/ # TS API contracts
-│   ├── ai-models/         # SD/Whisper loading and wrappers
-│   └── ui-components/     # reusable UI components
-├── infrastructure/
-│   └── terraform/         # AWS + Cloudflare IaC
-├── docker-compose.yml     # local integrated dev stack
-└── nx.json                # build cache/dependency graph
-```
+## Current Status
+현재 기준으로 동작하는 범위는 아래와 같습니다.
+- 회원가입 / 로그인 / 로그아웃
+- `httpOnly` cookie 기반 세션 인증
+- admin 계정 시드 및 관리자 전용 회원 목록 조회
+- 인터뷰 / 음성 / 이미지 입력용 capture UI 초안
+- capture job 생성 / 조회 API
+- 세 가지 실행 경로 모두 검증 완료
+  - local dev: `pnpm dev`
+  - Dockerfile test: `pnpm docker`
+  - Docker Compose demo: `docker compose up`
 
-## 4) Tech Direction (Initial)
+아직 구현되지 않은 핵심 범위는 아래입니다.
+- LangChain 기반 페르소나 추출
+- Whisper 기반 음성 분석
+- Stable Diffusion / ControlNet 기반 이미지 생성
+- ai-worker와 backend 간 비동기 작업 처리
+
+## Tech Stack
 - Monorepo: Nx
-- Frontend: React Router 7 + TypeScript + Tailwind CSS + shadcn/ui
-- Backend: FastAPI + Python
-- Worker: Python (GPU inference separation)
-- Package Managers:
+- Frontend: React Router 7, TypeScript, Tailwind CSS, shadcn/ui
+- Backend: FastAPI, SQLAlchemy, PostgreSQL
+- Worker: Python, uv
+- Package manager:
   - Node: pnpm
   - Python: uv
-- AI/ML:
-  - LangChain (interview -> persona extraction)
-  - Whisper (voice transcription/feature extraction)
-  - Stable Diffusion + ControlNet (art-style avatar generation)
-- Infra/DevOps:
-  - Docker Compose (local integration)
-  - Terraform (AWS/Cloudflare automation)
+- Infra / local runtime:
+  - Docker Compose
+  - Terraform
 
-## 5) Development Phases
+## Runtime Policy
+재현성을 위해 로컬과 Docker 런타임 버전을 patch까지 고정합니다.
+- Node: `24.11.0`
+- Python: `3.11.15`
+- Postgres: `16.13-alpine`
+- Redis: `7.4.7-alpine`
 
+관련 파일:
+- [/.nvmrc](/home/sejong/new_project/.nvmrc)
+- [/.python-version](/home/sejong/new_project/.python-version)
+- [/apps/frontend/Dockerfile](/home/sejong/new_project/apps/frontend/Dockerfile)
+- [/apps/backend/Dockerfile](/home/sejong/new_project/apps/backend/Dockerfile)
+- [/docker-compose.yml](/home/sejong/new_project/docker-compose.yml)
+
+## Quick Start
+사전 조건:
+- `nvm`
+- `corepack`
+- `uv`
+- `docker`
+- `docker compose`
+
+초기 설치:
+```bash
+nvm install 24.11.0
+nvm use 24.11.0
+corepack enable
+uv python install 3.11.15
+pnpm setup
+```
+
+`pnpm setup`가 하는 일:
+- `apps/frontend/.env.example` -> `apps/frontend/.env` 자동 생성
+- `apps/backend/.env.example` -> `apps/backend/.env` 자동 생성
+- Node 의존성 설치
+- backend / ai-worker Python 환경 동기화
+
+## Run Modes
+### 1. Local Development
+가장 자주 쓰는 실행 경로입니다.
+
+```bash
+pnpm dev
+```
+
+동작:
+- `db`, `redis`를 Docker Compose로 실행
+- Nx가 `backend`, `frontend`를 로컬 dev server로 실행
+- backend는 `5432` 준비를 기다린 뒤 시작
+- frontend는 `8000` 준비를 기다린 뒤 시작
+
+종료:
+- 앱 프로세스 종료: `Ctrl+C`
+- 남아 있는 `db`, `redis` 종료:
+```bash
+pnpm infra:down
+```
+
+### 2. Dockerfile Test
+앱 Dockerfile 자체가 실제로 빌드되고 실행되는지 검증할 때 사용합니다.
+
+```bash
+pnpm docker
+```
+
+동작:
+- `db`, `redis`를 Docker Compose로 실행
+- Nx가 frontend / backend Docker 이미지를 BuildKit으로 빌드
+- build 로그는 Nx 콘솔에 stream 형태로 출력
+- 빌드 후 frontend / backend 컨테이너를 detached 모드로 실행
+
+로그 확인:
+```bash
+pnpm docker:logs
+```
+
+종료:
+```bash
+pnpm docker:down
+```
+
+### 3. Docker Compose Demo
+외부 사용자가 가장 단순하게 데모를 확인할 수 있는 경로입니다.
+
+```bash
+docker compose up
+```
+
+종료:
+```bash
+docker compose down
+```
+
+주의:
+- `pnpm infra:down`은 `db`, `redis`만 내립니다.
+- `docker compose down`은 compose로 띄운 전체 서비스(frontend, backend, ai-worker, db, redis)를 내립니다.
+
+## Environment Variables
+### Policy
+- 실제 앱 로컬 env는 Git에 올리지 않습니다.
+- 예제 파일만 추적합니다.
+- Docker Compose demo 기본값은 추적 가능한 [compose.env](/home/sejong/new_project/compose.env)로 유지합니다.
+
+### Files
+- frontend example: [/apps/frontend/.env.example](/home/sejong/new_project/apps/frontend/.env.example)
+- backend example: [/apps/backend/.env.example](/home/sejong/new_project/apps/backend/.env.example)
+- compose demo env: [/compose.env](/home/sejong/new_project/compose.env)
+
+### Effective Use
+- local dev / local docker test:
+  - `apps/frontend/.env`
+  - `apps/backend/.env`
+- compose demo:
+  - `compose.env`
+
+### Important Keys
+- frontend:
+  - `VITE_API_BASE_URL`
+- backend:
+  - `DATABASE_URL`
+  - `JWT_SECRET_KEY`
+  - `BACKEND_CORS_ORIGINS`
+  - `AUTH_COOKIE_*`
+  - `ADMIN_SEED_*`
+- compose / db:
+  - `POSTGRES_DB`
+  - `POSTGRES_USER`
+  - `POSTGRES_PASSWORD`
+
+## What Is Implemented Today
+### Auth
+- `POST /auth/signup`
+- `POST /auth/login`
+- `POST /auth/logout`
+- `GET /auth/me`
+
+### Admin
+- `GET /admin/users`
+- admin 세션일 때만 프론트 메뉴 노출
+
+### Capture
+- `POST /capture/jobs`
+- `GET /capture/jobs`
+- `GET /capture/jobs/{job_id}`
+- 프론트는 step-based capture UI를 제공하며, 현재는 review 단계 전까지 draft를 client side에 보관
+
+### Health
+- `GET /health`
+
+## Monorepo Structure
+```text
+/persona-mirror
+├── apps/
+│   ├── frontend/
+│   ├── backend/
+│   └── ai-worker/
+├── libs/
+│   ├── shared-interfaces/
+│   ├── ai-models/
+│   └── ui-components/
+├── infrastructure/
+│   └── terraform/
+├── docs/
+│   └── changelog/
+├── scripts/
+├── docker-compose.yml
+└── nx.json
+```
+
+### Frontend Structure
+원칙:
+- 공용 UI는 `src/common/components`
+- feature 코드는 `src/features/<domain>`
+- React Router `loader` / `action`을 기본 패턴으로 사용
+
+현재 주요 도메인:
+- `auth`
+- `admin`
+- `capture`
+
+### Backend Structure
+원칙:
+- 공통 코드는 `app/common`
+- 기능 코드는 `app/features/<domain>`
+- feature는 필요에 따라 `router.py`, `service.py`, `schemas.py`, `models.py`로 분리
+
+현재 주요 도메인:
+- `auth`
+- `admin`
+- `capture`
+
+## Roadmap
 ### Phase 0. Foundation Setup
-목표: 모노레포 기반과 공통 개발 환경 확립
 - [x] Nx workspace 초기화
-- [x] `apps/`, `libs/`, `infrastructure/` 기본 디렉토리 생성
-- [x] Python/Node 버전 정책 확정 (`.nvmrc`, `.python-version` 등)
-- [x] 공통 린트/포맷/프리커밋 전략 정의
-- [x] `docker-compose.yml` 초안 작성 (frontend/backend/worker/db/cache)
-- [x] Frontend 라우팅을 React Router Data API(`loader`/`action`) 기준으로 구성
-- [x] Backend CORS를 `.env` 기반(`BACKEND_CORS_ORIGINS`)으로 구성
-- [x] Frontend UI 기본 스택을 Tailwind CSS + shadcn/ui로 초기 세팅
+- [x] 공통 런타임 / lint / format / pre-commit 정리
+- [x] local / docker / compose 실행 경로 정리
+- [x] frontend / backend 기본 구조 정리
 
 ### Phase 1. MVP Core Flow
-목표: 최소 기능 End-to-End 데모 완성
-- [x] 기본 아이디/패스워드 형태의 회원가입/로그인 기능
-- [x] JWT 인증 토큰 발급 및 백엔드 토큰 검사 절차 (`httpOnly` cookie 기반 세션)
-- [x] PostgreSQL 초기 데이터로 Admin 계정 시드 (`ADMIN_SEED_USER_ID`, `ADMIN_SEED_PASSWORD`)
-- [x] Admin 전용 회원정보 조회 페이지 분리 (`/admin/users`)
-- [x] Frontend: 인터뷰/음성/이미지 입력 UI
-- [x] Backend: capture draft 요청 API + 작업 상태 API
-- [ ] LangChain 기반 텍스트 페르소나 추출 파이프라인
-- [ ] Whisper 기반 음성 텍스트화 및 말투 특징 추출(기초)
-- [ ] SD 기반 단일 스타일 아바타 생성
-- [ ] 결과 조회 화면(요약 페르소나 + 생성 이미지)
+- [x] 기본 인증
+- [x] admin 조회 화면
+- [x] capture UI 초안
+- [x] capture job API
+- [ ] capture review -> backend job API 연결
+- [ ] 파일 업로드 처리
+- [ ] AI 분석 / 생성 파이프라인 연결
 
-MVP 완료 기준 (DoD):
-- [ ] 사용자 입력 -> 분석 -> 이미지 생성 -> 결과 확인까지 단일 플로우 성공
-- [ ] 실패/재시도/타임아웃 기본 처리
+### Phase 2+
+- [ ] 품질 개선
+- [ ] 비동기 작업 분리
+- [ ] 인프라 자동화
+- [ ] 운영 관측성
 
-### Phase 2. Quality Upgrade
-목표: 페르소나 일관성과 생성 품질 개선
-- [ ] ControlNet 도입으로 외형/포즈 일관성 향상
-- [ ] 가치관/말투를 프롬프트 체인에 반영
-- [ ] 프롬프트/파라미터 실험 체계(버전/로그) 정립
-- [ ] 기본 평가 지표 정의(주관+반자동)
+## Next Recommended Work
+- `capture review` 단계에서 backend `POST /capture/jobs` 연결
+- backend auth / capture smoke test 추가
+- ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성
+- 실제 파일 업로드 처리(오디오 / 이미지) 추가
 
-### Phase 3. Scalable Architecture
-목표: 처리 안정성/성능/비용 최적화
-- [ ] AI 작업을 큐 기반 비동기로 전환
-- [ ] Worker autoscaling 전략 수립
-- [ ] 캐싱/배치/모델 warm-up으로 지연 시간 절감
-- [ ] GPU 비용 모니터링 대시보드 구성
+## Quality Commands
+```bash
+pnpm lint
+pnpm format
+uvx pre-commit install
+uvx pre-commit run --all-files
+```
 
-### Phase 4. Deployment & Operations
-목표: 운영 가능한 배포 체계 확보
-- [ ] Terraform으로 AWS 리소스 코드화
-- [ ] Cloudflare 연계(도메인/보안/캐싱)
-- [ ] 관측성(로그/메트릭/트레이싱) 구축
-- [ ] 장애 대응 Runbook 작성
+## Changelog
+- 인덱스: [/docs/changelog/README.md](/home/sejong/new_project/docs/changelog/README.md)
+- 일자별 기록: `docs/changelog/YYYY-MM-DD.md`
 
-## 6) Priority Risks
-- GPU 비용 및 추론 지연
-- 멀티모달 결과 일관성 부족
-- 개인정보/음성/이미지 데이터 보안 및 권한 처리
+기록 방식:
+- 작업 중: 한 줄 메모 누적
+- 커밋 직전: 커밋 범위 기준으로 요약 정리
 
-## 7) Collaboration Rules (Working Memory)
-이 문서는 개발 기준점으로 사용합니다.
-- 새로운 결정은 README의 해당 섹션에 즉시 반영
-- 큰 변경은 "왜 바꿨는지"를 함께 기록
-- 완료된 항목은 체크박스로 상태 갱신
-
-구조 메모:
-- frontend는 `src/common` + `src/features/<domain>` 기준으로 유지
-- backend는 `app/common` + `app/features/<domain>` 기준으로 유지
-- 현재 공통 도메인 이름은 `auth`, `admin`, `capture`
-
-## 8) Next Immediate Tasks
-- [x] backend(FastAPI) + frontend(React) 의존성 설치(`uv`, `pnpm`) 및 실행 검증
-- [ ] backend 인증/API smoke test 추가
-- [ ] ai-worker와 backend 간 비동기 작업 인터페이스 초안 작성
-- [x] 인터뷰/음성/이미지 입력 플로우 설계 및 화면 초안
-- [ ] capture draft를 backend job 생성 API와 연결
-- [ ] 실제 파일 업로드 처리(오디오/이미지) 추가
-
-## 10) Environment Variables
-- 루트 `.env` 파일 사용
-- 현재 키:
-  - `BACKEND_CORS_ORIGINS` (예: `http://localhost:3000`)
-  - `DATABASE_URL` (로컬 실행: `localhost`, Docker backend 실행 시 compose에서 `db` host 주입)
-  - `DATABASE_URL_DOCKER` (compose backend용 DB URL)
-  - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (compose db 서비스)
-  - `JWT_SECRET_KEY` (필수, SHA256 기준 32바이트 이상)
-  - `JWT_EXPIRE_MINUTES`
-  - `AUTH_COOKIE_NAME`, `AUTH_COOKIE_SAMESITE`, `AUTH_COOKIE_SECURE`
-  - `VITE_API_BASE_URL` (예: `http://localhost:8000`)
-  - `ADMIN_SEED_USER_ID` (기본: `admin`)
-  - `ADMIN_SEED_PASSWORD` (기본: `Admin#2026!Mirror`)
-
-Compose note:
-- Docker backend/ai-worker는 컨테이너 내부 전용 uv 환경(`/tmp/...`)을 사용해,
-  로컬 `apps/*/.venv`와 권한 충돌이 나지 않도록 구성함.
-- Docker frontend는 named volume으로 `/workspace/node_modules`를 분리해,
-  로컬 `node_modules` 소유권 충돌이 나지 않도록 구성함.
-
-Auth note:
-- 브라우저 세션은 `httpOnly` cookie 기반으로 처리하고, 프론트는 `credentials: "include"`로 통신함.
-- 템플릿 기본값으로 `localStorage` 토큰 저장은 사용하지 않음.
-
-## 11) Quality Commands
-- lint:
-  - `pnpm lint` (frontend ESLint + python Ruff check)
-- format:
-  - `pnpm format` (Prettier + Ruff format)
-- pre-commit:
-  - 1회 설치: `uvx pre-commit install`
-  - 수동 실행: `uvx pre-commit run --all-files`
-
-## 12) Dev Run
-- 전체 개발 실행:
-  - `pnpm dev`
-  - 동작: `docker compose up -d db redis` 후 `backend`는 `db:5432` 대기, `frontend`는 `backend:8000` 대기 뒤 순차 실행
-  - 포트 대기는 Node 스크립트 기반이라 Windows/macOS/Linux에서 동일하게 사용 가능
-- 인프라만 실행:
-  - `pnpm infra:up`
-- 인프라 종료:
-  - `pnpm infra:down`
-
-## 13) Template Notes
-- 템플릿 기본값은 "로컬 개발 편의"보다 "복제 후 안전한 기본값"을 우선한다.
-- 인증 관련 secret은 fallback 없이 환경변수로 강제한다.
-- 입력값은 저장 전에 정규화하고 검증한다.
-- OS 종속 bash 트릭 대신 Node/Python 스크립트 기반 실행 보조를 우선한다.
-
-## 9) Git Workflow (Learning Mode)
+## Git Workflow
 브랜치 전략:
-- `main`: 항상 실행 가능한 안정 브랜치 유지
-- `feat/*`: 학습 단위 기능 구현 브랜치
-- `study/*`: 실험/연습 브랜치 (깨져도 허용)
+- `main`: 안정 브랜치
+- `feat/*`: 기능 브랜치
+- `study/*`: 실험 브랜치
 
-브랜치 네이밍 예시:
-- `feat/phase0-project-bootstrap`
-- `feat/backend-fastapi-skeleton`
-- `feat/frontend-input-flow`
-- `study/langchain-prompt-exp-01`
+브랜치 예시:
+- `feat/ai`
+- `feat/auth`
+- `feat/capture`
+- `study/prompt-exp`
 
-작업 루틴:
-1. `main` 최신화
-2. 새 브랜치 생성
-3. 작은 단위 커밋(의도 1개 = 커밋 1개)
-4. 로컬 실행/테스트
-5. 리뷰 후 `main` 병합
-6. 병합 후 작업 브랜치 삭제
+커밋 원칙:
+- 작은 단위 커밋 유지
+- 최종 커밋 전 변경 요약 확인
+- 승인 후 현재 브랜치를 원격까지 푸시
 
-커밋 메시지 예시:
-- `feat(backend): add persona interview endpoint`
-- `fix(frontend): handle mic permission error`
-- `docs(readme): update phase 1 checklist`
+## Why This Repo Is Useful For Learners
+이 저장소는 단순한 튜토리얼이 아니라 아래를 같이 보여줍니다.
+- feature 기반 폴더 구조 설계
+- local / docker / compose 실행 경로 분리
+- env 정책 정리
+- 인증, 관리자 기능, capture 플로우의 실제 구현 방식
+- 이후 ai-worker와 모델 파이프라인으로 확장 가능한 구조

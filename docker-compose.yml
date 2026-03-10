@@ -2,11 +2,9 @@ name: persona-mirror
 
 services:
   frontend:
-    image: node:24-alpine
+    image: node:24.11.0-alpine
     working_dir: /workspace
-    command: sh -c "corepack enable && CI=true pnpm install --frozen-lockfile=false && pnpm --dir apps/frontend dev"
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    command: sh -c "corepack enable && CI=true PERSONA_VITE_CACHE_DIR=/tmp/persona-vite-cache pnpm install --frozen-lockfile=false && PERSONA_VITE_CACHE_DIR=/tmp/persona-vite-cache pnpm --dir apps/frontend dev"
     volumes:
       - ./:/workspace
       - frontend_node_modules:/workspace/node_modules
@@ -16,17 +14,12 @@ services:
       - backend
 
   backend:
-    image: python:3.11-slim
+    image: python:3.11.15-slim
     working_dir: /workspace
     command: sh -c "pip install uv && uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend"
+    env_file:
+      - compose.env
     environment:
-      DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql+psycopg://persona:persona@db:5432/persona_mirror}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
-      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
-      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-pm_access_token}
-      AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-lax}
-      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
-      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000}
       UV_PROJECT_ENVIRONMENT: /tmp/persona-backend-venv
       UV_LINK_MODE: copy
     volumes:
@@ -40,7 +33,7 @@ services:
         condition: service_started
 
   ai-worker:
-    image: python:3.11-slim
+    image: python:3.11.15-slim
     working_dir: /workspace
     command: sh -c "pip install uv && echo 'ai-worker scaffold pending (Phase 1, uv ready)' && tail -f /dev/null"
     environment:
@@ -52,13 +45,11 @@ services:
       - redis
 
   db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-persona_mirror}
-      POSTGRES_USER: ${POSTGRES_USER:-persona}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-persona}
+    image: postgres:16.13-alpine
+    env_file:
+      - compose.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-persona} -d ${POSTGRES_DB:-persona_mirror}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 2s
       timeout: 3s
       retries: 15
@@ -68,7 +59,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.7-alpine
     ports:
       - "6379:6379"
 

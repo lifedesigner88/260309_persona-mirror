@@ -17,6 +17,23 @@
         ],
         "parallel": false
       }
+    },
+    "docker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "node scripts/wait-for-port.mjs 8000 127.0.0.1 60000"
+          },
+          {
+            "command": "node scripts/docker-build.mjs apps/frontend/Dockerfile persona-mirror-frontend:dev"
+          },
+          {
+            "command": "node scripts/docker-run-frontend.mjs"
+          }
+        ],
+        "parallel": false
+      }
     }
   }
 }

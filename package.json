@@ -4,18 +4,20 @@
   "private": true,
   "packageManager": "pnpm@10.31.0",
   "scripts": {
-    "nx": "nx",
+    "setup": "node scripts/setup-dev.mjs",
+    "dev": "node scripts/ensure-dev-env.mjs && pnpm infra:up && nx run-many -t dev -p frontend,backend",
     "infra:up": "docker compose up -d db redis",
-    "infra:down": "docker compose down",
-    "dev:frontend": "nx run frontend:dev",
-    "dev:backend": "nx run backend:dev",
-    "dev": "pnpm infra:up && nx run-many -t dev -p frontend,backend",
+    "infra:down": "node scripts/infra-down.mjs",
+    "docker": "node scripts/ensure-dev-env.mjs && pnpm infra:up && nx run-many -t docker -p backend,frontend --output-style=stream",
+    "docker:down": "node scripts/docker-down.mjs",
+    "docker:logs": "node scripts/docker-logs.mjs",
     "lint:frontend": "pnpm exec eslint apps/frontend/src --ext .ts,.tsx --max-warnings=0",
     "lint:python": "uvx ruff check apps/backend apps/ai-worker",
     "lint": "pnpm lint:frontend && pnpm lint:python",
     "format:frontend": "pnpm exec prettier --write .",
     "format:python": "uvx ruff format apps/backend apps/ai-worker",
-    "format": "pnpm format:frontend && pnpm format:python"
+    "format": "pnpm format:frontend && pnpm format:python",
+    "nx": "nx"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",

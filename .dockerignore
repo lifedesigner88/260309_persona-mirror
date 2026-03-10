@@ -1,0 +1,15 @@
+.git
+.nx
+.cache
+**/.cache
+dist
+tmp
+node_modules
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+data
+outputs
+artifacts
+compose.env

@@ -12,7 +12,24 @@
             "command": "node scripts/wait-for-port.mjs 5432 127.0.0.1 60000"
           },
           {
-            "command": "uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend --env-file .env"
+            "command": "uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend --env-file apps/backend/.env"
+          }
+        ],
+        "parallel": false
+      }
+    },
+    "docker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "node scripts/wait-for-port.mjs 5432 127.0.0.1 60000"
+          },
+          {
+            "command": "node scripts/docker-build.mjs apps/backend/Dockerfile persona-mirror-backend:dev"
+          },
+          {
+            "command": "node scripts/docker-run-backend.mjs"
           }
         ],
         "parallel": false
