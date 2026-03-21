@@ -137,6 +137,22 @@ After any task that changes `README.md`, `AGENTS.md`, or project structure:
 - Never add commits to an already-merged PR branch — create a new branch and cherry-pick if needed.
 - Clean up merged branches (local + remote) after PR is merged.
 
+### Creating PRs (gh CLI)
+`gh auth login` requires interactive browser flow and cannot run unattended.
+Use the `GH_TOKEN` env var instead — the token is stored in the git remote URL:
+
+```bash
+# Extract token from git remote URL
+git remote get-url origin
+# → https://<user>:<TOKEN>@github.com/...
+
+# Create PR without interactive login
+GH_TOKEN=<TOKEN> gh pr create --title "..." --body "..." --base main --head <branch>
+```
+
+- Always use `--force-with-lease` (not `--force`) when force-pushing a rebased branch.
+- After a rebase, local and remote histories diverge — force-push is required before PR creation.
+
 ## Response Style
 After each task, briefly state:
 - What changed
