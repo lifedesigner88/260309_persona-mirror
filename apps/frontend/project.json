@@ -7,9 +7,10 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
+        "envFile": "apps/frontend/.env",
         "commands": [
           {
-            "command": "node scripts/wait-for-port.mjs 8000 127.0.0.1 60000"
+            "command": "node scripts/wait-for-port.mjs ${BACKEND_PORT:-8000} 127.0.0.1 60000"
           },
           {
             "command": "pnpm --dir apps/frontend dev"
