@@ -29,6 +29,7 @@ const DEMO_PROFILE: PersonaProfile = {
     "Sustains deep learning on a single subject over the long term",
     "Reconstructs career direction into new domains with resilience",
     "Translates teaching experience into product and service problems",
+    "Strong writing and documentation habits support learning and collaboration",
   ],
   watchouts: [
     "Running too many axes at once can lead to overload",
@@ -54,7 +55,7 @@ const DEMO_PROFILE: PersonaProfile = {
     community_drive: 5,
     builder_drive: 4,
     scientific_curiosity: 5,
-    entrepreneurship_readiness: 4,
+    entrepreneurship: 4,
     reflection_depth: 5,
   },
   sdg_alignment: [

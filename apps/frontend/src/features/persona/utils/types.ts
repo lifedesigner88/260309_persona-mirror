@@ -4,7 +4,7 @@ export type FitVectors = {
   community_drive?: number;
   builder_drive?: number;
   scientific_curiosity?: number;
-  entrepreneurship_readiness?: number;
+  entrepreneurship?: number;
   reflection_depth?: number;
 };
 
