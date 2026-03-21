@@ -12,7 +12,7 @@
             "command": "node scripts/wait-for-port.mjs 5432 127.0.0.1 60000"
           },
           {
-            "command": "uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir apps/backend --env-file apps/backend/.env"
+            "command": "uv run --project apps/backend uvicorn main:app --reload --host 0.0.0.0 --port ${BACKEND_PORT:-8000} --app-dir apps/backend --env-file apps/backend/.env"
           }
         ],
         "parallel": false
