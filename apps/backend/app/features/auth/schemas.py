@@ -17,10 +17,10 @@ SignupPasswordValue = Annotated[
     str,
     StringConstraints(min_length=4, max_length=4, pattern=r"^\d{4}$"),
 ]
-# Login: flexible — allows admin's longer password
+# Login: exactly 4 digits (same as signup PIN)
 LoginPasswordValue = Annotated[
     str,
-    StringConstraints(min_length=1, max_length=128),
+    StringConstraints(min_length=4, max_length=4, pattern=r"^\d{4}$"),
 ]
 
 

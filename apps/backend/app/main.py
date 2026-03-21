@@ -6,12 +6,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.common.db import Base, SessionLocal, engine
+from app.common.seed import sync_demo_seed
 from app.features.admin.router import router as admin_router
 from app.features.auth import models as auth_models  # noqa: F401
 from app.features.auth.router import router as auth_router
 from app.features.auth.service import sync_admin_seed
 from app.features.capture import models as capture_models  # noqa: F401
 from app.features.capture.router import router as capture_router
+from app.features.persona import models as persona_models  # noqa: F401
+from app.features.persona.router import router as persona_router
 
 
 @asynccontextmanager
@@ -19,6 +22,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         sync_admin_seed(db)
+        sync_demo_seed(db)
     yield
 
 
@@ -44,3 +48,4 @@ def health() -> dict[str, str]:
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(capture_router)
+app.include_router(persona_router)

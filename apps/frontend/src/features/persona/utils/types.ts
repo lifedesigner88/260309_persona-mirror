@@ -41,6 +41,7 @@ export type MbtiProfile = {
 
 export type PersonaProfile = {
   person_id: string;
+  title?: string;
   archetype: string;
   headline: string;
   one_liner: string;

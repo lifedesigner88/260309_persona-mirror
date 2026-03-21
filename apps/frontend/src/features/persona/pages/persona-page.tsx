@@ -450,6 +450,9 @@ export function PersonaPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Public persona</Badge>
             <Badge variant="success">{profile.person_id}</Badge>
+            {profile.title && (
+              <span className="text-xs font-medium text-muted-foreground">{profile.title}</span>
+            )}
           </div>
           <CardTitle className="text-3xl tracking-[-0.04em]">{profile.archetype}</CardTitle>
           <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{profile.one_liner}</p>

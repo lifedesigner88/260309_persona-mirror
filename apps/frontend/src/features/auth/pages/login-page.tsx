@@ -27,9 +27,16 @@ export function LoginPage() {
             <Input
               autoComplete="current-password"
               inputMode="numeric"
+              maxLength={4}
               name="password"
+              pattern="[0-9]{4}"
+              placeholder="••••"
               required
               type={showPin ? "text" : "password"}
+              onInput={(e) => {
+                const t = e.currentTarget;
+                t.value = t.value.replace(/\D/g, "").slice(0, 4);
+              }}
             />
             <Button size="sm" type="button" variant="outline" onClick={() => setShowPin((v) => !v)}>
               {showPin ? "Hide" : "Show"}
