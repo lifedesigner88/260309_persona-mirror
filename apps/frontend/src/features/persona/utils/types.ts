@@ -4,7 +4,7 @@ export type FitVectors = {
   community_drive?: number;
   builder_drive?: number;
   scientific_curiosity?: number;
-  entrepreneurship_readiness?: number;
+  entrepreneurship?: number;
   reflection_depth?: number;
 };
 
@@ -41,6 +41,7 @@ export type MbtiProfile = {
 
 export type PersonaProfile = {
   person_id: string;
+  title?: string;
   archetype: string;
   headline: string;
   one_liner: string;

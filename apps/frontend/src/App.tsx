@@ -38,6 +38,7 @@ export function App() {
     ...(sessionUser?.is_admin ? [{ to: "/admin/users", label: "Admin users" }] : []),
     { to: "/capture", label: "Capture" },
     ...(sessionUser ? [{ to: "/capture/submissions", label: "My submissions" }] : []),
+    { to: "/persona/demo", label: "Demo Persona" },
   ];
 
   return (
