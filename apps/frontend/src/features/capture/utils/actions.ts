@@ -3,6 +3,7 @@ import { redirect, type LoaderFunctionArgs } from "react-router-dom";
 import {
   readCaptureJobResponse,
   readCaptureJobsResponse,
+  requestAuthMe,
   requestCaptureJob,
   requestCaptureJobs,
   requestCreateCaptureJob,
@@ -22,7 +23,12 @@ async function readApiError(response: Response, fallback: string) {
   return data?.detail ?? fallback;
 }
 
-export function captureLoader(): CaptureLoaderData {
+export async function captureLoader(): Promise<CaptureLoaderData | Response> {
+  const response = await requestAuthMe();
+  if (response.status === 401) {
+    return redirect("/auth/login");
+  }
+
   const draft = readCaptureDraft();
   const completion = getCompletion(draft);
   return {

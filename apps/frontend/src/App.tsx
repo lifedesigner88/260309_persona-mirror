@@ -36,8 +36,7 @@ export function App() {
     { to: "/", label: "Overview" },
     ...(!sessionUser ? [{ to: "/auth/signup", label: "Sign up" }, { to: "/auth/login", label: "Login" }] : []),
     ...(sessionUser?.is_admin ? [{ to: "/admin/users", label: "Admin users" }] : []),
-    { to: "/capture", label: "Capture" },
-    ...(sessionUser ? [{ to: "/capture/submissions", label: "My submissions" }] : []),
+    ...(sessionUser ? [{ to: "/capture", label: "Capture" }, { to: "/capture/submissions", label: "My submissions" }] : []),
     { to: "/persona/demo", label: "Demo Persona" },
   ];
 

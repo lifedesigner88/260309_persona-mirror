@@ -46,6 +46,10 @@ export async function readCaptureJobsResponse(response: Response): Promise<Captu
   return (await response.json()) as CaptureJob[];
 }
 
+export async function requestAuthMe() {
+  return fetch(`${API_BASE_URL}/auth/me`, { credentials: "include" });
+}
+
 export async function requestInterviewChat(messages: ChatMessage[]): Promise<{ message: string; is_complete: boolean }> {
   const response = await fetch(`${API_BASE_URL}/capture/interview/chat`, {
     method: "POST",
