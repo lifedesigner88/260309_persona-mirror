@@ -90,10 +90,23 @@ const DEMO_PROFILE: PersonaProfile = {
   ],
 };
 
+const DEMO_BACKEND_ID = "d31sf2";
+
 export async function personaLoader({ params }: LoaderFunctionArgs): Promise<PersonaLoaderData> {
   const personId = params.personId ?? "";
 
+  // "demo" route: try the real backend persona first; fall back to hardcoded data
+  // so the Ask panel has a valid persona_id to post against.
   if (personId === "demo") {
+    try {
+      const response = await requestPersonaProfile(DEMO_BACKEND_ID);
+      if (response.ok) {
+        const profile = await readPersonaProfileResponse(response);
+        return { profile };
+      }
+    } catch {
+      // backend unreachable — fall through to hardcoded demo
+    }
     return { profile: DEMO_PROFILE };
   }
 
