@@ -1,0 +1,102 @@
+{
+  "overview": {
+    "badge": "Workflow entry",
+    "title": "Prepare and submit the capture draft",
+    "description": "The first three screens collect the payload in browser memory. The review step now submits that payload to the backend capture job API.",
+    "viewSubmissions": "View submissions",
+    "continueDraft": "Continue draft",
+    "startCapture": "Start capture",
+    "interviewTitle": "Interview",
+    "interviewComplete": "Interview complete — ready to submit.",
+    "interviewProgress": "{{count}} messages so far — continue the conversation.",
+    "interviewStart": "Claude will guide you through 5 questions to understand who you are.",
+    "voiceTitle": "Voice",
+    "voiceSoon": "Coming soon — voice sample and tone capture.",
+    "imageTitle": "Image",
+    "imageSoon": "Coming soon — reference image and visual direction."
+  },
+  "interview": {
+    "badge": "Step 1",
+    "title": "Interview",
+    "description": "Claude will guide you through 5 questions to understand who you are. Answer naturally — there are no wrong answers.",
+    "thinking": "Thinking…",
+    "placeholder": "Type your answer…",
+    "send": "Send",
+    "errorMessage": "Something went wrong. Please try again."
+  },
+  "review": {
+    "badge": "Step 2",
+    "title": "Review draft package",
+    "description": "This is the payload that will be sent to the backend capture job API. File uploads are still metadata-only, but the review step is now the real submission gate.",
+    "readyToSubmit": "ready to submit",
+    "partialDraft": "partial draft",
+    "gateTitle": "Submission gate",
+    "gateDescription": "Submitting this draft creates a persisted capture job. The next backend phase can attach real file upload handling and async processing on top of the same payload shape.",
+    "backToInterview": "Back to interview",
+    "submit": "Submit to backend",
+    "submitting": "Submitting..."
+  },
+  "submissions": {
+    "deletedBadge": "Deleted",
+    "deletedMessage": "Capture submission {{id}} was removed.",
+    "createAnother": "Create another capture",
+    "badge": "Your submissions",
+    "title": "Review saved capture jobs",
+    "description": "Each submission is a persisted capture package. This list view is intentionally card-based so the same card pattern can be reused later for admin review screens.",
+    "backToCapture": "Back to capture",
+    "startNew": "Start new submission",
+    "emptyBadge": "No submissions yet",
+    "emptyTitle": "Create the first capture package",
+    "emptyDescription": "Once the review step is submitted, the backend stores a capture job and it will appear here.",
+    "startCapture": "Start capture"
+  },
+  "detail": {
+    "submittedBadge": "Submitted",
+    "submittedMessage": "Capture job {{id}} was created and is now persisted.",
+    "viewAll": "View all submissions",
+    "badge": "Submission detail",
+    "analyzing": "Analyzing…",
+    "jobTitle": "Capture job {{id}}",
+    "description": "This detail view is designed to be reusable for later admin review. The same payload summary can be shown whether the viewer is the owner or an administrator.",
+    "owner": "Owner",
+    "created": "Created",
+    "updated": "Updated",
+    "actionsTitle": "Submission actions",
+    "actionsDescription": "Delete removes the persisted capture job. Use this detail screen as the single action surface for both current-user and future admin review flows.",
+    "backToList": "Back to list",
+    "deleteConfirm": "Delete this capture submission?",
+    "deleting": "Deleting...",
+    "deleteSubmission": "Delete submission"
+  },
+  "voice": {
+    "badge": "Step 2",
+    "title": "Voice intent",
+    "description": "Voice capture will be available in a future update.",
+    "comingSoon": "Coming soon",
+    "comingSoonText": "Voice sample upload and tone configuration will be added after the interview MVP is complete.",
+    "backToInterview": "Back to interview"
+  },
+  "image": {
+    "badge": "Step 3",
+    "title": "Visual references",
+    "description": "Image capture will be available in a future update.",
+    "comingSoon": "Coming soon",
+    "comingSoonText": "Reference image upload and visual direction notes will be added after the interview MVP is complete.",
+    "backToInterview": "Back to interview"
+  },
+  "layout": {
+    "badge": "Capture flow",
+    "heading": "Answer 5 questions and let Claude build your persona draft.",
+    "subheading": "Complete the AI interview, then review and submit. Voice and image capture will be added in a future update.",
+    "progressTitle": "Progress",
+    "progressSteps": "{{count}}/1 steps",
+    "progressDescription": "Complete the interview to unlock the review and submission step.",
+    "stepMapTitle": "Step map",
+    "stepMapDescription": "Move step by step or jump back to revise any section.",
+    "step1": "1. Interview",
+    "step2": "2. Voice (coming soon)",
+    "step3": "3. Image (coming soon)",
+    "step4": "4. Review",
+    "resetDraft": "Reset current draft"
+  }
+}

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button, Field, Input, ShellCard, StatusPill } from "@/common/components";
 
 import { confirmPinReset, requestPinReset } from "../api";
 
 export function ResetPinPage() {
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -44,16 +46,14 @@ export function ResetPinPage() {
     return (
       <ShellCard className="mx-auto max-w-xl bg-white/92">
         <div className="space-y-2">
-          <StatusPill label="Check your email" />
-          <h2 className="text-2xl font-semibold tracking-[-0.03em]">Enter your reset code</h2>
+          <StatusPill label={t("resetPin.confirmPill")} />
+          <h2 className="text-2xl font-semibold tracking-[-0.03em]">{t("resetPin.confirmTitle")}</h2>
           <p className="text-sm leading-6 text-muted-foreground">
-            We sent a 6-digit code to{" "}
-            <span className="font-medium text-foreground">{email}</span>.
-            Enter it and set a new 4-digit PIN.
+            {t("resetPin.confirmDescription", { email })}
           </p>
         </div>
         <div className="mt-6 space-y-4">
-          <Field label="Verification code">
+          <Field label={t("resetPin.verificationCodeLabel")}>
             <Input
               autoComplete="one-time-code"
               inputMode="numeric"
@@ -63,7 +63,7 @@ export function ResetPinPage() {
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
             />
           </Field>
-          <Field label="New PIN (4 digits)">
+          <Field label={t("resetPin.newPinLabel")}>
             <div className="flex items-center gap-2">
               <Input
                 autoComplete="new-password"
@@ -77,14 +77,14 @@ export function ResetPinPage() {
                 onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
               />
               <Button size="sm" type="button" variant="outline" onClick={() => setShowPin((v) => !v)}>
-                {showPin ? "Hide" : "Show"}
+                {showPin ? t("resetPin.hide") : t("resetPin.show")}
               </Button>
             </div>
           </Field>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end">
             <Button disabled={otp.length !== 6 || newPin.length !== 4 || loading} onClick={handleConfirm}>
-              {loading ? "Resetting…" : "Reset PIN"}
+              {loading ? t("resetPin.resetting") : t("resetPin.resetPin")}
             </Button>
           </div>
         </div>
@@ -95,14 +95,12 @@ export function ResetPinPage() {
   return (
     <ShellCard className="mx-auto max-w-xl bg-white/92">
       <div className="space-y-2">
-        <StatusPill label="Forgot PIN" />
-        <h2 className="text-2xl font-semibold tracking-[-0.03em]">Reset your PIN</h2>
-        <p className="text-sm leading-6 text-muted-foreground">
-          Enter your registered email. We will send a verification code to reset your PIN.
-        </p>
+        <StatusPill label={t("resetPin.requestPill")} />
+        <h2 className="text-2xl font-semibold tracking-[-0.03em]">{t("resetPin.requestTitle")}</h2>
+        <p className="text-sm leading-6 text-muted-foreground">{t("resetPin.requestDescription")}</p>
       </div>
       <div className="mt-6 space-y-4">
-        <Field label="Email">
+        <Field label={t("resetPin.emailLabel")}>
           <Input
             autoComplete="email"
             type="email"
@@ -113,7 +111,7 @@ export function ResetPinPage() {
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <div className="flex justify-end">
           <Button disabled={!email || loading} onClick={handleRequest}>
-            {loading ? "Sending…" : "Send code"}
+            {loading ? t("resetPin.sending") : t("resetPin.sendCode")}
           </Button>
         </div>
       </div>

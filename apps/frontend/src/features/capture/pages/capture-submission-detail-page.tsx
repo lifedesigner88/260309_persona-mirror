@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Form, NavLink, useActionData, useLoaderData, useNavigation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/common/components";
 
@@ -11,6 +12,7 @@ import type { CaptureJob, CaptureJobActionData, CaptureJobDetailLoaderData } fro
 const POLLING_STATUSES = new Set(["pending", "processing"]);
 
 export function CaptureSubmissionDetailPage() {
+  const { t } = useTranslation("capture");
   const { job: initialJob, created } = useLoaderData() as CaptureJobDetailLoaderData;
   const actionData = useActionData() as CaptureJobActionData | undefined;
   const navigation = useNavigation();
@@ -38,11 +40,11 @@ export function CaptureSubmissionDetailPage() {
           <CardContent className="px-6 py-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-1">
-                <Badge variant="success">Submitted</Badge>
-                <p className="text-sm text-foreground/80">Capture job {job.id} was created and is now persisted.</p>
+                <Badge variant="success">{t("detail.submittedBadge")}</Badge>
+                <p className="text-sm text-foreground/80">{t("detail.submittedMessage", { id: job.id })}</p>
               </div>
               <NavLink to="/capture/submissions">
-                <Button variant="outline">View all submissions</Button>
+                <Button variant="outline">{t("detail.viewAll")}</Button>
               </NavLink>
             </div>
           </CardContent>
@@ -53,22 +55,19 @@ export function CaptureSubmissionDetailPage() {
         <CardHeader className="flex flex-wrap items-start justify-between gap-6 md:flex-row">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="outline">Submission detail</Badge>
+              <Badge variant="outline">{t("detail.badge")}</Badge>
               <CaptureJobStatusBadge status={job.status} />
               {polling ? (
-                <span className="text-xs text-muted-foreground animate-pulse">Analyzing…</span>
+                <span className="text-xs text-muted-foreground animate-pulse">{t("detail.analyzing")}</span>
               ) : null}
             </div>
-            <CardTitle className="text-2xl">{`Capture job ${job.id.slice(0, 8)}`}</CardTitle>
-            <CardDescription className="max-w-2xl">
-              This detail view is designed to be reusable for later admin review. The same payload summary can be shown
-              whether the viewer is the owner or an administrator.
-            </CardDescription>
+            <CardTitle className="text-2xl">{t("detail.jobTitle", { id: job.id.slice(0, 8) })}</CardTitle>
+            <CardDescription className="max-w-2xl">{t("detail.description")}</CardDescription>
           </div>
           <div className="rounded-3xl border border-border/70 bg-background/75 px-4 py-4 text-sm text-foreground/80">
-            <div>Owner: {job.owner_user_id}</div>
-            <div className="mt-1">Created: {formatCaptureTimestamp(job.created_at)}</div>
-            <div className="mt-1">Updated: {formatCaptureTimestamp(job.updated_at)}</div>
+            <div>{t("detail.owner")}: {job.owner_user_id}</div>
+            <div className="mt-1">{t("detail.created")}: {formatCaptureTimestamp(job.created_at)}</div>
+            <div className="mt-1">{t("detail.updated")}: {formatCaptureTimestamp(job.updated_at)}</div>
           </div>
         </CardHeader>
       </Card>
@@ -83,29 +82,26 @@ export function CaptureSubmissionDetailPage() {
         <CardContent className="space-y-4 px-6 py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h4 className="text-lg font-semibold tracking-[-0.03em]">Submission actions</h4>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Delete removes the persisted capture job. Use this detail screen as the single action surface for both
-                current-user and future admin review flows.
-              </p>
+              <h4 className="text-lg font-semibold tracking-[-0.03em]">{t("detail.actionsTitle")}</h4>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("detail.actionsDescription")}</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <NavLink to="/capture/submissions">
                 <Button type="button" variant="outline">
-                  Back to list
+                  {t("detail.backToList")}
                 </Button>
               </NavLink>
               <Form
                 method="post"
                 onSubmit={(event) => {
-                  if (!window.confirm("Delete this capture submission?")) {
+                  if (!window.confirm(t("detail.deleteConfirm"))) {
                     event.preventDefault();
                   }
                 }}
               >
                 <input name="intent" type="hidden" value="delete" />
                 <Button disabled={deleting} type="submit" variant="outline">
-                  {deleting ? "Deleting..." : "Delete submission"}
+                  {deleting ? t("detail.deleting") : t("detail.deleteSubmission")}
                 </Button>
               </Form>
             </div>

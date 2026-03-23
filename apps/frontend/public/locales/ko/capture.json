@@ -1,0 +1,102 @@
+{
+  "overview": {
+    "badge": "워크플로우 진입",
+    "title": "캡처 초안 준비 및 제출",
+    "description": "처음 세 화면은 브라우저 메모리에 페이로드를 수집합니다. 검토 단계에서 해당 페이로드를 백엔드 캡처 작업 API에 제출합니다.",
+    "viewSubmissions": "제출 목록 보기",
+    "continueDraft": "초안 계속하기",
+    "startCapture": "캡처 시작",
+    "interviewTitle": "인터뷰",
+    "interviewComplete": "인터뷰 완료 — 제출 준비됨.",
+    "interviewProgress": "지금까지 {{count}}개의 메시지 — 대화를 이어가세요.",
+    "interviewStart": "Claude가 5가지 질문을 통해 당신이 누구인지 파악합니다.",
+    "voiceTitle": "음성",
+    "voiceSoon": "곧 제공 예정 — 음성 샘플 및 톤 캡처.",
+    "imageTitle": "이미지",
+    "imageSoon": "곧 제공 예정 — 참조 이미지 및 비주얼 방향성."
+  },
+  "interview": {
+    "badge": "1단계",
+    "title": "인터뷰",
+    "description": "Claude가 5가지 질문을 통해 당신이 누구인지 파악합니다. 자연스럽게 답하세요 — 틀린 답은 없습니다.",
+    "thinking": "생각 중…",
+    "placeholder": "답변을 입력하세요…",
+    "send": "전송",
+    "errorMessage": "오류가 발생했습니다. 다시 시도해 주세요."
+  },
+  "review": {
+    "badge": "2단계",
+    "title": "초안 패키지 검토",
+    "description": "백엔드 캡처 작업 API에 전송될 페이로드입니다. 파일 업로드는 아직 메타데이터 전용이지만, 검토 단계가 실제 제출 관문입니다.",
+    "readyToSubmit": "제출 준비 완료",
+    "partialDraft": "부분 초안",
+    "gateTitle": "제출 관문",
+    "gateDescription": "이 초안을 제출하면 지속적인 캡처 작업이 생성됩니다. 다음 백엔드 단계에서 동일한 페이로드 형태로 실제 파일 업로드 처리 및 비동기 처리를 추가할 수 있습니다.",
+    "backToInterview": "인터뷰로 돌아가기",
+    "submit": "백엔드에 제출",
+    "submitting": "제출 중..."
+  },
+  "submissions": {
+    "deletedBadge": "삭제됨",
+    "deletedMessage": "캡처 제출 {{id}}이(가) 삭제되었습니다.",
+    "createAnother": "다른 캡처 만들기",
+    "badge": "내 제출 목록",
+    "title": "저장된 캡처 작업 검토",
+    "description": "각 제출은 지속적인 캡처 패키지입니다. 이 목록 뷰는 나중에 관리자 검토 화면에서도 동일한 카드 패턴을 재사용할 수 있도록 의도적으로 카드 기반으로 설계되었습니다.",
+    "backToCapture": "캡처로 돌아가기",
+    "startNew": "새 제출 시작",
+    "emptyBadge": "제출 없음",
+    "emptyTitle": "첫 번째 캡처 패키지 만들기",
+    "emptyDescription": "검토 단계를 제출하면 백엔드에서 캡처 작업이 저장되어 여기에 표시됩니다.",
+    "startCapture": "캡처 시작"
+  },
+  "detail": {
+    "submittedBadge": "제출됨",
+    "submittedMessage": "캡처 작업 {{id}}이(가) 생성되어 저장되었습니다.",
+    "viewAll": "전체 제출 목록 보기",
+    "badge": "제출 상세",
+    "analyzing": "분석 중…",
+    "jobTitle": "캡처 작업 {{id}}",
+    "description": "이 상세 보기는 향후 관리자 검토를 위해 재사용 가능하도록 설계되었습니다. 소유자 또는 관리자 여부와 관계없이 동일한 페이로드 요약을 표시할 수 있습니다.",
+    "owner": "소유자",
+    "created": "생성일",
+    "updated": "수정일",
+    "actionsTitle": "제출 관리",
+    "actionsDescription": "삭제 시 저장된 캡처 작업이 제거됩니다. 이 상세 화면을 현재 사용자 및 향후 관리자 검토 플로우 모두에 대한 단일 관리 화면으로 사용하세요.",
+    "backToList": "목록으로 돌아가기",
+    "deleteConfirm": "이 캡처 제출을 삭제하시겠습니까?",
+    "deleting": "삭제 중...",
+    "deleteSubmission": "제출 삭제"
+  },
+  "voice": {
+    "badge": "2단계",
+    "title": "음성 의도",
+    "description": "음성 캡처는 향후 업데이트에서 제공될 예정입니다.",
+    "comingSoon": "곧 제공 예정",
+    "comingSoonText": "인터뷰 MVP 완료 후 음성 샘플 업로드 및 톤 설정이 추가될 예정입니다.",
+    "backToInterview": "인터뷰로 돌아가기"
+  },
+  "image": {
+    "badge": "3단계",
+    "title": "비주얼 레퍼런스",
+    "description": "이미지 캡처는 향후 업데이트에서 제공될 예정입니다.",
+    "comingSoon": "곧 제공 예정",
+    "comingSoonText": "인터뷰 MVP 완료 후 참조 이미지 업로드 및 비주얼 방향성 노트가 추가될 예정입니다.",
+    "backToInterview": "인터뷰로 돌아가기"
+  },
+  "layout": {
+    "badge": "캡처 플로우",
+    "heading": "5가지 질문에 답하고 Claude가 당신의 페르소나 초안을 만들게 하세요.",
+    "subheading": "AI 인터뷰를 완료한 후 검토하고 제출하세요. 음성 및 이미지 캡처는 향후 업데이트에서 추가될 예정입니다.",
+    "progressTitle": "진행 상황",
+    "progressSteps": "{{count}}/1 단계",
+    "progressDescription": "리뷰 및 제출 단계를 활성화하려면 인터뷰를 완료하세요.",
+    "stepMapTitle": "단계 지도",
+    "stepMapDescription": "단계별로 진행하거나 이전 섹션으로 돌아가 수정할 수 있습니다.",
+    "step1": "1. 인터뷰",
+    "step2": "2. 음성 (곧 제공 예정)",
+    "step3": "3. 이미지 (곧 제공 예정)",
+    "step4": "4. 검토",
+    "resetDraft": "현재 초안 초기화"
+  }
+}

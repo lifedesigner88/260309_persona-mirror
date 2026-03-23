@@ -23,7 +23,6 @@ from .models import User
 from .schemas import LoginRequest, ResetPinConfirm, ResetPinRequest, SessionResponse, SignupRequest, UserResponse, VerifyRequest
 
 security_scheme = HTTPBearer(auto_error=False)
-ADMIN_SEED_USER_ID = os.getenv("ADMIN_SEED_USER_ID", "admin")
 ADMIN_SEED_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "Admin#2026!Mirror")
 ADMIN_SEED_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "admin@example.com")
 
@@ -33,15 +32,10 @@ def to_user_response(user: User) -> UserResponse:
 
 
 def sync_admin_seed(db: Session) -> None:
-    admin = db.scalar(
-        select(User).where(
-            (User.user_id == ADMIN_SEED_USER_ID) | (User.email == ADMIN_SEED_EMAIL)
-        )
-    )
+    admin = db.scalar(select(User).where(User.email == ADMIN_SEED_EMAIL))
     if admin is None:
         db.add(
             User(
-                user_id=ADMIN_SEED_USER_ID,
                 email=ADMIN_SEED_EMAIL,
                 password_hash=hash_password(ADMIN_SEED_PASSWORD),
                 is_admin=True,
@@ -71,7 +65,6 @@ def create_user(payload: SignupRequest, db: Session) -> UserResponse:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     otp, expires_at = _generate_otp()
     user = User(
-        user_id=payload.user_id,
         email=payload.email,
         password_hash=hash_password(payload.password),
         is_verified=False,
@@ -84,7 +77,7 @@ def create_user(payload: SignupRequest, db: Session) -> UserResponse:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="ID already taken — try another") from exc
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered") from exc
     db.refresh(user)
     send_otp_email(user.email, otp)
     return to_user_response(user)
@@ -155,7 +148,7 @@ def build_session(payload: LoginRequest, response: Response, db: Session) -> Ses
         user.password_hash = updated_hash
         db.commit()
 
-    access_token = create_access_token(subject=user.user_id, is_admin=user.is_admin)
+    access_token = create_access_token(subject=str(user.user_id), is_admin=user.is_admin)
     response.set_cookie(AUTH_COOKIE_NAME, access_token, **get_cookie_settings())
     return SessionResponse(user_id=user.user_id, is_admin=user.is_admin)
 
@@ -192,7 +185,7 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
-    user = db.scalar(select(User).where(User.user_id == user_id))
+    user = db.scalar(select(User).where(User.user_id == int(user_id)))
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user

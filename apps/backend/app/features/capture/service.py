@@ -75,7 +75,7 @@ def require_capture_job(db: Session, job_id: str) -> CaptureJob:
 
 def create_capture_job(db: Session, payload: CaptureDraftRequest, current_user: User) -> CaptureJobResponse:
     job = CaptureJob(
-        owner_id=current_user.id,
+        owner_id=current_user.user_id,
         status="pending",
         payload=payload.model_dump(mode="json"),
     )
@@ -89,7 +89,7 @@ def list_capture_jobs(db: Session, current_user: User) -> list[CaptureJobRespons
     jobs = db.scalars(
         select(CaptureJob)
         .options(selectinload(CaptureJob.owner))
-        .where(CaptureJob.owner_id == current_user.id)
+        .where(CaptureJob.owner_id == current_user.user_id)
         .order_by(CaptureJob.created_at.desc())
     ).all()
     return [to_capture_job_response(job) for job in jobs]
@@ -97,14 +97,14 @@ def list_capture_jobs(db: Session, current_user: User) -> list[CaptureJobRespons
 
 def get_capture_job(db: Session, job_id: str, current_user: User) -> CaptureJobResponse:
     job = require_capture_job(db, job_id)
-    if job.owner_id != current_user.id and not current_user.is_admin:
+    if job.owner_id != current_user.user_id and not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return to_capture_job_response(job)
 
 
 def delete_capture_job(db: Session, job_id: str, current_user: User) -> None:
     job = require_capture_job(db, job_id)
-    if job.owner_id != current_user.id and not current_user.is_admin:
+    if job.owner_id != current_user.user_id and not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     db.delete(job)

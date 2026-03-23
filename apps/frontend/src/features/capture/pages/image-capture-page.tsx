@@ -1,24 +1,27 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Badge, Button } from "@/common/components";
 
 import { CapturePageShell } from "../components";
 
 export function ImageCapturePage() {
+  const { t } = useTranslation("capture");
+
   return (
     <CapturePageShell
-      badge="Step 3"
-      description="Image capture will be available in a future update."
+      badge={t("image.badge")}
+      description={t("image.description")}
       footer={null}
-      title="Visual references"
+      title={t("image.title")}
     >
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <Badge variant="outline">Coming soon</Badge>
+        <Badge variant="outline">{t("image.comingSoon")}</Badge>
         <p className="text-sm text-muted-foreground max-w-sm">
-          Reference image upload and visual direction notes will be added after the interview MVP is complete.
+          {t("image.comingSoonText")}
         </p>
         <NavLink to="/capture/interview">
-          <Button variant="outline">Back to interview</Button>
+          <Button variant="outline">{t("image.backToInterview")}</Button>
         </NavLink>
       </div>
     </CapturePageShell>

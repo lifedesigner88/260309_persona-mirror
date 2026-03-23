@@ -1,0 +1,100 @@
+{
+  "hero": {
+    "badge": "Public persona",
+    "topValues": "Top values",
+    "copyHeading": "Want to use this profile somewhere?",
+    "copySubtext": "Copy the full profile as Markdown — ready to paste into any doc or AI prompt.",
+    "copiedHeading": "✓ Copied to clipboard!",
+    "copiedSubtext": "Paste it into any document, note, or AI tool.",
+    "copyBtn": "Copy →",
+    "copiedBtn": "Done"
+  },
+  "mbti": {
+    "typeLabel": "MBTI type",
+    "turbulent": "· Turbulent",
+    "assertive": "· Assertive",
+    "viewOn16p": "View on 16personalities →",
+    "aiNote": "AI prediction — this result is inferred from values, behaviors, and identity data, not a self-reported test. The more input data PersonaMirror has, the more precise this prediction becomes."
+  },
+  "mbtiDimensions": {
+    "introverted": "Introverted",
+    "extraverted": "Extraverted",
+    "intuitive": "Intuitive",
+    "observant": "Observant",
+    "feeling": "Feeling",
+    "thinking": "Thinking",
+    "judging": "Judging",
+    "prospecting": "Prospecting",
+    "turbulent": "Turbulent",
+    "assertive": "Assertive"
+  },
+  "mbtiTypes": {
+    "INFJ": {
+      "name": "The Advocate",
+      "description": "Idealistic and principled — connects deep values to long-horizon vision, builds systems that serve people."
+    },
+    "INTJ": { "name": "The Architect", "description": "Strategic and determined — turns complex systems into elegant, long-term plans." },
+    "INFP": { "name": "The Mediator", "description": "Poetic and kind — driven by values and a deep desire to make the world better." },
+    "INTP": { "name": "The Logician", "description": "Innovative and curious — endlessly analyzes ideas in pursuit of deeper truth." },
+    "ENFJ": { "name": "The Protagonist", "description": "Charismatic and inspiring — leads people toward a shared, meaningful vision." },
+    "ENTJ": { "name": "The Commander", "description": "Bold and decisive — naturally steps into leadership to drive progress." },
+    "ENFP": { "name": "The Campaigner", "description": "Enthusiastic and creative — sees life as full of exciting possibilities." },
+    "ENTP": { "name": "The Debater", "description": "Smart and curious — loves challenging ideas and sparking intellectual debate." },
+    "ISFJ": { "name": "The Defender", "description": "Dedicated and warm — protects and supports the people they care about." },
+    "ISTJ": { "name": "The Logistician", "description": "Practical and reliable — upholds tradition and duty with quiet determination." },
+    "ISFP": { "name": "The Adventurer", "description": "Flexible and charming — always ready to explore new experiences." },
+    "ISTP": { "name": "The Virtuoso", "description": "Bold and practical — masters tools and crafts with calm, hands-on expertise." },
+    "ESFJ": { "name": "The Consul", "description": "Caring and popular — attentive to others' needs and eager to contribute." },
+    "ESTJ": { "name": "The Executive", "description": "Excellent administrator — manages people and processes with clear principles." },
+    "ESFP": { "name": "The Entertainer", "description": "Spontaneous and energetic — brings fun and excitement wherever they go." },
+    "ESTP": { "name": "The Entrepreneur", "description": "Smart and energetic — thrives on living on the edge and solving problems in action." }
+  },
+  "vectorLabels": {
+    "learning_drive": ["Learning"],
+    "teaching_drive": ["Teaching"],
+    "community_drive": ["Community"],
+    "builder_drive": ["Builder"],
+    "scientific_curiosity": ["Scientific", "Curiosity"],
+    "entrepreneurship_readiness": ["Entrepreneur", "Readiness"],
+    "entrepreneurship": ["Entrepreneur"],
+    "reflection_depth": ["Reflection"]
+  },
+  "goals": {
+    "sectionLabel": "Goals & vision",
+    "lifetimeMission": "Lifetime mission",
+    "currentDecade": "Current decade · 30s",
+    "directions": "Directions"
+  },
+  "vectors": {
+    "sectionLabel": "Drive vectors",
+    "subtitle": "How strongly each internal drive shows up across values, behaviors, and life history. Scored 1–5.",
+    "aiNote": "AI prediction — drive strengths are inferred from values, career patterns, and behavioral history, not a self-reported assessment. The more input data PersonaMirror has, the more precise these scores become."
+  },
+  "sdg": {
+    "sectionLabel": "SDG alignment",
+    "aiNote": "AI prediction — alignment is inferred from values, career history, and community activity, not a self-reported assessment. The more input data PersonaMirror has, the more precise this alignment becomes."
+  },
+  "timeline": {
+    "sectionLabel": "Identity timeline"
+  },
+  "strengths": {
+    "sectionLabel": "Strengths"
+  },
+  "watchouts": {
+    "sectionLabel": "Watch outs"
+  },
+  "qa": {
+    "badge": "Ask this persona",
+    "title": "Have a conversation",
+    "description": "Ask anything — the persona answers based on their values, experiences, and worldview.",
+    "thinking": "Thinking…",
+    "placeholder": "Ask a question… (Enter to send)",
+    "ask": "Ask",
+    "hint": "Press Enter to send · Shift+Enter for new line",
+    "errorMessage": "Sorry, I couldn't answer that right now."
+  },
+  "loginPrompt": {
+    "message": "Log in to ask this persona a question.",
+    "loginBtn": "Log in"
+  }
+}

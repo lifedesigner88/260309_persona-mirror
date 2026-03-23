@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from "react";
 import { useLoaderData, useRouteLoaderData } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Textarea } from "@/common/components";
 import type { RootLoaderData } from "@/features/auth";
@@ -91,20 +92,6 @@ export type PersonaLoaderData = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-// Two-line labels for long keys; short labels for compact display
-const VECTOR_LABELS: Record<string, [string, string?]> = {
-  learning_drive:              ["Learning"],
-  teaching_drive:              ["Teaching"],
-  community_drive:             ["Community"],
-  builder_drive:               ["Builder"],
-  scientific_curiosity:        ["Scientific", "Curiosity"],
-  entrepreneurship_readiness:  ["Entrepreneur", "Readiness"],
-  reflection_depth:            ["Reflection"],
-};
-
-function getVectorLabel(key: string): [string, string?] {
-  return VECTOR_LABELS[key] ?? [key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())];
-}
 
 // Returns a vivid HSL color evenly spaced around the hue wheel.
 // Works for any axis count — 5, 7, 9, etc.
@@ -114,6 +101,7 @@ function axisColor(i: number, total: number): string {
 }
 
 function RadarChart({ vectors }: { vectors: Record<string, number> }) {
+  const { t } = useTranslation("persona");
   const entries = Object.entries(vectors) as [string, number][];
   const n = entries.length;
   const cx = 230, cy = 210, r = 120, max = 5;
@@ -173,7 +161,8 @@ function RadarChart({ vectors }: { vectors: Record<string, number> }) {
         const lx = cx + lr * Math.cos(angle);
         const ly = cy + lr * Math.sin(angle);
         const anchor = Math.cos(angle) > 0.1 ? "start" : Math.cos(angle) < -0.1 ? "end" : "middle";
-        const [line1, line2] = getVectorLabel(key);
+        const raw = t(`vectorLabels.${key}`, { returnObjects: true, defaultValue: [key.replace(/_/g, " ")] }) as unknown;
+        const [line1, line2] = Array.isArray(raw) ? raw as [string, string?] : [String(raw)];
         const color = axisColor(i, n);
         const scoreY = ly + (line2 ? 22 : 10);
         return (
@@ -196,41 +185,41 @@ function RadarChart({ vectors }: { vectors: Record<string, number> }) {
 // Colors are chosen per axis so each bar reads as its own spectrum.
 const MBTI_ROWS = [
   {
-    key:         "introverted" as const,
-    left: "I",  leftLabel:  "Introverted",  leftUrl:  "https://www.16personalities.com/articles/mind-introverted-vs-extraverted",
-    right: "E", rightLabel: "Extraverted",  rightUrl: "https://www.16personalities.com/articles/mind-introverted-vs-extraverted",
+    key:        "introverted" as const,
+    left: "I", leftKey:  "introverted", leftUrl:  "https://www.16personalities.com/articles/mind-introverted-vs-extraverted",
+    right: "E", rightKey: "extraverted", rightUrl: "https://www.16personalities.com/articles/mind-introverted-vs-extraverted",
     gradient:   "linear-gradient(to right, #3730a3, #7c3aed, #e9d5ff, #fcd34d, #d97706)",
     leftColor:  "#3730a3",
     rightColor: "#d97706",
   },
   {
-    key:         "intuitive" as const,
-    left: "N",  leftLabel:  "Intuitive",    leftUrl:  "https://www.16personalities.com/articles/energy-intuitive-vs-observant",
-    right: "S", rightLabel: "Observant",    rightUrl: "https://www.16personalities.com/articles/energy-intuitive-vs-observant",
+    key:        "intuitive" as const,
+    left: "N", leftKey:  "intuitive",   leftUrl:  "https://www.16personalities.com/articles/energy-intuitive-vs-observant",
+    right: "S", rightKey: "observant",  rightUrl: "https://www.16personalities.com/articles/energy-intuitive-vs-observant",
     gradient:   "linear-gradient(to right, #0e7490, #22d3ee, #a5f3fc, #6ee7b7, #059669)",
     leftColor:  "#0e7490",
     rightColor: "#059669",
   },
   {
-    key:         "feeling" as const,
-    left: "F",  leftLabel:  "Feeling",      leftUrl:  "https://www.16personalities.com/articles/nature-thinking-vs-feeling",
-    right: "T", rightLabel: "Thinking",     rightUrl: "https://www.16personalities.com/articles/nature-thinking-vs-feeling",
+    key:        "feeling" as const,
+    left: "F", leftKey:  "feeling",     leftUrl:  "https://www.16personalities.com/articles/nature-thinking-vs-feeling",
+    right: "T", rightKey: "thinking",   rightUrl: "https://www.16personalities.com/articles/nature-thinking-vs-feeling",
     gradient:   "linear-gradient(to right, #be185d, #f472b6, #fbcfe8, #bae6fd, #0369a1)",
     leftColor:  "#be185d",
     rightColor: "#0369a1",
   },
   {
-    key:         "judging" as const,
-    left: "J",  leftLabel:  "Judging",      leftUrl:  "https://www.16personalities.com/articles/tactics-judging-vs-prospecting",
-    right: "P", rightLabel: "Prospecting",  rightUrl: "https://www.16personalities.com/articles/tactics-judging-vs-prospecting",
+    key:        "judging" as const,
+    left: "J", leftKey:  "judging",     leftUrl:  "https://www.16personalities.com/articles/tactics-judging-vs-prospecting",
+    right: "P", rightKey: "prospecting", rightUrl: "https://www.16personalities.com/articles/tactics-judging-vs-prospecting",
     gradient:   "linear-gradient(to right, #b45309, #fbbf24, #fef9c3, #bbf7d0, #15803d)",
     leftColor:  "#b45309",
     rightColor: "#15803d",
   },
   {
-    key:         "turbulent" as const,
-    left: "T",  leftLabel:  "Turbulent",    leftUrl:  "https://www.16personalities.com/articles/identity-assertive-vs-turbulent",
-    right: "A", rightLabel: "Assertive",    rightUrl: "https://www.16personalities.com/articles/identity-assertive-vs-turbulent",
+    key:        "turbulent" as const,
+    left: "T", leftKey:  "turbulent",   leftUrl:  "https://www.16personalities.com/articles/identity-assertive-vs-turbulent",
+    right: "A", rightKey: "assertive",  rightUrl: "https://www.16personalities.com/articles/identity-assertive-vs-turbulent",
     gradient:   "linear-gradient(to right, #b91c1c, #f87171, #fecdd3, #ddd6fe, #6d28d9)",
     leftColor:  "#b91c1c",
     rightColor: "#6d28d9",
@@ -250,9 +239,12 @@ function getMbtiDominantGradient(mbti: MbtiProfile): string {
 }
 
 function MbtiBarChart({ mbti }: { mbti: MbtiProfile }) {
+  const { t } = useTranslation("persona");
   return (
     <div className="space-y-4 py-1">
-      {MBTI_ROWS.map(({ key, left, leftLabel, leftUrl, right, rightLabel, rightUrl, gradient, leftColor, rightColor }) => {
+      {MBTI_ROWS.map(({ key, left, leftKey, leftUrl, right, rightKey, rightUrl, gradient, leftColor, rightColor }) => {
+        const leftLabel = t(`mbtiDimensions.${leftKey}`);
+        const rightLabel = t(`mbtiDimensions.${rightKey}`);
         const score = mbti.scores[key]; // 0–100 toward left pole
         const dominant = score >= 50;
         const thumbColor = dominant ? leftColor : rightColor;
@@ -330,6 +322,7 @@ function SdgBadge({ sdg, label, resonance }: { sdg: number; label: string; reson
 // ─── Q&A panel (auth-gated) ───────────────────────────────────────────────────
 
 function PersonaQAPanel({ personId }: { personId: string }) {
+  const { t } = useTranslation("persona");
   const [messages, setMessages] = useState<PersonaQAMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -347,10 +340,10 @@ function PersonaQAPanel({ personId }: { personId: string }) {
         const data = (await response.json()) as { answer: string };
         setMessages((prev) => [...prev, { role: "persona", content: data.answer }]);
       } else {
-        setMessages((prev) => [...prev, { role: "persona", content: "Sorry, I couldn't answer that right now." }]);
+        setMessages((prev) => [...prev, { role: "persona", content: t("qa.errorMessage") }]);
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "persona", content: "Sorry, I couldn't answer that right now." }]);
+      setMessages((prev) => [...prev, { role: "persona", content: t("qa.errorMessage") }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -367,11 +360,9 @@ function PersonaQAPanel({ personId }: { personId: string }) {
   return (
     <Card className="bg-white/94">
       <CardHeader className="gap-2">
-        <Badge variant="outline">Ask this persona</Badge>
-        <CardTitle className="text-lg">Have a conversation</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Ask anything — the persona answers based on their values, experiences, and worldview.
-        </p>
+        <Badge variant="outline">{t("qa.badge")}</Badge>
+        <CardTitle className="text-lg">{t("qa.title")}</CardTitle>
+        <p className="text-sm text-muted-foreground">{t("qa.description")}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {messages.length > 0 ? (
@@ -392,7 +383,7 @@ function PersonaQAPanel({ personId }: { personId: string }) {
             {loading ? (
               <div className="flex gap-3">
                 <div className="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 animate-pulse">
-                  Thinking…
+                  {t("qa.thinking")}
                 </div>
               </div>
             ) : null}
@@ -405,15 +396,15 @@ function PersonaQAPanel({ personId }: { personId: string }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question… (Enter to send)"
+            placeholder={t("qa.placeholder")}
             className="min-h-[72px] resize-none"
             disabled={loading}
           />
           <Button onClick={handleAsk} disabled={loading || !input.trim()} className="self-end">
-            Ask
+            {t("qa.ask")}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Press Enter to send · Shift+Enter for new line</p>
+        <p className="text-xs text-muted-foreground">{t("qa.hint")}</p>
       </CardContent>
     </Card>
   );
@@ -422,6 +413,7 @@ function PersonaQAPanel({ personId }: { personId: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function PersonaPage() {
+  const { t } = useTranslation("persona");
   const { profile } = useLoaderData() as PersonaLoaderData;
   const rootData = useRouteLoaderData("root") as RootLoaderData;
   const sessionUser = rootData?.sessionUser ?? null;
@@ -448,7 +440,7 @@ export function PersonaPage() {
       <Card className="border-teal-200 bg-[linear-gradient(160deg,rgba(240,253,250,0.98),rgba(236,254,255,0.92))]">
         <CardHeader className="gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Public persona</Badge>
+            <Badge variant="outline">{t("hero.badge")}</Badge>
             <Badge variant="success">{profile.person_id}</Badge>
             {profile.title && (
               <span className="text-xs font-medium text-muted-foreground">{profile.title}</span>
@@ -490,7 +482,7 @@ export function PersonaPage() {
         <CardContent className="space-y-4">
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Top values
+              {t("hero.topValues")}
             </div>
             <div className="flex flex-wrap gap-2">
               {profile.top3_values.map((v) => (
@@ -512,14 +504,14 @@ export function PersonaPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-teal-800">
-                  {copied ? "✓ Copied to clipboard!" : "Want to use this profile somewhere?"}
+                  {copied ? t("hero.copiedHeading") : t("hero.copyHeading")}
                 </div>
                 <div className="mt-0.5 text-xs text-teal-600/80">
-                  {copied ? "Paste it into any document, note, or AI tool." : "Copy the full profile as Markdown — ready to paste into any doc or AI prompt."}
+                  {copied ? t("hero.copiedSubtext") : t("hero.copySubtext")}
                 </div>
               </div>
               <span className="shrink-0 rounded-xl border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 shadow-sm group-hover:border-teal-400 transition">
-                {copied ? "Done" : "Copy →"}
+                {copied ? t("hero.copiedBtn") : t("hero.copyBtn")}
               </span>
             </div>
           </button>
@@ -544,7 +536,7 @@ export function PersonaPage() {
                   <span className="text-xs font-semibold text-white/80">-{profile.mbti.identity}</span>
                 </a>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-500">MBTI type</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-500">{t("mbti.typeLabel")}</div>
                   <div className="mt-0.5 text-lg font-semibold tracking-[-0.03em] text-violet-900">
                     <a
                       href={`https://www.16personalities.com/${profile.mbti.type.toLowerCase()}-personality`}
@@ -552,14 +544,14 @@ export function PersonaPage() {
                       rel="noopener noreferrer"
                       className="hover:text-violet-600 hover:underline underline-offset-2 transition-colors"
                     >
-                      The Advocate
+                      {t(`mbtiTypes.${profile.mbti.type}.name`, { defaultValue: profile.mbti.type })}
                     </a>
                     <span className="ml-1.5 text-xs font-medium text-violet-400">
-                      {profile.mbti.identity === "T" ? "· Turbulent" : "· Assertive"}
+                      {profile.mbti.identity === "T" ? t("mbti.turbulent") : t("mbti.assertive")}
                     </span>
                   </div>
                   <p className="mt-0.5 max-w-md text-xs leading-5 text-violet-700/80">
-                    Idealistic and principled — connects deep values to long-horizon vision, builds systems that serve people.
+                    {t(`mbtiTypes.${profile.mbti.type}.description`, { defaultValue: "" })}
                   </p>
                 </div>
               </div>
@@ -569,7 +561,7 @@ export function PersonaPage() {
                 rel="noopener noreferrer"
                 className="text-xs font-medium text-violet-500 hover:text-violet-700"
               >
-                View on 16personalities →
+                {t("mbti.viewOn16p")}
               </a>
             </div>
             {/* Bar chart */}
@@ -577,10 +569,7 @@ export function PersonaPage() {
             {/* AI prediction note */}
             <div className="flex items-start gap-2 rounded-2xl border border-violet-200 bg-violet-50/60 px-4 py-3">
               <span className="mt-0.5 text-violet-400">✦</span>
-              <p className="text-xs leading-5 text-violet-600">
-                <span className="font-semibold">AI prediction</span> — this result is inferred from values, behaviors, and identity data, not a self-reported test.
-                The more input data PersonaMirror has, the more precise this prediction becomes.
-              </p>
+              <p className="text-xs leading-5 text-violet-600">{t("mbti.aiNote")}</p>
             </div>
           </CardContent>
         </Card>
@@ -589,22 +578,22 @@ export function PersonaPage() {
       {/* Goals & vision */}
       <Card className="bg-[linear-gradient(160deg,rgba(255,251,235,0.98),rgba(254,243,199,0.88))] border-amber-200">
         <CardHeader className="gap-2">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">Goals & vision</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">{t("goals.sectionLabel")}</div>
           <CardTitle className="text-lg tracking-[-0.03em] text-amber-900">
             {profile.goals_vision.long_term_vision}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="rounded-2xl border border-amber-200 bg-white/70 px-4 py-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">Lifetime mission</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">{t("goals.lifetimeMission")}</div>
             <p className="mt-1 text-sm leading-6 text-amber-900">{profile.goals_vision.lifetime_mission}</p>
           </div>
           <div className="rounded-2xl border border-amber-200 bg-white/70 px-4 py-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">Current decade · 30s</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">{t("goals.currentDecade")}</div>
             <p className="mt-1 text-sm leading-6 text-amber-900">{profile.goals_vision.current_decade_mission}</p>
           </div>
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">Directions</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">{t("goals.directions")}</div>
             <ul className="space-y-1.5">
               {profile.goals_vision.long_term_directions.map((d) => (
                 <li key={d} className="flex gap-2 text-sm leading-6 text-amber-900/80">
@@ -621,19 +610,14 @@ export function PersonaPage() {
       {Object.keys(profile.fit_vectors).length > 0 ? (
         <Card className="bg-white/94">
           <CardHeader className="gap-1">
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Drive vectors</div>
-            <p className="text-xs leading-5 text-muted-foreground/70">
-              How strongly each internal drive shows up across values, behaviors, and life history. Scored 1–5.
-            </p>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("vectors.sectionLabel")}</div>
+            <p className="text-xs leading-5 text-muted-foreground/70">{t("vectors.subtitle")}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <RadarChart vectors={profile.fit_vectors as Record<string, number>} />
             <div className="flex items-start gap-2 rounded-2xl border border-border/60 bg-zinc-50/60 px-4 py-3">
               <span className="mt-0.5 text-zinc-400">✦</span>
-              <p className="text-xs leading-5 text-zinc-500">
-                <span className="font-semibold">AI prediction</span> — drive strengths are inferred from values, career patterns, and behavioral history, not a self-reported assessment.
-                The more input data PersonaMirror has, the more precise these scores become.
-              </p>
+              <p className="text-xs leading-5 text-zinc-500">{t("vectors.aiNote")}</p>
             </div>
           </CardContent>
         </Card>
@@ -644,7 +628,7 @@ export function PersonaPage() {
         <Card className="bg-white/94" style={{ background: mbtiCardBg(2, 3) }}>
           <CardHeader>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              SDG alignment
+              {t("sdg.sectionLabel")}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -655,10 +639,7 @@ export function PersonaPage() {
             </div>
             <div className="flex items-start gap-2 rounded-2xl border border-border/60 bg-zinc-50/60 px-4 py-3">
               <span className="mt-0.5 text-zinc-400">✦</span>
-              <p className="text-xs leading-5 text-zinc-500">
-                <span className="font-semibold">AI prediction</span> — alignment is inferred from values, career history, and community activity, not a self-reported assessment.
-                The more input data PersonaMirror has, the more precise this alignment becomes.
-              </p>
+              <p className="text-xs leading-5 text-zinc-500">{t("sdg.aiNote")}</p>
             </div>
           </CardContent>
         </Card>
@@ -671,7 +652,7 @@ export function PersonaPage() {
           <Card className="bg-white/94" style={{ background: mbtiCardBg(0, 4, 160) }}>
             <CardHeader>
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Identity timeline
+                {t("timeline.sectionLabel")}
               </div>
             </CardHeader>
             <CardContent>
@@ -710,7 +691,7 @@ export function PersonaPage() {
       <div className="grid gap-3 md:grid-cols-2">
         <Card className="bg-white/94" style={{ background: mbtiCardBg(0, 1) }}>
           <CardContent className="px-4 py-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Strengths</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("strengths.sectionLabel")}</div>
             <ul className="space-y-1">
               {profile.strengths.map((s) => (
                 <li key={s} className="flex gap-2 text-xs leading-5 text-foreground/75">
@@ -724,7 +705,7 @@ export function PersonaPage() {
 
         <Card className="bg-white/94" style={{ background: mbtiCardBg(3, 4) }}>
           <CardContent className="px-4 py-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Watch outs</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t("watchouts.sectionLabel")}</div>
             <ul className="space-y-1">
               {profile.watchouts.map((w) => (
                 <li key={w} className="flex gap-2 text-xs leading-5 text-foreground/75">
@@ -744,11 +725,9 @@ export function PersonaPage() {
         <Card className="bg-white/88">
           <CardContent className="px-6 py-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">
-                Log in to ask this persona a question.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("loginPrompt.message")}</p>
               <a href="/auth/login">
-                <Button variant="outline" size="sm">Log in</Button>
+                <Button variant="outline" size="sm">{t("loginPrompt.loginBtn")}</Button>
               </a>
             </div>
           </CardContent>

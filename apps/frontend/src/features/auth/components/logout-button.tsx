@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useRevalidator } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/common/components";
 
@@ -12,6 +13,7 @@ export function LogoutButton({
   className?: string;
   variant?: "default" | "secondary" | "outline" | "ghost";
 }) {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export function LogoutButton({
 
   return (
     <Button className={className} disabled={loading} onClick={handleLogout} type="button" variant={variant}>
-      {loading ? "Logging out..." : "Logout"}
+      {loading ? t("button.loggingOut") : t("button.logout")}
     </Button>
   );
 }

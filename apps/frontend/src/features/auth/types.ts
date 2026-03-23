@@ -1,5 +1,5 @@
 export type SessionUser = {
-  user_id: string;
+  user_id: number;
   is_admin: boolean;
   created_at: string;
 };
@@ -10,7 +10,6 @@ export type RootLoaderData = {
 
 export type AuthActionData = {
   error?: string;
-  generatedUserId?: string;
   signupEmail?: string;
   verified?: boolean;
 };

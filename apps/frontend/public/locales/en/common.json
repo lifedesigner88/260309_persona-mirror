@@ -1,0 +1,57 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "signup": "Sign up",
+    "login": "Login",
+    "adminUsers": "Admin users",
+    "capture": "Capture",
+    "mySubmissions": "My submissions",
+    "demoPersona": "Demo Persona"
+  },
+  "sidebar": {
+    "phase": "Phase 1 starter",
+    "tagline": "Identity capture starter for auth, admin access, and the first multimodal workflow shell.",
+    "currentBaseline": "Current baseline",
+    "sessionTitle": "Session",
+    "signedInAs": "Signed in as {{userId}}",
+    "notSignedIn": "Not signed in",
+    "guest": "guest",
+    "adminSession": "admin session",
+    "memberSession": "member session",
+    "footer": "Auth, admin list, DB seed, and dev runtime are already wired."
+  },
+  "home": {
+    "pill": "Starter overview",
+    "heading": "Solid enough to build the real persona flow without redoing the foundation later.",
+    "description": "Auth, admin permission boundaries, Postgres wiring, React Router data APIs, and local dev orchestration are already aligned.",
+    "loggedIn": "logged in: {{userId}}",
+    "guestMode": "guest mode",
+    "adminAccess": "admin access",
+    "checkBackend": "Check backend health",
+    "checkingBackend": "Checking backend...",
+    "createAccount": "Create test account",
+    "runtimeSignal": "Runtime signal",
+    "backendApi": "Backend API",
+    "authMode": "Auth mode",
+    "authModeValue": "httpOnly cookie",
+    "healthState": "Health state",
+    "cards": {
+      "authTitle": "Auth baseline",
+      "authText": "Sign up, login, logout, admin session checks, and seeded admin access are already connected.",
+      "uiTitle": "UI direction",
+      "uiText": "Tailwind + shadcn/ui is in place so the next screens can stay consistent without redoing primitives.",
+      "nextTitle": "Next step",
+      "nextText": "The natural follow-up is interview input, media upload flow, and async generation orchestration."
+    }
+  },
+  "button": {
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "error": {
+    "routeError": "Route error",
+    "unexpectedError": "Unexpected application error",
+    "pageNotLoaded": "The requested page could not be loaded.",
+    "unknownError": "Unknown error"
+  }
+}

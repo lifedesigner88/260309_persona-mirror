@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button, Input } from "@/common/components";
 
@@ -10,6 +11,7 @@ import type { ChatMessage } from "../utils/types";
 import { useCaptureRouteData } from "../utils/hooks";
 
 export function InterviewCapturePage() {
+  const { t } = useTranslation("capture");
   const { draft } = useCaptureRouteData();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>(draft.interview.messages);
@@ -51,7 +53,7 @@ export function InterviewCapturePage() {
         setTimeout(() => navigate("/capture/review"), 1200);
       }
     } catch {
-      setMessages([...next, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      setMessages([...next, { role: "assistant", content: t("interview.errorMessage") }]);
     } finally {
       setLoading(false);
     }
@@ -65,10 +67,10 @@ export function InterviewCapturePage() {
 
   return (
     <CapturePageShell
-      badge="Step 1"
-      description="Claude will guide you through 5 questions to understand who you are. Answer naturally — there are no wrong answers."
+      badge={t("interview.badge")}
+      description={t("interview.description")}
       footer={null}
-      title="Interview"
+      title={t("interview.title")}
     >
       <div className="flex flex-col gap-3 min-h-[320px] max-h-[480px] overflow-y-auto pr-1">
         {messages.map((msg, i) => (
@@ -90,7 +92,7 @@ export function InterviewCapturePage() {
         {loading && (
           <div className="flex justify-start">
             <div className="rounded-2xl bg-secondary px-4 py-2.5 text-sm text-muted-foreground animate-pulse">
-              Thinking…
+              {t("interview.thinking")}
             </div>
           </div>
         )}
@@ -101,12 +103,12 @@ export function InterviewCapturePage() {
         <Input
           className="flex-1"
           disabled={loading || draft.interview.isComplete}
-          placeholder="Type your answer…"
+          placeholder={t("interview.placeholder")}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
         <Button disabled={!input.trim() || loading || draft.interview.isComplete} type="submit">
-          Send
+          {t("interview.send")}
         </Button>
       </form>
     </CapturePageShell>

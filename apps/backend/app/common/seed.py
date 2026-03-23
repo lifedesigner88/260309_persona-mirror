@@ -10,7 +10,6 @@ from app.common.security import hash_password
 from app.features.auth.models import User
 from app.features.persona.models import Persona
 
-DEMO_USER_ID    = os.getenv("DEMO_USER_ID",    "pse001")               # 6-char static user ID
 DEMO_USER_EMAIL = os.getenv("DEMO_USER_EMAIL", "lifedesigner88@gmail.com")
 DEMO_USER_PIN   = os.getenv("DEMO_USER_PIN",   "1234")                 # login: email + 1234
 DEMO_PERSONA_ID = os.getenv("DEMO_PERSONA_ID", "d31sf2")               # /persona/d31sf2
@@ -126,10 +125,9 @@ _DEMO_DATA: dict = {
 def sync_demo_seed(db: Session) -> None:
     """Insert demo user and persona if they don't exist yet (idempotent)."""
     # ── User ──────────────────────────────────────────────────────────────────
-    user = db.scalar(select(User).where(User.user_id == DEMO_USER_ID))
+    user = db.scalar(select(User).where(User.email == DEMO_USER_EMAIL))
     if user is None:
         user = User(
-            user_id=DEMO_USER_ID,
             email=DEMO_USER_EMAIL,
             password_hash=hash_password(DEMO_USER_PIN),
             is_verified=True,
@@ -144,7 +142,7 @@ def sync_demo_seed(db: Session) -> None:
         db.add(
             Persona(
                 persona_id=DEMO_PERSONA_ID,
-                owner_user_id=DEMO_USER_ID,
+                user_id=user.user_id,
                 title="Park Sejong — 2026",
                 data=_DEMO_DATA,
             )
