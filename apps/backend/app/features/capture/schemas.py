@@ -53,7 +53,7 @@ class PersonaResultResponse(BaseModel):
 
 class CaptureJobResponse(BaseModel):
     id: str
-    owner_user_id: str
+    owner_user_id: int
     status: str
     payload: CaptureDraftRequest
     result: PersonaResultResponse | None = None

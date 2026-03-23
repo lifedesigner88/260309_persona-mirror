@@ -178,11 +178,22 @@ const DEMO_PROFILE_KO: PersonaProfile = {
 export async function personaLoader({ params }: LoaderFunctionArgs): Promise<PersonaLoaderData> {
   const personId = params.personId ?? "";
 
-  // "demo" route: try the real backend persona first; fall back to hardcoded data
-  // so the Ask panel has a valid persona_id to post against.
+  // "demo" route: use hardcoded bilingual profile for display, but fetch the real
+  // persona_id from the backend so the Ask panel has a valid DB id to post against.
   if (personId === "demo") {
     const lang = i18n.resolvedLanguage ?? "en";
-    return { profile: lang === "ko" ? DEMO_PROFILE_KO : DEMO_PROFILE_EN };
+    const base = lang === "ko" ? DEMO_PROFILE_KO : DEMO_PROFILE_EN;
+    // Try to get the real persona_id (e.g. "d31sf2") from the backend
+    try {
+      const resp = await requestPersonaProfile("d31sf2");
+      if (resp.ok) {
+        const real = await readPersonaProfileResponse(resp);
+        return { profile: { ...base, person_id: real.person_id } };
+      }
+    } catch {
+      // backend unreachable — fall through with "demo" id (Ask will 404 gracefully)
+    }
+    return { profile: base };
   }
 
   const response = await requestPersonaProfile(personId);

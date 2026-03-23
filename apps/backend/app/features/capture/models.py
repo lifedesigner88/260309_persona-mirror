@@ -18,7 +18,7 @@ class CaptureJob(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     owner_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)

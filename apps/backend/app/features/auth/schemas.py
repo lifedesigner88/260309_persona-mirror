@@ -3,15 +3,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, StringConstraints
 
-NormalizedUserId = Annotated[
-    str,
-    StringConstraints(strip_whitespace=True, min_length=3, max_length=64),
-]
-# Signup user_id: exactly 6 uppercase alphanumeric chars (client-generated)
-SignupUserIdValue = Annotated[
-    str,
-    StringConstraints(min_length=6, max_length=6, pattern=r"^[A-Z0-9]{6}$"),
-]
 # Signup: exactly 4 digits (demo PIN)
 SignupPasswordValue = Annotated[
     str,
@@ -25,7 +16,6 @@ LoginPasswordValue = Annotated[
 
 
 class SignupRequest(BaseModel):
-    user_id: SignupUserIdValue
     password: SignupPasswordValue
     email: EmailStr
 
@@ -51,12 +41,12 @@ class ResetPinConfirm(BaseModel):
 
 
 class SessionResponse(BaseModel):
-    user_id: str
+    user_id: int
     is_admin: bool
 
 
 class UserResponse(BaseModel):
-    user_id: str
+    user_id: int
     email: str
     is_admin: bool
     created_at: datetime

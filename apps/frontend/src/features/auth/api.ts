@@ -23,20 +23,18 @@ export async function rootLoader(): Promise<RootLoaderData> {
 
 export async function signupAction({ request }: { request: Request }): Promise<AuthActionData | Response> {
   const formData = await request.formData();
-  const user_id = String(formData.get("user_id") ?? "");
   const password = String(formData.get("password") ?? "");
   const email = String(formData.get("email") ?? "").trim() || undefined;
 
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id, password, email }),
+    body: JSON.stringify({ password, email }),
     credentials: "include",
   });
 
   if (response.ok) {
-    const data = (await response.json()) as { user_id: string };
-    return { generatedUserId: data.user_id, signupEmail: email };
+    return { signupEmail: email };
   }
 
   const data = (await response.json().catch(() => null)) as { detail?: string } | null;

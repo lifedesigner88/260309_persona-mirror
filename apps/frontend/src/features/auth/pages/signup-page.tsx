@@ -7,18 +7,10 @@ import { Button, Field, Input, ShellCard, StatusPill } from "@/common/components
 import { verifyOtp } from "../api";
 import type { AuthActionData } from "../types";
 
-const ID_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-function generateId(): string {
-  return Array.from({ length: 6 }, () => ID_CHARSET[Math.floor(Math.random() * ID_CHARSET.length)]).join("");
-}
-
 export function SignupPage() {
   const { t } = useTranslation("auth");
   const actionData = useActionData() as AuthActionData | undefined;
   const navigate = useNavigate();
-  const [userId, setUserId] = useState(() => generateId());
-  const [copied, setCopied] = useState(false);
   const [showPin, setShowPin] = useState(false);
 
   // OTP verification state
@@ -26,16 +18,6 @@ export function SignupPage() {
   const [otpError, setOtpError] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(userId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [userId]);
-
-  const handleRandomize = useCallback(() => {
-    setUserId(generateId());
-  }, []);
 
   const handleVerify = useCallback(async () => {
     if (!actionData?.signupEmail || otp.length !== 6) return;
@@ -52,7 +34,7 @@ export function SignupPage() {
   }, [actionData?.signupEmail, otp]);
 
   // Step 3: Verified
-  if (actionData?.generatedUserId && verified) {
+  if (actionData?.signupEmail && verified) {
     return (
       <ShellCard className="mx-auto max-w-xl bg-white/92">
         <div className="space-y-2">
@@ -60,29 +42,13 @@ export function SignupPage() {
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">{t("signup.step3Title")}</h2>
           <p className="text-sm leading-6 text-muted-foreground">{t("signup.step3Description")}</p>
         </div>
-        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5">
-          <p className="text-xs font-medium uppercase tracking-widest text-amber-600">{t("signup.personaIdLabel")}</p>
-          <div className="mt-1 flex items-center gap-3">
-            <p className="font-mono text-4xl font-bold tracking-widest text-amber-900">
-              {actionData.generatedUserId}
-            </p>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={() => navigator.clipboard.writeText(actionData.generatedUserId!)}
-            >
-              {t("signup.copy")}
-            </Button>
-          </div>
-        </div>
         <p className="mt-6 text-sm text-muted-foreground">{t("signup.redirecting")}</p>
       </ShellCard>
     );
   }
 
   // Step 2: OTP verification
-  if (actionData?.generatedUserId) {
+  if (actionData?.signupEmail) {
     return (
       <ShellCard className="mx-auto max-w-xl bg-white/92">
         <div className="space-y-2">
@@ -90,13 +56,6 @@ export function SignupPage() {
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">{t("signup.step2Title")}</h2>
           <p className="text-sm leading-6 text-muted-foreground">
             {t("signup.step2Description", { email: actionData.signupEmail })}
-          </p>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4">
-          <p className="text-xs font-medium uppercase tracking-widest text-amber-600">{t("signup.personaIdLabel")}</p>
-          <p className="mt-1 font-mono text-3xl font-bold tracking-widest text-amber-900">
-            {actionData.generatedUserId}
           </p>
         </div>
 
@@ -134,24 +93,7 @@ export function SignupPage() {
         <p className="text-sm leading-6 text-muted-foreground">{t("signup.step1Description")}</p>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5">
-        <p className="text-xs font-medium uppercase tracking-widest text-amber-600">{t("signup.personaIdLabel")}</p>
-        <div className="mt-1 flex items-center gap-3">
-          <p className="font-mono text-4xl font-bold tracking-widest text-amber-900">{userId}</p>
-          <div className="flex flex-col gap-1.5">
-            <Button size="sm" type="button" variant="outline" onClick={handleCopy}>
-              {copied ? t("signup.copied") : t("signup.copy")}
-            </Button>
-            <Button size="sm" type="button" variant="outline" onClick={handleRandomize}>
-              {t("signup.shuffle")}
-            </Button>
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-amber-700">{t("signup.personaIdHint")}</p>
-      </div>
-
       <Form className="mt-6 space-y-4" method="post">
-        <input name="user_id" type="hidden" value={userId} />
         <Field label={t("signup.emailLabel")} hint={t("signup.emailHint")}>
           <Input autoComplete="email" name="email" required type="email" />
         </Field>
@@ -183,6 +125,13 @@ export function SignupPage() {
           {actionData.error}
         </div>
       ) : null}
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {t("signup.alreadyHaveAccount")}{" "}
+        <Link className="font-medium text-primary underline-offset-4 hover:underline" to="/auth/login">
+          {t("signup.login")}
+        </Link>
+      </p>
     </ShellCard>
   );
 }
