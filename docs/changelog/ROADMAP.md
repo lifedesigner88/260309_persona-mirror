@@ -48,7 +48,7 @@ Goal: full AI pipeline → shareable Level 1 persona card
 - [x] Capture routes auth-gated (nav hidden + route redirect on 401)
 - [x] Dev environment: `.env` files created, model set to `claude-haiku-4-5` for cost
 - [x] `GET /persona/:id` real backend endpoint (personas table + router)
-- [ ] `POST /persona/:id/ask` Q&A panel backend endpoint
+- [x] `POST /persona/:id/ask` Q&A panel backend endpoint — Claude Haiku answers in-persona; frontend Ask panel wired end-to-end
 - [ ] DB volume reset required (new columns: `result`, `persona_id`)
 - [x] Production Docker images: frontend nginx build + nginx.conf SPA routing
 - [x] GHCR CI: build + push `persona-mirror-frontend`, `persona-mirror-backend`, `persona-mirror-ai-worker`
@@ -61,8 +61,6 @@ Goal: full AI pipeline → shareable Level 1 persona card
 
 Goal: Level 2+ persona depth, multi-modal input
 
-- [ ] `GET /persona/:id` real endpoint + backend persona storage
-- [ ] `POST /persona/:id/ask` — Q&A panel AI answer
 - [ ] LangGraph Phase 2 nodes: `extract_speaking`, `generate_card`
 - [ ] Whisper voice analysis node
 - [ ] Image analysis node
@@ -86,5 +84,5 @@ Goal: production-ready
 
 ## Next Recommended Work
 
-1. `POST /persona/:id/ask` — Q&A panel AI answer
-2. DB volume reset on next local deploy (run `docker compose down -v && docker compose up`)
+1. DB volume reset on next local deploy (run `docker compose down -v && docker compose up`)
+2. Voice and image capture pipeline
