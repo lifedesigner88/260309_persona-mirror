@@ -7,7 +7,7 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: "inherit",
     shell: false,
-    ...options,
+    ...options
   });
 
   if (result.error) {
@@ -17,7 +17,7 @@ function run(command, args, options = {}) {
   return result.status ?? 0;
 }
 
-// Parse .env and override DATABASE_URL for Docker networking
+// Parse app env and pass it through as-is.
 const envVars = Object.fromEntries(
   readFileSync("apps/backend/.env", "utf8")
     .split("\n")
@@ -27,9 +27,6 @@ const envVars = Object.fromEntries(
       return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
     })
 );
-// Use compose service name "db" — backend joins the same Docker network
-envVars["DATABASE_URL"] =
-  "postgresql+psycopg://persona:persona@db:5432/persona_mirror";
 
 const envFlags = Object.entries(envVars).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
 
@@ -45,7 +42,7 @@ const status = run("docker", [
   "-p",
   "8000:8000",
   ...envFlags,
-  "persona-mirror-backend:dev",
+  "persona-mirror-backend:dev"
 ]);
 
 process.exit(status);

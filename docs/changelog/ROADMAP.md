@@ -1,106 +1,123 @@
-# PersonaMirror Roadmap
+# SoMa Community Roadmap
 
-Built from project history. Each phase maps to what was actually done or decided.
-
----
-
-## Phase 0 — Foundation `2026-03-09` ✅
-
-Goal: empty monorepo → runnable template
-
-- [x] Nx monorepo, pnpm + uv, `.nvmrc`, `.python-version`
-- [x] FastAPI `/health` + React Router v7 frontend scaffold
-- [x] ESLint, Prettier, Ruff, pre-commit
-- [x] httpOnly cookie-based session auth (signup / login / logout / admin)
-- [x] `capture_jobs` table + `POST /capture/jobs`, `GET`, `GET /{id}`
-- [x] Capture step UI draft (interview / voice / image / review)
-- [x] Frontend / backend aligned to same domain names: `auth`, `admin`, `capture`
+Built from the current product direction and completed work in the repo. Checked items reflect what is already implemented as of `2026-03-23`.
 
 ---
 
-## Phase 0.5 — Operational Baseline `2026-03-10` ✅
+## Phase 0 — Foundation ✅
 
-Goal: loosely-running template → reproducible and verifiable
+Goal: empty monorepo -> runnable product base
 
-- [x] Three execution paths stabilized: `pnpm dev` / `pnpm docker` / `docker compose up`
-- [x] Runtime pinned to patch version (Node 24.11.0, Python 3.11.15, Postgres 16.13, Redis 7.4.7)
-- [x] `.env.example` tracked; actual `.env` auto-generated; `compose.env` consolidated
-- [x] 10 backend smoke tests (auth, admin, capture)
-- [x] `capture_jobs.owner_id` → FK to `users.id`
-- [x] Capture submit → submission list / detail / delete full cycle working
-- [x] Per-date changelog + stacked branch policy documented
-
----
-
-## Phase 1 — March 25 MVP `2026-03-21` 🔄
-
-Goal: full AI pipeline → shareable Level 1 persona card
-
-- [x] Email signup with OTP verification (Resend) + 4-digit PIN login
-- [x] Reset PIN via email OTP
-- [x] Admin account seed + admin user list
-- [x] AI chat interview — Claude asks 5 adaptive questions (`POST /capture/interview/chat`)
-- [x] `capture_jobs.result` (JSON) + `persona_id` (String 16) added
-- [x] ai-worker LangGraph pipeline: polls pending jobs → Claude → writes `{ archetype, top3_values, one_liner }`
-- [x] Level 1 Persona Card on submission detail (polls every 2s until done)
-- [x] Public persona page `/persona/:id` — hero, MBTI bars, radar, SDG, timeline, strengths
-- [x] `/persona/demo` — Hupository data, no backend needed
-- [x] Capture routes auth-gated (nav hidden + route redirect on 401)
-- [x] Dev environment: `.env` files created, model set to `claude-haiku-4-5` for cost
-- [x] `GET /persona/:id` real backend endpoint (personas table + router)
-- [x] `POST /persona/:id/ask` Q&A panel backend endpoint — Claude Haiku answers in-persona; frontend Ask panel wired end-to-end
-- [ ] DB volume reset required (new columns: `result`, `persona_id`)
-- [x] Production Docker images: frontend nginx build + nginx.conf SPA routing
-- [x] GHCR CI: build + push `persona-mirror-frontend`, `persona-mirror-backend`, `persona-mirror-ai-worker`
-- [x] Supabase as managed DB — removed local Postgres/Redis from compose
-- [x] Deploy to `asm17.huposit.kr` via 260312-demo-infra (Caddy + compose)
+- [x] Nx monorepo, `pnpm` + `uv`, pinned runtime versions
+- [x] FastAPI backend + React Router frontend scaffold
+- [x] ESLint, Prettier, Ruff, pre-commit baseline
+- [x] Cookie-based session auth structure
+- [x] Docker / Compose / local dev execution paths
+- [x] Daily changelog and roadmap documentation flow
 
 ---
 
-## Phase 1.5 — Internationalization (KOR / ENG) `planned`
+## Phase 1 — Community Pivot MVP ✅ `2026-03-23`
 
-Goal: full Korean ↔ English UI switch with AI responses in the active locale
+Goal: `PersonaMirror` -> `ASM 17 Community`
 
-- [ ] Install `react-i18next` + `i18next-http-backend`; configure lazy namespace loading
-- [ ] Locale JSON files per feature: `en/{common,auth,capture,persona}.json` + `ko/` mirrors
-- [ ] Language detection: `localStorage` → `navigator.language` (`ko*` → Korean) → `en`
-- [ ] `<LangToggle>` component in nav (KO / EN pill switch, persists to localStorage)
-- [ ] Replace all hardcoded UI strings in auth, capture, persona, admin pages with `t()` calls
-- [ ] Korean web font — Pretendard via `@fontsource/pretendard` or CDN; apply in `index.css`
-- [ ] Layout audit: remove fixed widths on text containers; verify KOR/ENG renders without overflow
-- [ ] Pass `lang` (active locale) from frontend to `POST /capture/interview/chat` → backend forwards to Claude system prompt so AI replies in the correct language
-- [ ] AI-worker: inject locale into LangGraph state; persona generation prompts output KOR or ENG based on `lang`
-- [ ] Date / number formatting: replace manual formats with `Intl.DateTimeFormat` / `Intl.NumberFormat` using active locale
-- [ ] `<html lang="...">` attribute updated reactively on locale change
-
----
-
-## Phase 2 — Enriched Analysis `planned`
-
-Goal: Level 2+ persona depth, multi-modal input
-
-- [ ] LangGraph Phase 2 nodes: `extract_speaking`, `generate_card`
-- [ ] Whisper voice analysis node
-- [ ] Image analysis node
-- [ ] Level 2 output: language patterns + decision-making tendencies + career direction
-- [ ] Multi-LLM backend support (GPT, Gemini swap via LangGraph)
+- [x] `ASM 17 Community` branding and navigation cleanup
+- [x] Email signup with OTP verification
+- [x] `4-digit PIN` login and PIN reset
+- [x] Admin seed account with real reset-ready email
+- [x] Supabase as the shared backend / worker DB path
+- [x] Successful-applicant verification as the main onboarding flow
+- [x] Verification apply + edit-after-approval flow
+- [x] Required verification fields with privacy/help notes
+- [x] Kakao open-chat follow-up guidance in the verification flow
+- [x] Interview `start time` storage with auto-derived `1T`-`5T`
+- [x] Seoul interview dashboard with `500-seat` operating model
+- [x] Compact mobile-friendly dashboard board and `320px` layout handling
+- [x] Admin verification review page with full submitted info
+- [x] Admin approve / reject flow
+- [x] Admin member list with verification revoke action
+- [x] Admin dashboard-slot inspection without applicant verification
+- [x] `Sejong Persona` kept as demo data only
+- [x] `capture` hidden from current user navigation
+- [x] Busan dashboard placeholder navigation (`Coming soon`)
 
 ---
 
-## Phase 3 — Operations `planned`
+## Phase 2 — Community Safety and Review Tools `planned`
 
-Goal: production-ready
+Goal: make browsing safer and reduce duplicated outreach
 
-- [ ] Alembic migration introduction
-- [ ] Playwright e2e tests
-- [ ] Admin capture submission list / detail view
-- [ ] Logging and monitoring
-- [ ] Infrastructure automation (Terraform)
-- [ ] Level N: life timeline · goal hierarchy · value evolution · SDG alignment
+- [ ] User report / 신고 feature for inappropriate profiles or behavior
+- [ ] Report categories and optional evidence submission
+- [ ] Admin report queue with status: `received`, `reviewing`, `resolved`, `dismissed`
+- [ ] Reporter protection: hide who reported and prevent easy retaliation
+- [ ] User-level block / hide feature
+- [ ] `내가 확인한 유저` list for members
+- [ ] Per-user review states such as `확인함`, `연락함`, `보류`, `관심있음`
+- [ ] Personal notes/tags on reviewed users
+- [ ] Filter to hide users already reviewed or already contacted
+- [ ] Duplicate-outreach reduction cues in dashboard or member views
+
+---
+
+## Phase 3 — 3-Person Team Building Assist `planned`
+
+Goal: help members form balanced 3-person teams faster
+
+- [ ] Team-building profile fields: role, strengths, preferred stack, project interests
+- [ ] Availability fields: region, remote/onsite preference, active hours
+- [ ] `팀 구하는 중` states such as `2명 찾는 중`, `1명 찾는 중`, `팀 완성`
+- [ ] Search / filter by role, stack, interest, and region
+- [ ] Trio recommendation view for complementary 3-person combinations
+- [ ] Balance signals for a trio: role coverage, stack diversity, availability overlap
+- [ ] Save shortlisted candidate trios
+- [ ] `찜한 팀원 후보` / shortlist collection
+- [ ] One-click compare view for 2~3 candidate teammates
+- [ ] `우리 팀 1명 더 필요해요` post or badge
+- [ ] Mutual interest or invite flow before moving to open chat
+
+---
+
+## Phase 4 — Community Profiles and Persona Extension `planned`
+
+Goal: expand from verification data to richer teaming signals
+
+- [ ] Dedicated community profile beyond verification-only fields
+- [ ] Skills, interests, side-project history, and collaboration preferences
+- [ ] Public-ish member summary visible only to verified cohort members
+- [ ] Persona-assisted teammate introduction summary
+- [ ] Reuse the current `Sejong Persona` structure for future member-level persona cards
+- [ ] Reintroduce persona/capture flows only when team-building priority is high enough
+
+---
+
+## Phase 5 — Data Model and Operations Hardening `planned`
+
+Goal: make the community app easier to operate at real scale
+
+- [ ] Seoul / Busan team separation in the actual data model
+- [ ] Busan dashboard implementation
+- [ ] Interview slot normalization with a dedicated slots table
+- [ ] Real schedule cleanup after enough member submissions arrive
+- [ ] Alembic migrations
+- [ ] Playwright e2e coverage
+- [ ] Logging, moderation audit trail, and operational monitoring
+- [ ] Infrastructure automation and deploy hardening
+
+---
+
+## Deferred but Preserved
+
+- [x] Bilingual persona structure (`data_eng` / `data_kor`)
+- [x] Demo persona page and ask flow
+- [x] Legacy capture / ai-worker codebase kept for later reuse
+- [ ] Member-facing voice / image capture relaunch
+- [ ] Persona-first team recommendation workflow
 
 ---
 
 ## Next Recommended Work
 
-1. DB volume reset on next local deploy (run `docker compose down -v && docker compose up`)
-2. Voice and image capture pipeline
+1. Add `신고` and `내가 확인한 유저` features first so browsing becomes safer and more organized.
+2. Add minimal team-building profile fields and shortlist states so members can manage candidate teammates before full trio recommendation logic.
+3. Normalize interview slots and add real Seoul / Busan team separation before Busan goes live.

@@ -29,10 +29,10 @@ def _otp_block(otp: str) -> str:
 def send_otp_email(to: str, otp: str) -> None:
     _send(
         to,
-        "Your PersonaMirror verification code",
+        "Your SoMa Community verification code",
         "<div style='font-family:sans-serif;max-width:480px;margin:0 auto'>"
         "<h2 style='color:#1a1a1a'>Verify your email</h2>"
-        "<p>Enter this code to activate your PersonaMirror account:</p>"
+        "<p>Enter this code to activate your SoMa Community account:</p>"
         + _otp_block(otp)
         + "</div>",
     )
@@ -41,7 +41,7 @@ def send_otp_email(to: str, otp: str) -> None:
 def send_reset_pin_email(to: str, otp: str) -> None:
     _send(
         to,
-        "Reset your PersonaMirror PIN",
+        "Reset your SoMa Community PIN",
         "<div style='font-family:sans-serif;max-width:480px;margin:0 auto'>"
         "<h2 style='color:#1a1a1a'>Reset your PIN</h2>"
         "<p>Enter this code to set a new 4-digit PIN:</p>"

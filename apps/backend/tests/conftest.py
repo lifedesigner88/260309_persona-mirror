@@ -12,6 +12,7 @@ if str(BACKEND_ROOT) not in sys.path:
 os.environ.setdefault("JWT_SECRET_KEY", "persona-mirror-test-secret-key-2026")
 os.environ.setdefault("AUTH_COOKIE_SECURE", "false")
 os.environ.setdefault("BACKEND_CORS_ORIGINS", "http://localhost:3000")
+os.environ.setdefault("ADMIN_SEED_EMAIL", "parksejong88@gmail.com")
 os.environ.setdefault(
     "DATABASE_URL",
     f"sqlite+pysqlite:///{Path(tempfile.gettempdir()) / 'persona_mirror_backend_test.sqlite3'}",
@@ -26,8 +27,8 @@ from app.main import app
 
 DEFAULT_PASSWORD = "1234"
 DEFAULT_EMAIL = "alice@example.com"
-ADMIN_EMAIL = "admin@example.com"
-ADMIN_PASSWORD = "Admin#2026!Mirror"
+ADMIN_EMAIL = "parksejong88@gmail.com"
+ADMIN_PASSWORD = "2026"
 
 
 @pytest.fixture(autouse=True)

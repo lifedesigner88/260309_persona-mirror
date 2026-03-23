@@ -81,7 +81,7 @@ def test_admin_can_get_another_users_capture_job(user_session, login_user):
     assert create_response.status_code == 201
     created_job = create_response.json()
 
-    login_user("admin@example.com", "Admin#2026!Mirror")
+    login_user("parksejong88@gmail.com", "2026")
     admin_get_response = client.get(f"/capture/jobs/{created_job['id']}")
 
     assert admin_get_response.status_code == 200

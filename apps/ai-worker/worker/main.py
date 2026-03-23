@@ -11,18 +11,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from sqlalchemy import create_engine, select, update  # noqa: E402
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, create_engine, func, select, text, update  # noqa: E402
 from sqlalchemy.orm import Session, declarative_base, mapped_column, relationship  # noqa: E402
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, func, text  # noqa: E402
 from sqlalchemy.orm import Mapped  # noqa: E402
 
 from worker.graph import graph  # noqa: E402
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://persona:persona@localhost:5432/persona_mirror")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set to a Supabase Postgres connection string.")
+
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL_SECONDS", "5"))
 _ID_CHARSET = string.ascii_uppercase + string.digits
 
-engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+engine_kwargs: dict = {"future": True, "pool_pre_ping": True}
+
+if "pooler.supabase.com" in DATABASE_URL:
+    # Supabase transaction pooler (PgBouncer) does not support prepared statements.
+    engine_kwargs["connect_args"] = {"prepare_threshold": None}
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 Base = declarative_base()
 
 

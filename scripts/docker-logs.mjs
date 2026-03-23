@@ -3,11 +3,10 @@ import { spawn, spawnSync } from "node:child_process";
 const children = [];
 
 function containerExists(name) {
-  const result = spawnSync(
-    "docker",
-    ["container", "inspect", name],
-    { stdio: "ignore", shell: false }
-  );
+  const result = spawnSync("docker", ["container", "inspect", name], {
+    stdio: "ignore",
+    shell: false
+  });
   return result.status === 0;
 }
 
@@ -18,7 +17,7 @@ function watch(command, args, label) {
   children.push(child);
 }
 
-watch("docker", ["compose", "logs", "-f", "db", "redis"], "compose");
+watch("docker", ["compose", "logs", "-f", "backend", "frontend", "ai-worker"], "compose");
 
 if (containerExists("persona-mirror-backend")) {
   watch("docker", ["logs", "-f", "persona-mirror-backend"], "backend");
@@ -26,6 +25,10 @@ if (containerExists("persona-mirror-backend")) {
 
 if (containerExists("persona-mirror-frontend")) {
   watch("docker", ["logs", "-f", "persona-mirror-frontend"], "frontend");
+}
+
+if (containerExists("persona-mirror-ai-worker")) {
+  watch("docker", ["logs", "-f", "persona-mirror-ai-worker"], "ai-worker");
 }
 
 function shutdown() {

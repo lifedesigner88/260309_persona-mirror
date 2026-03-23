@@ -4,14 +4,14 @@
     "signup": "회원가입",
     "login": "로그인",
     "adminUsers": "관리자 목록",
-    "capture": "캡처",
-    "mySubmissions": "내 제출 목록",
-    "demoPersona": "데모 페르소나",
-    "sejongPersona": "세종 페르소나"
+    "capture": "페르소나 구조",
+    "mySubmissions": "더미 제출 목록",
+    "demoPersona": "만든 사람",
+    "sejongPersona": "만든 사람"
   },
   "sidebar": {
-    "phase": "Phase 1 스타터",
-    "tagline": "인증, 관리자 접근, 첫 번째 멀티모달 워크플로우 셸을 위한 아이덴티티 캡처 스타터.",
+    "phase": "AI SW Maestro",
+    "tagline": "서울 + 부산 450명의 17기 동료를 알아가기 위한 서비스",
     "currentBaseline": "현재 기준선",
     "sessionTitle": "세션",
     "signedInAs": "{{userId}} 로그인 중",
@@ -19,30 +19,30 @@
     "guest": "게스트",
     "adminSession": "관리자 세션",
     "memberSession": "회원 세션",
-    "footer": "인증, 관리자 목록, DB 시드, 개발 런타임이 모두 연결되어 있습니다."
+    "footer": "회원가입, 인증 승인, 대시보드 조회 흐름이 먼저 완성되고 있습니다."
   },
   "home": {
-    "pill": "스타터 개요",
-    "heading": "나중에 기반을 다시 만들지 않고도 실제 페르소나 플로우를 구축할 수 있을 만큼 탄탄합니다.",
-    "description": "인증, 관리자 권한 경계, Postgres 연결, React Router 데이터 API, 로컬 개발 오케스트레이션이 이미 정렬되어 있습니다.",
+    "pill": "커뮤니티 리팩토링",
+    "heading": "소프트웨어마에스트로 합격자 인증과 팀빌딩을 위한 커뮤니티 서비스로 재구성 중입니다.",
+    "description": "지금 우선순위는 이메일 가입, 17기 인증, 관리자 승인, 면접자 대시보드입니다. 페르소나 기능은 만든 사람의 더미 데이터만 남겨두고 이후 팀빌딩 단계에서 확장할 예정입니다.",
     "loggedIn": "로그인: {{userId}}",
     "guestMode": "게스트 모드",
     "adminAccess": "관리자 권한",
     "checkBackend": "백엔드 상태 확인",
     "checkingBackend": "확인 중...",
-    "createAccount": "테스트 계정 만들기",
+    "createAccount": "커뮤니티 계정 만들기",
     "runtimeSignal": "런타임 신호",
     "backendApi": "백엔드 API",
     "authMode": "인증 방식",
     "authModeValue": "httpOnly 쿠키",
     "healthState": "헬스 상태",
     "cards": {
-      "authTitle": "인증 기반",
-      "authText": "회원가입, 로그인, 로그아웃, 관리자 세션 확인 및 시드 관리자 접근이 이미 연결되어 있습니다.",
-      "uiTitle": "UI 방향",
-      "uiText": "Tailwind + shadcn/ui가 적용되어 있어 기본 요소를 다시 만들지 않고도 다음 화면을 일관되게 유지할 수 있습니다.",
+      "authTitle": "가입과 인증",
+      "authText": "이메일 OTP, 4자리 PIN 로그인, 합격자 인증 신청과 승인 플로우가 연결되어 있습니다.",
+      "uiTitle": "대시보드 중심",
+      "uiText": "모바일에서도 빠르게 방과 좌석 현황을 볼 수 있도록 면접자 대시보드를 제품 중심 화면으로 다듬고 있습니다.",
       "nextTitle": "다음 단계",
-      "nextText": "인터뷰 입력, 미디어 업로드 플로우, 비동기 생성 오케스트레이션이 자연스러운 후속 작업입니다."
+      "nextText": "서울팀과 부산팀 구분, 실제 면접 스케줄 정리, 팀빌딩용 커뮤니티 프로필이 다음 핵심 작업입니다."
     }
   },
   "button": {

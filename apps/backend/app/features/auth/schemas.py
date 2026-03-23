@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, StringConstraints
@@ -50,3 +50,15 @@ class UserResponse(BaseModel):
     email: str
     is_admin: bool
     created_at: datetime
+    github_address: str | None = None
+    notion_url: str | None = None
+    name: str | None = None
+    gender: str | None = None
+    birth_date: date | None = None
+    residence: str | None = None
+    phone: str | None = None
+    interview_date: date | None = None
+    interview_start_time: time | None = None
+    interview_time_slot: int | None = None
+    interview_room: int | None = None
+    applicant_status: str = "none"

@@ -3,9 +3,10 @@ import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://persona:persona@localhost:5432/persona_mirror"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set to a Supabase Postgres connection string.")
 
 engine_kwargs: dict = {"future": True, "pool_pre_ping": True}
 

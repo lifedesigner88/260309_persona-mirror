@@ -1,4 +1,5 @@
 import os
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -23,16 +24,50 @@ from .models import User
 from .schemas import LoginRequest, ResetPinConfirm, ResetPinRequest, SessionResponse, SignupRequest, UserResponse, VerifyRequest
 
 security_scheme = HTTPBearer(auto_error=False)
-ADMIN_SEED_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "Admin#2026!Mirror")
-ADMIN_SEED_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "admin@example.com")
+
+
+def _read_admin_seed_password() -> str:
+    password = os.getenv("ADMIN_SEED_PASSWORD", "2026")
+    if re.fullmatch(r"\d{4}", password) is None:
+        raise RuntimeError("ADMIN_SEED_PASSWORD must be exactly 4 digits to match the PIN login flow.")
+    return password
+
+
+ADMIN_SEED_PASSWORD = _read_admin_seed_password()
+ADMIN_SEED_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "parksejong88@gmail.com")
+LEGACY_ADMIN_SEED_EMAILS = ("admin@example.com",)
 
 
 def to_user_response(user: User) -> UserResponse:
-    return UserResponse(user_id=user.user_id, email=user.email, is_admin=user.is_admin, created_at=user.created_at)
+    return UserResponse(
+        user_id=user.user_id,
+        email=user.email,
+        is_admin=user.is_admin,
+        created_at=user.created_at,
+        github_address=user.github_address,
+        notion_url=user.notion_url,
+        name=user.name,
+        gender=user.gender,
+        birth_date=user.birth_date,
+        residence=user.residence,
+        phone=user.phone,
+        interview_date=user.interview_date,
+        interview_start_time=user.interview_start_time,
+        interview_time_slot=user.interview_time_slot,
+        interview_room=user.interview_room,
+        applicant_status=user.applicant_status,
+    )
 
 
 def sync_admin_seed(db: Session) -> None:
     admin = db.scalar(select(User).where(User.email == ADMIN_SEED_EMAIL))
+    if admin is None:
+        admin = db.scalar(
+            select(User).where(
+                User.is_admin.is_(True),
+                User.email.in_(LEGACY_ADMIN_SEED_EMAILS),
+            )
+        )
     if admin is None:
         db.add(
             User(

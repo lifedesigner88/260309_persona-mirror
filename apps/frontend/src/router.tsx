@@ -21,7 +21,10 @@ import {
   submitCaptureAction,
   voiceAction,
 } from "./features/capture";
+import { DashboardPage } from "./features/dashboard";
 import { PersonaPage, personaLoader } from "./features/persona";
+import { VerificationPage } from "./features/verification";
+import { AdminVerificationsPage } from "./features/admin";
 
 export const router = createBrowserRouter([
   {
@@ -101,6 +104,18 @@ export const router = createBrowserRouter([
         path: "admin/users",
         element: <AdminUsersPage />,
         loader: adminUsersLoader
+      },
+      {
+        path: "admin/verifications",
+        element: <AdminVerificationsPage />,
+      },
+      {
+        path: "verification",
+        element: <VerificationPage />,
+      },
+      {
+        path: "dashboard",
+        element: <DashboardPage />,
       },
       {
         path: "persona/:personId",

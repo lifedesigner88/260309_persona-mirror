@@ -13,16 +13,23 @@ import { useTranslation } from "react-i18next";
 
 import { Button, LangToggle, ShellCard, StatusPill } from "@/common/components";
 import { LogoutButton, type RootLoaderData } from "@/features/auth";
+import { KAKAO_OPEN_CHAT_URL } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 type HealthLoaderData = { initialStatus: string };
 type HealthActionData = { result: string };
+type NavigationItem = {
+  to: string;
+  label: string;
+  disabled?: boolean;
+  hoverTitle?: string;
+};
 
 async function requestHealthStatus(): Promise<string> {
   const response = await fetch(`${API_BASE_URL}/health`, {
-    credentials: "include",
+    credentials: "include"
   });
   if (!response.ok) {
     throw new Error(`Backend request failed: ${response.status}`);
@@ -34,24 +41,45 @@ async function requestHealthStatus(): Promise<string> {
 export function App() {
   const { t, i18n } = useTranslation("common");
   const { sessionUser } = useLoaderData() as RootLoaderData;
-  const navigationItems = [
-    { to: "/", label: t("nav.overview") },
-    ...(!sessionUser ? [{ to: "/auth/signup", label: t("nav.signup") }, { to: "/auth/login", label: t("nav.login") }] : []),
-    ...(sessionUser?.is_admin ? [{ to: "/admin/users", label: t("nav.adminUsers") }] : []),
-    ...(sessionUser ? [{ to: "/capture", label: t("nav.capture") }, { to: "/capture/submissions", label: t("nav.mySubmissions") }] : []),
-    { to: "/persona/sejong", label: t("nav.sejongPersona") },
+  const navigationItems: NavigationItem[] = [
+    { to: "/dashboard", label: "대시보드 - 서울" },
+    { to: "/dashboard/busan", label: "대시보드 - 부산", disabled: true, hoverTitle: "Coming soon" },
+    ...(!sessionUser
+      ? [
+          { to: "/auth/signup", label: t("nav.signup") },
+          { to: "/auth/login", label: t("nav.login") }
+        ]
+      : []),
+    ...(sessionUser
+      ? [
+          {
+            to: "/verification",
+            label: sessionUser.applicant_status === "approved" ? "내 인증정보 수정" : "합격자 인증"
+          }
+        ]
+      : []),
+    ...(sessionUser?.is_admin
+      ? [
+          { to: "/admin/users", label: t("nav.adminUsers") },
+          { to: "/admin/verifications", label: "인증 관리" }
+        ]
+      : []),
+    // Capture navigation is intentionally hidden for now.
+    // We'll bring this tab back later when persona-based team-building features are prioritized again.
+    { to: "/persona/sejong", label: t("nav.sejongPersona") }
   ];
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <main className="mx-auto min-h-screen max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-6 lg:h-fit">
           <ShellCard
             className="overflow-hidden transition-all duration-500"
             style={{
-              background: i18n.resolvedLanguage === "ko"
-                ? "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(252,241,240,0.92))"
-                : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(235,241,255,0.92))",
+              background:
+                i18n.resolvedLanguage === "ko"
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(252,241,240,0.92))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(235,241,255,0.92))"
             }}
           >
             <div className="flex items-center justify-between">
@@ -59,52 +87,64 @@ export function App() {
               <LangToggle />
             </div>
             <div className="mt-4 space-y-3">
-              <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground">
-                PersonaMirror
-              </h1>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {t("sidebar.tagline")}
-              </p>
+              <NavLink to="/" className="group inline-flex w-fit flex-col" end>
+                <h1 className="text-4xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground transition group-hover:text-foreground/85">
+                  <span className="block">ASM 17</span>
+                  <span className="mt-1 block">Community</span>
+                </h1>
+              </NavLink>
+              <p className="text-sm leading-6 text-muted-foreground">{t("sidebar.tagline")}</p>
             </div>
             <nav className="mt-8 grid gap-2">
-              {navigationItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn(
-                      "rounded-2xl px-4 py-3 text-sm font-medium transition",
-                      isActive
-                        ? "bg-foreground text-background shadow-sm"
-                        : "text-foreground/75 hover:bg-black/5 hover:text-foreground"
-                    )
-                  }
-                  end={item.to === "/"}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+              {navigationItems.map((item) =>
+                item.disabled ? (
+                  <span
+                    key={item.to}
+                    aria-disabled="true"
+                    title={item.hoverTitle}
+                    className="cursor-not-allowed rounded-2xl border border-dashed border-border/70 px-4 py-3 text-sm font-medium text-foreground/40 transition hover:border-foreground/25 hover:bg-black/5"
+                  >
+                    {item.label}
+                  </span>
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "rounded-2xl px-4 py-3 text-sm font-medium transition",
+                        isActive
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-foreground/75 hover:bg-black/5 hover:text-foreground"
+                      )
+                    }
+                    end={item.to === "/"}
+                  >
+                    {item.label}
+                  </NavLink>
+                )
+              )}
             </nav>
-            <div className="mt-8 rounded-2xl border border-black/5 bg-white/70 p-4 text-sm text-muted-foreground">
-              <div className="flex items-center justify-between gap-3">
-                <span>{t("sidebar.currentBaseline")}</span>
-                <StatusPill
-                  label={sessionUser ? (sessionUser.is_admin ? t("sidebar.adminSession") : t("sidebar.memberSession")) : t("sidebar.guest")}
-                  tone={sessionUser?.is_admin ? "success" : "default"}
-                />
-              </div>
-              <div className="mt-3 rounded-2xl border border-border/70 bg-white/80 px-3 py-3">
-                <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("sidebar.sessionTitle")}</div>
-                <div className="mt-2 text-sm font-medium text-foreground">
-                  {sessionUser ? t("sidebar.signedInAs", { userId: sessionUser.user_id }) : t("sidebar.notSignedIn")}
-                </div>
-                {sessionUser ? (
-                  <div className="mt-3">
-                    <LogoutButton className="w-full" />
-                  </div>
-                ) : null}
-              </div>
-              <div className="mt-2 text-foreground">{t("sidebar.footer")}</div>
+            <div className="mt-8 space-y-3 rounded-2xl border border-black/5 bg-white/70 p-4 text-sm">
+              {sessionUser ? (
+                <LogoutButton className="w-full rounded-2xl border border-stone-200 bg-white/88 px-4 py-3 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-white" />
+              ) : null}
+              <a
+                href={KAKAO_OPEN_CHAT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl px-1 text-sm text-muted-foreground transition hover:text-foreground"
+              >
+                오픈채팅방 바로가기
+              </a>
+              <a
+                href={KAKAO_OPEN_CHAT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-[#E7D486] bg-[#F3E19A] px-4 py-3 text-sm font-semibold text-[#3A3522] shadow-sm transition hover:bg-[#ECD67E]"
+              >
+                1:1 문의하기
+              </a>
             </div>
           </ShellCard>
         </aside>
@@ -144,7 +184,7 @@ export function HomePage() {
   const cards = [
     { title: t("home.cards.authTitle"), text: t("home.cards.authText") },
     { title: t("home.cards.uiTitle"), text: t("home.cards.uiText") },
-    { title: t("home.cards.nextTitle"), text: t("home.cards.nextText") },
+    { title: t("home.cards.nextTitle"), text: t("home.cards.nextText") }
   ];
 
   return (
@@ -162,10 +202,16 @@ export function HomePage() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <StatusPill
-                  label={sessionUser ? t("home.loggedIn", { userId: sessionUser.user_id }) : t("home.guestMode")}
+                  label={
+                    sessionUser
+                      ? t("home.loggedIn", { userId: sessionUser.user_id })
+                      : t("home.guestMode")
+                  }
                   tone={sessionUser ? "success" : "default"}
                 />
-                {sessionUser?.is_admin ? <StatusPill label={t("home.adminAccess")} tone="success" /> : null}
+                {sessionUser?.is_admin ? (
+                  <StatusPill label={t("home.adminAccess")} tone="success" />
+                ) : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -237,8 +283,12 @@ export function RouteErrorBoundary() {
     return (
       <ShellCard className="mx-auto max-w-2xl border-amber-200 bg-amber-50/90">
         <StatusPill label={`${t("error.routeError")} ${error.status}`} tone="warn" />
-        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{error.statusText || t("error.routeError")}</h2>
-        <p className="mt-3 text-sm leading-6 text-amber-900">{typeof error.data === "string" ? error.data : t("error.pageNotLoaded")}</p>
+        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">
+          {error.statusText || t("error.routeError")}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-amber-900">
+          {typeof error.data === "string" ? error.data : t("error.pageNotLoaded")}
+        </p>
       </ShellCard>
     );
   }
@@ -247,7 +297,9 @@ export function RouteErrorBoundary() {
     return (
       <ShellCard className="mx-auto max-w-2xl border-red-200 bg-red-50/90">
         <StatusPill label={t("error.routeError")} tone="warn" />
-        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{t("error.unexpectedError")}</h2>
+        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">
+          {t("error.unexpectedError")}
+        </h2>
         <p className="mt-3 text-sm leading-6 text-red-800">{error.message}</p>
       </ShellCard>
     );
