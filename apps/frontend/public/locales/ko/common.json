@@ -30,28 +30,79 @@
     "footer": "회원가입, 인증 승인, 대시보드 조회 흐름이 먼저 완성되고 있습니다."
   },
   "home": {
-    "pill": "커뮤니티 리팩토링",
-    "heading": "소프트웨어마에스트로 합격자 인증과 팀빌딩을 위한 커뮤니티 서비스로 재구성 중입니다.",
-    "description": "지금 우선순위는 이메일 가입, 17기 인증, 관리자 승인, 면접자 대시보드입니다. 페르소나 기능은 만든 사람의 더미 데이터만 남겨두고 이후 팀빌딩 단계에서 확장할 예정입니다.",
+    "pill": "ASM17 Team Building",
+    "heading": "ASM17 팀빌딩 전 탐색용 커뮤니티 앱",
+    "description": "채팅방 링크 몇 개만으로는 팀원을 판단하기 어려워, 같이 면접 본 사람들의 정보를 바탕으로 GitHub와 자기소개 링크를 먼저 보게 만들었습니다.",
+    "visibilityNote": "멤버 정보는 17기 인증을 완료한 이메일 계정끼리만 서로 볼 수 있습니다.",
     "loggedIn": "로그인: {{userId}}",
     "guestMode": "게스트 모드",
     "adminAccess": "관리자 권한",
-    "checkBackend": "백엔드 상태 확인",
-    "checkingBackend": "확인 중...",
-    "createAccount": "커뮤니티 계정 만들기",
-    "runtimeSignal": "런타임 신호",
-    "backendApi": "백엔드 API",
-    "authMode": "인증 방식",
-    "authModeValue": "httpOnly 쿠키",
-    "healthState": "헬스 상태",
-    "cards": {
-      "authTitle": "가입과 인증",
-      "authText": "이메일 OTP, 4자리 PIN 로그인, 합격자 인증 신청과 승인 플로우가 연결되어 있습니다.",
-      "uiTitle": "대시보드 중심",
-      "uiText": "모바일에서도 빠르게 방과 좌석 현황을 볼 수 있도록 면접자 대시보드를 제품 중심 화면으로 다듬고 있습니다.",
-      "nextTitle": "다음 단계",
-      "nextText": "서울팀과 부산팀 구분, 실제 면접 스케줄 정리, 팀빌딩용 커뮤니티 프로필이 다음 핵심 작업입니다."
-    }
+    "runtimeLabel": "작은 재미",
+    "runtimeTitle": "백엔드 콕",
+    "runtimeButton": "백엔드 콕",
+    "runtimeButtonLoading": "콕...",
+    "runtimeLatency": "응답 시간",
+    "runtimeLatencyIdle": "-",
+    "runtimeLatencyValue": "{{ms}}ms",
+    "runtimeStatusIdle": "대기",
+    "runtimeStatusOk": "정상",
+    "runtimeStatusFailed": "실패",
+    "keywords": [
+      "17기 합격인증",
+      "같이 면접 본 사람들",
+      "GitHub",
+      "Notion 소개",
+      "같은 슬롯 탐색",
+      "팀빌딩 전 파악"
+    ],
+    "flowLabel": "현재 핵심 흐름",
+    "flowTitle": "가입부터 팀빌딩 전 탐색까지",
+    "flowSteps": [
+      {
+        "title": "회원가입",
+        "text": "이메일과 PIN으로 계정을 만듭니다."
+      },
+      {
+        "title": "17기 합격인증",
+        "text": "합격자 인증 정보를 입력하고 승인 흐름으로 들어갑니다."
+      },
+      {
+        "title": "면접 정보 입력",
+        "text": "면접 날짜와 시작 시간을 넣습니다."
+      },
+      {
+        "title": "프로필 링크 연결",
+        "text": "GitHub와 자기소개 Notion 링크를 추가합니다."
+      },
+      {
+        "title": "같이 면접 본 사람들 보기",
+        "text": "같이 면접 본 사람들의 GitHub와 소개 링크를 먼저 봅니다."
+      },
+      {
+        "title": "팀빌딩 전 판단",
+        "text": "이야기해볼 사람을 더 빨리 좁힙니다."
+      }
+    ],
+    "featuresLabel": "주요 기능",
+    "featuresTitle": "현재 들어 있는 기능",
+    "featuresSummary": "기능 설명도 길게 풀기보다 현재 동작하는 단위로 정리했습니다.",
+    "featureItems": [
+      "회원가입",
+      "로그인",
+      "PIN 재설정",
+      "17기 합격인증",
+      "면접 일정 입력",
+      "GitHub 링크",
+      "Notion 소개 링크",
+      "같이 면접 본 사람들 보기",
+      "Creator PR",
+      "관리자 승인",
+      "한/영 UI"
+    ],
+    "futureLabel": "앞으로의 방향",
+    "futureTitle": "충분한 맥락이 쌓이면 그 다음을 확장합니다.",
+    "futureSummary": "지금은 팀빌딩 전 탐색이 핵심이고, 이후에 비슷한 방향성 추천까지 확장하고 싶습니다.",
+    "futureItems": ["비슷한 비전 추천", "AI 보조 매칭", "팀빌딩 shortlist", "참가자 프로필 확장"]
   },
   "button": {
     "logout": "로그아웃",
