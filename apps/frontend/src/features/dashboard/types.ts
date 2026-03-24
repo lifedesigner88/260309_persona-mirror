@@ -24,4 +24,10 @@ export type MemberCard = {
   email: string | null;
   github_address: string | null;
   notion_url: string | null;
+  is_checked?: boolean;
+};
+
+export type MemberCheckState = {
+  target_user_id: number;
+  is_checked: boolean;
 };

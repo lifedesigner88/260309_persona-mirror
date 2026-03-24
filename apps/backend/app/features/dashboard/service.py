@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.features.auth.models import User
 
-from .schemas import DashboardGrid, MemberCard, SlotCell
+from .models import MemberCheck
+from .schemas import DashboardGrid, MemberCard, MemberCheckState, SlotCell
 
 # 면접 날짜 4일
 INTERVIEW_DATES = [
@@ -29,6 +30,14 @@ def _color(user: User | None) -> str:
     if user.gender == "F":
         return "pink"
     return "gray"
+
+
+def _require_dashboard_member_access(current_user: User) -> None:
+    if not current_user.is_admin and current_user.applicant_status != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="관리자 또는 17기 합격자 인증을 완료한 회원만 조회할 수 있습니다.",
+        )
 
 
 def get_dashboard(db: Session) -> DashboardGrid:
@@ -80,11 +89,7 @@ def get_slot_members(
     current_user: User,
     db: Session,
 ) -> list[MemberCard]:
-    if not current_user.is_admin and current_user.applicant_status != "approved":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="관리자 또는 17기 합격자 인증을 완료한 회원만 조회할 수 있습니다.",
-        )
+    _require_dashboard_member_access(current_user)
 
     users = db.scalars(
         select(User).where(
@@ -97,6 +102,18 @@ def get_slot_members(
 
     # 자리 번호 순으로 정렬 (등록 순서 기준 — user_id asc)
     users_sorted = sorted(users, key=lambda u: u.user_id)
+    checked_user_ids: set[int] = set()
+    if users_sorted:
+        checked_user_ids = set(
+            db.scalars(
+                select(MemberCheck.target_user_id).where(
+                    MemberCheck.viewer_user_id == current_user.user_id,
+                    MemberCheck.is_checked.is_(True),
+                    MemberCheck.target_user_id.in_([user.user_id for user in users_sorted]),
+                )
+            )
+            .all()
+        )
 
     cards: list[MemberCard] = []
     for seat in range(1, DISPLAY_SEATS_PER_ROOM + 1):
@@ -112,6 +129,46 @@ def get_slot_members(
                 email=user.email if user else None,
                 github_address=user.github_address if user else None,
                 notion_url=user.notion_url if user else None,
+                is_checked=user.user_id in checked_user_ids if user else False,
             )
         )
     return cards
+
+
+def set_member_check(
+    target_user_id: int,
+    is_checked: bool,
+    current_user: User,
+    db: Session,
+) -> MemberCheckState:
+    _require_dashboard_member_access(current_user)
+
+    target_user = db.scalar(
+        select(User).where(
+            User.user_id == target_user_id,
+            User.applicant_status == "approved",
+        )
+    )
+    if target_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="대상 멤버를 찾을 수 없습니다.")
+
+    member_check = db.scalar(
+        select(MemberCheck).where(
+            MemberCheck.viewer_user_id == current_user.user_id,
+            MemberCheck.target_user_id == target_user_id,
+        )
+    )
+
+    if member_check is None:
+        member_check = MemberCheck(
+            viewer_user_id=current_user.user_id,
+            target_user_id=target_user_id,
+            is_checked=is_checked,
+        )
+        db.add(member_check)
+    else:
+        member_check.is_checked = is_checked
+
+    db.commit()
+
+    return MemberCheckState(target_user_id=target_user_id, is_checked=is_checked)

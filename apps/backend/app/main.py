@@ -14,6 +14,7 @@ from app.features.auth.router import router as auth_router
 from app.features.auth.service import sync_admin_seed
 from app.features.capture import models as capture_models  # noqa: F401
 from app.features.capture.router import router as capture_router
+from app.features.dashboard import models as dashboard_models  # noqa: F401
 from app.features.dashboard.router import router as dashboard_router
 from app.features.persona import models as persona_models  # noqa: F401
 from app.features.persona.router import router as persona_router

@@ -9,7 +9,12 @@ export function StatusPill({ label, tone = "default" }: { label: string; tone?: 
         : "bg-slate-100 text-slate-700";
 
   return (
-    <span className={cn("inline-flex rounded-full px-3 py-1 text-xs font-medium tracking-wide", toneClass)}>
+    <span
+      className={cn(
+        "inline-flex shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium tracking-wide",
+        toneClass
+      )}
+    >
       {label}
     </span>
   );

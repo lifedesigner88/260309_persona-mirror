@@ -32,3 +32,13 @@ class MemberCard(BaseModel):
     email: str | None
     github_address: str | None
     notion_url: str | None
+    is_checked: bool = False
+
+
+class MemberCheckUpdate(BaseModel):
+    is_checked: bool
+
+
+class MemberCheckState(BaseModel):
+    target_user_id: int
+    is_checked: bool

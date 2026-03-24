@@ -1,18 +1,29 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useRouteLoaderData } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button, ShellCard, StatusPill } from "@/common/components";
 import type { RootLoaderData } from "@/features/auth/types";
-import { formatInterviewRoom, formatInterviewTimeSlot } from "@/lib/interview";
-import { fetchDashboard, fetchSlotMembers } from "../api";
+import { formatInterviewTimeSlot } from "@/lib/interview";
+import { fetchDashboard, fetchSlotMembers, updateMemberCheck } from "../api";
 import type { DashboardGrid, MemberCard, SlotCell } from "../types";
 
 const INTERVIEW_DATES = ["2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22"];
-const DATE_LABELS: Record<string, string> = {
-  "2026-03-19": "3/19 (목)",
-  "2026-03-20": "3/20 (금)",
-  "2026-03-21": "3/21 (토)",
-  "2026-03-22": "3/22 (일)"
+type AppLanguage = "en" | "ko";
+
+const DATE_LABELS: Record<AppLanguage, Record<string, string>> = {
+  ko: {
+    "2026-03-19": "3/19 (목)",
+    "2026-03-20": "3/20 (금)",
+    "2026-03-21": "3/21 (토)",
+    "2026-03-22": "3/22 (일)"
+  },
+  en: {
+    "2026-03-19": "3/19 (Thu)",
+    "2026-03-20": "3/20 (Fri)",
+    "2026-03-21": "3/21 (Sat)",
+    "2026-03-22": "3/22 (Sun)"
+  }
 };
 const MOBILE_DATE_GROUPS = [
   ["2026-03-19", "2026-03-20"],
@@ -58,6 +69,14 @@ const DEMO_PREVIEW_CARDS: SlotDialogCard[] = [
 
 function slotKey(date: string, timeSlot: number, room: number) {
   return `${date}|${timeSlot}|${room}`;
+}
+
+function normalizeLanguage(language: string | undefined): AppLanguage {
+  return language === "ko" ? "ko" : "en";
+}
+
+function getDateLabel(date: string, language: string | undefined) {
+  return DATE_LABELS[normalizeLanguage(language)][date] ?? date;
 }
 
 function slotSummary(cells: SlotCell[]): SlotSummary {
@@ -191,15 +210,19 @@ function timeSlotBoardClass(date: string, isActive: boolean) {
 
 function DepartmentRowButton({
   date,
+  dateLabel,
   timeSlot,
   room,
+  roomLabel,
   cells,
   isSelected,
   onSelect
 }: {
   date: string;
+  dateLabel: string;
   timeSlot: number;
   room: number;
+  roomLabel: string;
   cells: SlotCell[];
   isSelected: boolean;
   onSelect: (date: string, timeSlot: number, room: number) => void;
@@ -211,11 +234,11 @@ function DepartmentRowButton({
   return (
     <button
       onClick={() => onSelect(date, timeSlot, room)}
-      title={`${DATE_LABELS[date]} ${formatInterviewTimeSlot(timeSlot)} ${formatInterviewRoom(room)}`}
-      aria-label={`${DATE_LABELS[date]} ${formatInterviewTimeSlot(timeSlot)} ${formatInterviewRoom(room)}`}
+      title={`${dateLabel} ${formatInterviewTimeSlot(timeSlot)} ${roomLabel}`}
+      aria-label={`${dateLabel} ${formatInterviewTimeSlot(timeSlot)} ${roomLabel}`}
       className={`flex w-full items-center justify-between gap-2 rounded-xl border px-2 py-1.5 text-left transition ${tone.card}`}
     >
-      <span className="sr-only">{formatInterviewRoom(room)}</span>
+      <span className="sr-only">{roomLabel}</span>
       <div className="grid flex-1 grid-cols-5 gap-1.5">
         {visibleCells.map((cell) => (
           <span
@@ -303,8 +326,8 @@ function MemberIconLink({
   if (disabled || !href) {
     return (
       <span
-        aria-label={`${label} 없음`}
-        title={`${label} 없음`}
+        aria-label={title}
+        title={title}
         className={`${baseClass} border-border/50 bg-white/55 text-muted-foreground/40`}
       >
         {children}
@@ -343,7 +366,16 @@ function MemberIconLink({
   );
 }
 
-function MemberCardItem({ card }: { card: SlotDialogCard }) {
+function MemberCardItem({
+  card,
+  isSavingCheck = false,
+  onTogglePersistedCheck
+}: {
+  card: SlotDialogCard;
+  isSavingCheck?: boolean;
+  onTogglePersistedCheck?: (card: SlotDialogCard, nextChecked: boolean) => void;
+}) {
+  const { t } = useTranslation("common");
   const [copied, setCopied] = useState(false);
   const [demoSeen, setDemoSeen] = useState(false);
   const inlineProfile = [card.birth_year ? `${card.birth_year}` : null, card.residence].filter(Boolean);
@@ -382,8 +414,8 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
   if (card.previewState === "locked") {
     return (
       <div className="flex min-h-[188px] flex-col items-center justify-center rounded-2xl border border-dashed border-pink-200 bg-pink-50/85 p-4 text-center">
-        <span className="text-sm font-semibold text-pink-800">17기 인증 후</span>
-        <span className="mt-1 text-[11px] text-pink-700/80">열람 가능</span>
+        <span className="text-sm font-semibold text-pink-800">{t("dashboard.lockedLine1")}</span>
+        <span className="mt-1 text-[11px] text-pink-700/80">{t("dashboard.lockedLine2")}</span>
       </div>
     );
   }
@@ -391,9 +423,11 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
   if (!card.user_id) {
     return (
       <div className="flex min-h-[188px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/50 bg-gray-50/90 p-4 text-center">
-        <span className="text-sm font-semibold text-muted-foreground">미신청</span>
+        <span className="text-sm font-semibold text-muted-foreground">
+          {t("dashboard.memberMissingTitle")}
+        </span>
         <span className="mt-1 text-[11px] text-muted-foreground/60">
-          등록된 멤버 정보가 아직 없습니다.
+          {t("dashboard.memberMissingBody")}
         </span>
       </div>
     );
@@ -420,7 +454,10 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
               </span>
             )}
             {card.previewState === "demo" && (
-              <span className="text-[12px] font-medium text-muted-foreground/80"> - 예시</span>
+              <span className="text-[12px] font-medium text-muted-foreground/80">
+                {" "}
+                {t("dashboard.demoSuffix")}
+              </span>
             )}
           </p>
 
@@ -430,21 +467,38 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
                 type="checkbox"
                 checked={demoSeen}
                 onChange={toggleDemoSeen}
+                aria-label={t("dashboard.demoSeenAria")}
                 className="h-3.5 w-3.5 rounded border-border/60 accent-emerald-500"
+              />
+            </label>
+          )}
+          {card.previewState !== "demo" && onTogglePersistedCheck && (
+            <label className="flex shrink-0 items-center">
+              <input
+                type="checkbox"
+                checked={Boolean(card.is_checked)}
+                onChange={() => onTogglePersistedCheck(card, !card.is_checked)}
+                aria-label={t("dashboard.memberSeenAria")}
+                disabled={isSavingCheck}
+                className="h-3.5 w-3.5 rounded border-border/60 accent-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </label>
           )}
         </div>
         {inlineProfile.length === 0 && (
-          <p className="mt-1 text-[11px] text-muted-foreground">출생연도 / 거주지역 미입력</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">{t("dashboard.missingProfile")}</p>
         )}
       </div>
 
       <div className="mt-4 space-y-2">
         <MemberIconLink
           href={card.email}
-          label={copied ? "Email copied" : "Email"}
-          title={card.email ? `이메일 복사: ${card.email}` : "이메일 없음"}
+          label={copied ? t("dashboard.actionEmailCopied") : t("dashboard.actionEmail")}
+          title={
+            card.email
+              ? t("dashboard.emailCopyTitle", { email: card.email })
+              : t("dashboard.emailUnavailableTitle")
+          }
           disabled={!card.email}
           onClick={copyEmail}
         >
@@ -452,16 +506,24 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
         </MemberIconLink>
         <MemberIconLink
           href={card.github_address}
-          label="GitHub"
-          title={card.github_address ? `GitHub 열기: ${card.github_address}` : "GitHub 링크 없음"}
+          label={t("dashboard.actionGithub")}
+          title={
+            card.github_address
+              ? t("dashboard.githubOpenTitle", { url: card.github_address })
+              : t("dashboard.githubUnavailableTitle")
+          }
           disabled={!card.github_address}
         >
           <GithubIcon />
         </MemberIconLink>
         <MemberIconLink
           href={card.notion_url}
-          label="Notion"
-          title={card.notion_url ? `Notion 열기: ${card.notion_url}` : "Notion 링크 없음"}
+          label={t("dashboard.actionNotion")}
+          title={
+            card.notion_url
+              ? t("dashboard.notionOpenTitle", { url: card.notion_url })
+              : t("dashboard.notionUnavailableTitle")
+          }
           disabled={!card.notion_url}
         >
           <NotionIcon />
@@ -472,19 +534,25 @@ function MemberCardItem({ card }: { card: SlotDialogCard }) {
 }
 
 function SomaLogoCard() {
+  const { t } = useTranslation("common");
+
   return (
     <div className="flex min-h-[188px] flex-col items-center justify-center rounded-2xl border border-sky-200/80 bg-[linear-gradient(160deg,rgba(240,249,255,0.98),rgba(255,255,255,0.94))] p-4 text-center shadow-sm">
-      <img src="/asm17_logo.png" alt="SoMa 17" className="h-16 w-auto object-contain sm:h-20" />
-      <div className="mt-3 text-sm font-semibold tracking-[-0.02em] text-sky-950">asm 17</div>
-      <div className="mt-1 text-[11px] text-sky-900/70">AI Software Maestro 17</div>
+      <img src="/asm17_logo.png" alt={t("dashboard.logoAlt")} className="h-16 w-auto object-contain sm:h-20" />
+      <div className="mt-3 text-sm font-semibold tracking-[-0.02em] text-sky-950">
+        {t("dashboard.logoTitle")}
+      </div>
+      <div className="mt-1 text-[11px] text-sky-900/70">{t("dashboard.logoSubtitle")}</div>
     </div>
   );
 }
 
 export function DashboardPage() {
+  const { t, i18n } = useTranslation("common");
   const rootData = useRouteLoaderData("root") as RootLoaderData;
   const navigate = useNavigate();
   const sessionUser = rootData.sessionUser;
+  const language = normalizeLanguage(i18n.resolvedLanguage);
   const canViewSlotMembers = Boolean(
     sessionUser?.is_admin || sessionUser?.applicant_status === "approved"
   );
@@ -496,6 +564,7 @@ export function DashboardPage() {
   const [members, setMembers] = useState<SlotDialogCard[] | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [savingMemberChecks, setSavingMemberChecks] = useState<Record<number, boolean>>({});
   const [countdown, setCountdown] = useState<CountdownParts>(() => getCountdownParts(Date.now()));
 
   useEffect(() => {
@@ -517,6 +586,7 @@ export function DashboardPage() {
     setSelected(null);
     setMembers(null);
     setMembersError(null);
+    setSavingMemberChecks({});
   }
 
   useEffect(() => {
@@ -546,6 +616,7 @@ export function DashboardPage() {
     setSelected({ date, timeSlot, room });
     setMembers(null);
     setMembersError(null);
+    setSavingMemberChecks({});
     setLoadingMembers(true);
 
     if (!canViewSlotMembers) {
@@ -565,6 +636,46 @@ export function DashboardPage() {
     setMembers(result.data ?? []);
   }
 
+  async function handlePersistedCheckToggle(card: SlotDialogCard, nextChecked: boolean) {
+    if (!card.user_id) {
+      return;
+    }
+
+    const targetUserId = card.user_id;
+    const previousChecked = Boolean(card.is_checked);
+
+    setMembersError(null);
+    setSavingMemberChecks((current) => ({ ...current, [targetUserId]: true }));
+    setMembers((current) =>
+      current?.map((item) =>
+        item.user_id === targetUserId ? { ...item, is_checked: nextChecked } : item
+      ) ?? null
+    );
+
+    const result = await updateMemberCheck(targetUserId, nextChecked);
+
+    if (result.error) {
+      setMembers((current) =>
+        current?.map((item) =>
+          item.user_id === targetUserId ? { ...item, is_checked: previousChecked } : item
+        ) ?? null
+      );
+      setMembersError(result.error);
+    } else if (result.data) {
+      setMembers((current) =>
+        current?.map((item) =>
+          item.user_id === targetUserId ? { ...item, is_checked: result.data?.is_checked } : item
+        ) ?? null
+      );
+    }
+
+    setSavingMemberChecks((current) => {
+      const next = { ...current };
+      delete next[targetUserId];
+      return next;
+    });
+  }
+
   const cellMap = new Map<string, SlotCell[]>();
   if (grid) {
     for (const cell of grid.cells) {
@@ -578,6 +689,12 @@ export function DashboardPage() {
   const timeSlots = [1, 2, 3, 4, 5];
   const selectedDateForActiveTimeSlot =
     selected && selected.timeSlot === activeTimeSlot ? selected.date : null;
+  const countdownItems = [
+    { label: t("dashboard.countdownDay"), value: countdown.days },
+    { label: t("dashboard.countdownHour"), value: countdown.hours },
+    { label: t("dashboard.countdownMin"), value: countdown.minutes },
+    { label: t("dashboard.countdownSec"), value: countdown.seconds }
+  ];
 
   function toggleTimeSlotHighlight(timeSlot: number) {
     setActiveTimeSlot((current) => (current === timeSlot ? null : timeSlot));
@@ -588,38 +705,40 @@ export function DashboardPage() {
       <ShellCard className="overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.14),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(251,191,36,0.10),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.97),rgba(248,250,252,0.96))] px-4 py-4 sm:px-5 sm:py-4 lg:px-6 lg:py-5">
         <div className="grid gap-x-4 gap-y-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
           <div className="space-y-2.5">
-            <StatusPill label="소프트웨어마에스트로 17기" />
+            <StatusPill label={t("dashboard.pill")} />
             <div className="space-y-2.5">
               <h2 className="text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-                서울 면접자 대시보드
+                {t("dashboard.title")}
               </h2>
               <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                현재는 4일 x 5T x 5개 분과 x 기본 5명 기준으로 500석을 열어두었습니다.
+                {t("dashboard.introLine1")}
                 <br />
-                대시보드 보드는 분과별 5개의 점으로 최대한 빠르게 훑어볼 수 있게 정리했습니다.
+                {t("dashboard.introLine2")}
               </p>
               <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground sm:text-xs">
                 <span className="rounded-full border border-border/60 bg-white/80 px-2.5 py-1">
-                  1줄 = 1분과
+                  {t("dashboard.legendRow")}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1">
                   <span className="h-3 w-3 rounded-full border border-sky-200 bg-sky-200" />
-                  남성
+                  {t("dashboard.legendMale")}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1">
                   <span className="h-3 w-3 rounded-full border border-rose-200 bg-rose-200" />
-                  여성
+                  {t("dashboard.legendFemale")}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1">
                   <span className="h-3 w-3 rounded-full border border-stone-200 bg-stone-100" />
-                  미신청
+                  {t("dashboard.legendEmpty")}
                 </span>
-                {!canViewSlotMembers && (
-                  <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700 lg:ml-auto">
-                    17기 합격 인증 후 17기 정보 보기가 가능합니다.
-                  </span>
-                )}
               </div>
+              {!canViewSlotMembers && (
+                <div className="pt-1">
+                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-700 sm:text-xs">
+                    {t("dashboard.accessNote")}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -628,19 +747,14 @@ export function DashboardPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">
-                    서울 워크숍까지
+                    {t("dashboard.countdownTitle")}
                   </div>
-                  <p className="mt-1 text-[11px] text-sky-900/75">2026.04.03 (금) 13:00 · 양평</p>
+                  <p className="mt-1 text-[11px] text-sky-900/75">{t("dashboard.countdownDate")}</p>
                 </div>
-                <StatusPill label="D-Day" tone="success" />
+                <StatusPill label={t("dashboard.countdownBadge")} tone="success" />
               </div>
               <div className="mt-2.5 grid grid-cols-4 gap-2">
-                {[
-                  { label: "Day", value: countdown.days },
-                  { label: "Hour", value: countdown.hours },
-                  { label: "Min", value: countdown.minutes },
-                  { label: "Sec", value: countdown.seconds }
-                ].map((item) => (
+                {countdownItems.map((item) => (
                   <div
                     key={item.label}
                     className="rounded-xl border border-sky-100/90 bg-white/88 px-2 py-2 text-center"
@@ -661,7 +775,7 @@ export function DashboardPage() {
                 <div className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">
                   {grid.approved_member_count}
                   <span className="text-sm font-normal text-muted-foreground">
-                    /{COMMUNITY_TARGET_MEMBERS}(명)
+                    {t("dashboard.approvedSuffix", { count: COMMUNITY_TARGET_MEMBERS })}
                   </span>
                 </div>
               </div>
@@ -672,11 +786,11 @@ export function DashboardPage() {
 
       {loadingGrid ? (
         <ShellCard>
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>
         </ShellCard>
       ) : !grid ? (
         <ShellCard>
-          <p className="text-sm text-muted-foreground">데이터를 불러오지 못했습니다.</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.loadFailed")}</p>
         </ShellCard>
       ) : (
         <ShellCard className="overflow-hidden p-3 sm:p-4 lg:p-5">
@@ -693,7 +807,7 @@ export function DashboardPage() {
                     className={`rounded-2xl border px-2 py-2 text-center ${dateHeaderClass(date)}`}
                   >
                     <div className="text-[11px] font-semibold text-foreground">
-                      {DATE_LABELS[date]}
+                      {getDateLabel(date, language)}
                     </div>
                   </div>
                 ))}
@@ -733,8 +847,10 @@ export function DashboardPage() {
                                 <DepartmentRowButton
                                   key={slotKey(date, timeSlot, room)}
                                   date={date}
+                                  dateLabel={getDateLabel(date, language)}
                                   timeSlot={timeSlot}
                                   room={room}
+                                  roomLabel={t("dashboard.roomLabel", { room })}
                                   cells={cells}
                                   isSelected={isSelected}
                                   onSelect={handleSlotClick}
@@ -759,7 +875,7 @@ export function DashboardPage() {
                 className={`rounded-2xl border px-2 py-2 text-center ${dateHeaderClass(date)}`}
               >
                 <div className="hidden text-sm font-semibold text-foreground sm:block">
-                  {DATE_LABELS[date]}
+                  {getDateLabel(date, language)}
                 </div>
               </div>
             ))}
@@ -799,8 +915,10 @@ export function DashboardPage() {
                             <DepartmentRowButton
                               key={slotKey(date, timeSlot, room)}
                               date={date}
+                              dateLabel={getDateLabel(date, language)}
                               timeSlot={timeSlot}
                               room={room}
+                              roomLabel={t("dashboard.roomLabel", { room })}
                               cells={cells}
                               isSelected={isSelected}
                               onSelect={handleSlotClick}
@@ -821,7 +939,7 @@ export function DashboardPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <button
             type="button"
-            aria-label="슬롯 상세 닫기"
+            aria-label={t("dashboard.dialogCloseAria")}
             onClick={closeSlotDialog}
             className="absolute inset-0 bg-slate-950/36 backdrop-blur-[2px]"
           />
@@ -836,8 +954,9 @@ export function DashboardPage() {
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
                   <h3 id="slot-dialog-title" className="text-sm font-semibold sm:text-base">
-                    {DATE_LABELS[selected.date]} · {formatInterviewTimeSlot(selected.timeSlot)} ·{" "}
-                    {formatInterviewRoom(selected.room)}
+                    {getDateLabel(selected.date, language)} ·{" "}
+                    {formatInterviewTimeSlot(selected.timeSlot)} ·{" "}
+                    {t("dashboard.roomLabel", { room: selected.room })}
                   </h3>
                 </div>
                 <button
@@ -845,11 +964,11 @@ export function DashboardPage() {
                   onClick={closeSlotDialog}
                   className="text-xs text-muted-foreground transition hover:text-foreground"
                 >
-                  닫기
+                  {t("dashboard.dialogClose")}
                 </button>
               </div>
 
-              {loadingMembers && <p className="text-sm text-muted-foreground">불러오는 중...</p>}
+              {loadingMembers && <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>}
 
               {membersError && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -858,7 +977,7 @@ export function DashboardPage() {
                     !sessionUser.is_admin &&
                     sessionUser.applicant_status !== "approved" && (
                       <Button className="mt-3" size="sm" onClick={() => navigate("/verification")}>
-                        합격자 인증 신청
+                        {t("dashboard.applyVerification")}
                       </Button>
                     )}
                 </div>
@@ -867,7 +986,16 @@ export function DashboardPage() {
               {members && (
                 <div className="mx-auto grid max-w-[900px] auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {members.map((card) => (
-                    <MemberCardItem key={card.seat} card={card} />
+                    <MemberCardItem
+                      key={card.seat}
+                      card={card}
+                      isSavingCheck={card.user_id ? Boolean(savingMemberChecks[card.user_id]) : false}
+                      onTogglePersistedCheck={
+                        canViewSlotMembers && card.previewState !== "demo"
+                          ? handlePersistedCheckToggle
+                          : undefined
+                      }
+                    />
                   ))}
                   <SomaLogoCard />
                 </div>

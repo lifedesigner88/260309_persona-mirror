@@ -1,14 +1,13 @@
-import type { DashboardGrid, MemberCard } from "./types";
+import i18n from "@/lib/i18n";
+import type { DashboardGrid, MemberCard, MemberCheckState } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
-const SLOT_ACCESS_GUIDE =
-  "회원가입을 통한 이메일 인증 후, 17기 합격 인증을 해야 상세 조회가 가능합니다.";
 
 export async function fetchDashboard(): Promise<DashboardGrid> {
   const response = await fetch(`${API_BASE_URL}/dashboard`, {
     credentials: "include"
   });
-  if (!response.ok) throw new Error("대시보드 데이터를 불러오지 못했습니다.");
+  if (!response.ok) throw new Error(i18n.t("dashboard.apiDashboardLoadFailed"));
   return (await response.json()) as DashboardGrid;
 }
 
@@ -29,7 +28,31 @@ export async function fetchSlotMembers(
     return { data: (await response.json()) as MemberCard[] };
   }
   if (response.status === 401 || response.status === 403) {
-    return { error: SLOT_ACCESS_GUIDE };
+    return { error: i18n.t("dashboard.accessNote") };
   }
-  return { error: "슬롯 정보를 불러오지 못했습니다." };
+  return { error: i18n.t("dashboard.apiSlotLoadFailed") };
+}
+
+export async function updateMemberCheck(
+  targetUserId: number,
+  isChecked: boolean
+): Promise<{ data?: MemberCheckState; error?: string }> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/member-checks/${targetUserId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ is_checked: isChecked })
+  });
+
+  if (response.ok) {
+    return { data: (await response.json()) as MemberCheckState };
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    return { error: i18n.t("dashboard.accessNote") };
+  }
+
+  return { error: i18n.t("dashboard.apiMemberCheckFailed") };
 }
