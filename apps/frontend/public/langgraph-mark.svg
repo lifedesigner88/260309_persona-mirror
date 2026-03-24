@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="LangGraph icon">
+  <rect x="1" y="1" width="94" height="94" rx="18" fill="#16233F" />
+  <path
+    d="M30 22H24C19.582 22 16 25.582 16 30V30"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M66 22H72C76.418 22 80 25.582 80 30V30"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M24 66V72C24 76.418 27.582 80 32 80H32"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M72 66V72C72 76.418 68.418 80 64 80H64"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M30 74H24C19.582 74 16 70.418 16 66V66"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M66 74H72C76.418 74 80 70.418 80 66V66"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M24 30V24C24 19.582 27.582 16 32 16H32"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+  <path
+    d="M72 30V24C72 19.582 68.418 16 64 16H64"
+    fill="none"
+    stroke="#78BEFF"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="11"
+  />
+</svg>

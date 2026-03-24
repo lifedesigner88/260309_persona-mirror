@@ -1,6 +1,6 @@
 # SoMa Community Roadmap
 
-Built from the current product direction and completed work in the repo. Checked items reflect what is already implemented as of `2026-03-23`.
+Built from the current product direction and completed work in the repo. Checked items reflect what is already implemented as of `2026-03-24`.
 
 ---
 
@@ -43,6 +43,23 @@ Goal: `PersonaMirror` -> `ASM 17 Community`
 
 ---
 
+## Phase 1.5 — Brand And Creator PR Polish ✅ `2026-03-24`
+
+Goal: make the current community flow clearer and turn the demo persona into a team-building surface
+
+- [x] PNG-based favicon, logo, and Open Graph image wiring
+- [x] `/` -> `/seoul/dashboard` default landing flow and `/home` split
+- [x] Simplified sidebar branding with logo + tagline
+- [x] Full navigation i18n sync, including support actions
+- [x] Creator persona page reframed as `Creator PR`
+- [x] Hupository-based bilingual creator persona seed refresh
+- [x] Persona intro card with Hupository link and contact/copy actions
+- [x] Unified persona card system, calmer palette, larger SDGs badges
+- [x] Responsive categorized tech-stack grid
+- [x] Creator stack naming/icon cleanup (`LangGraph`, `AmazonWebServices`, Ubuntu, Redis category)
+
+---
+
 ## Phase 2 — Community Safety and Review Tools `planned`
 
 Goal: make browsing safer and reduce duplicated outreach
@@ -75,6 +92,8 @@ Goal: help members form balanced 3-person teams faster
 - [ ] One-click compare view for 2~3 candidate teammates
 - [ ] `우리 팀 1명 더 필요해요` post or badge
 - [ ] Mutual interest or invite flow before moving to open chat
+- [ ] Commitment window signals such as `6월~11월 함께 가능`
+- [ ] Vision alignment fields such as startup / side project / contest / revenue focus
 
 ---
 
@@ -118,6 +137,6 @@ Goal: make the community app easier to operate at real scale
 
 ## Next Recommended Work
 
-1. Add `신고` and `내가 확인한 유저` features first so browsing becomes safer and more organized.
-2. Add minimal team-building profile fields and shortlist states so members can manage candidate teammates before full trio recommendation logic.
-3. Normalize interview slots and add real Seoul / Busan team separation before Busan goes live.
+1. Add `신고` and `내가 확인한 유저` features first so browsing becomes safer and members can manage outreach history.
+2. Add minimal team-building profile fields such as role, commitment window, and vision alignment before building full trio recommendation logic.
+3. Normalize interview slots and add real Seoul / Busan data separation before the Busan dashboard goes live.

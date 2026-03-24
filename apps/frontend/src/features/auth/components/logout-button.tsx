@@ -8,7 +8,7 @@ import { logoutRequest } from "../api";
 
 export function LogoutButton({
   className,
-  variant = "outline",
+  variant = "outline"
 }: {
   className?: string;
   variant?: "default" | "secondary" | "outline" | "ghost";
@@ -23,14 +23,20 @@ export function LogoutButton({
     try {
       await logoutRequest();
       revalidator.revalidate();
-      navigate("/", { replace: true });
+      navigate("/home", { replace: true });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Button className={className} disabled={loading} onClick={handleLogout} type="button" variant={variant}>
+    <Button
+      className={className}
+      disabled={loading}
+      onClick={handleLogout}
+      type="button"
+      variant={variant}
+    >
       {loading ? t("button.loggingOut") : t("button.logout")}
     </Button>
   );

@@ -106,12 +106,14 @@ docker compose down -v     # also wipe Compose-managed caches/volumes
 
 ## What's Working (Community Refactor)
 
+- ASM 17 PNG branding, favicon, Open Graph preview image, and Seoul-dashboard-first entry flow
 - Email signup with OTP verification + 4-digit PIN login + PIN reset
 - 17th cohort verification application with interview date, interview start time, auto-derived time slot, and room
 - Admin approval flow for verification requests
 - Interview dashboard grid for 4 interview dates × 5 time slots × 5 rooms × 5 seats = 500 seats
 - Slot detail access gated to approved members only
-- Creator demo persona page kept as placeholder data for a future team-building feature
+- Bilingual sidebar navigation and shared EN/KO toggle behavior
+- Creator PR demo persona page refreshed from Hupository data for future team-building use
 - Persona/capture backend structure still exists, but it is not the current product priority
 
 ---
@@ -120,7 +122,8 @@ docker compose down -v     # also wipe Compose-managed caches/volumes
 
 - Seoul / Busan team segmentation in the data model and UI
 - Final real-world interview schedule cleanup after members start applying
-- Dedicated community profile and team-building surfaces
+- Community safety/review tools such as reports and reviewed-user management
+- Dedicated team-building profile and teammate shortlist surfaces
 - Persona capture workflow as a member-facing feature
 
 ---
@@ -129,9 +132,9 @@ docker compose down -v     # also wipe Compose-managed caches/volumes
 
 ```text
 apps/
-├── frontend/     # React SPA (auth, verification, dashboard, admin, demo persona)
-├── backend/      # FastAPI (auth, verification, dashboard, admin, legacy persona structure)
-└── ai-worker/    # Legacy persona pipeline kept for later team-building experiments
+├── frontend/     # React SPA (home, dashboard, verification, admin, creator PR demo)
+├── backend/      # FastAPI (auth, verification, dashboard, admin, persona seed/demo)
+└── ai-worker/    # Legacy persona pipeline preserved for later team-building experiments
 infrastructure/
 └── terraform/
 ```

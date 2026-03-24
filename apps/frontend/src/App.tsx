@@ -42,8 +42,13 @@ export function App() {
   const { t, i18n } = useTranslation("common");
   const { sessionUser } = useLoaderData() as RootLoaderData;
   const navigationItems: NavigationItem[] = [
-    { to: "/dashboard", label: "대시보드 - 서울" },
-    { to: "/dashboard/busan", label: "대시보드 - 부산", disabled: true, hoverTitle: "Coming soon" },
+    { to: "/seoul/dashboard", label: t("nav.dashboardSeoul") },
+    {
+      to: "/busan/dashboard",
+      label: t("nav.dashboardBusan"),
+      disabled: true,
+      hoverTitle: t("nav.comingSoon")
+    },
     ...(!sessionUser
       ? [
           { to: "/auth/signup", label: t("nav.signup") },
@@ -54,14 +59,17 @@ export function App() {
       ? [
           {
             to: "/verification",
-            label: sessionUser.applicant_status === "approved" ? "내 인증정보 수정" : "합격자 인증"
+            label:
+              sessionUser.applicant_status === "approved"
+                ? t("nav.editVerification")
+                : t("nav.cohortVerification")
           }
         ]
       : []),
     ...(sessionUser?.is_admin
       ? [
           { to: "/admin/users", label: t("nav.adminUsers") },
-          { to: "/admin/verifications", label: "인증 관리" }
+          { to: "/admin/verifications", label: t("nav.adminVerifications") }
         ]
       : []),
     // Capture navigation is intentionally hidden for now.
@@ -86,14 +94,21 @@ export function App() {
               <StatusPill label={t("sidebar.phase")} />
               <LangToggle />
             </div>
-            <div className="mt-4 space-y-3">
-              <NavLink to="/" className="group inline-flex w-fit flex-col" end>
-                <h1 className="text-4xl font-semibold leading-[0.95] tracking-[-0.04em] text-foreground transition group-hover:text-foreground/85">
-                  <span className="block">ASM 17</span>
-                  <span className="mt-1 block">Community</span>
-                </h1>
+            <div className="mt-4">
+              <NavLink
+                to="/home"
+                className="group inline-flex w-full items-center gap-3 rounded-3xl"
+                end
+              >
+                <img
+                  src="/asm17_logo.png"
+                  alt="ASM 17 logo"
+                  className="h-14 w-14 shrink-0 object-contain"
+                />
+                <p className="min-w-0 text-sm font-medium leading-5 text-foreground/78 transition group-hover:text-foreground">
+                  {t("sidebar.tagline")}
+                </p>
               </NavLink>
-              <p className="text-sm leading-6 text-muted-foreground">{t("sidebar.tagline")}</p>
             </div>
             <nav className="mt-8 grid gap-2">
               {navigationItems.map((item) =>
@@ -135,7 +150,7 @@ export function App() {
                 rel="noopener noreferrer"
                 className="block rounded-xl px-1 text-sm text-muted-foreground transition hover:text-foreground"
               >
-                오픈채팅방 바로가기
+                {t("sidebar.openChat")}
               </a>
               <a
                 href={KAKAO_OPEN_CHAT_URL}
@@ -143,7 +158,7 @@ export function App() {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center rounded-2xl border border-[#E7D486] bg-[#F3E19A] px-4 py-3 text-sm font-semibold text-[#3A3522] shadow-sm transition hover:bg-[#ECD67E]"
               >
-                1:1 문의하기
+                {t("sidebar.directInquiry")}
               </a>
             </div>
           </ShellCard>

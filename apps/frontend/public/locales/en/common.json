@@ -1,17 +1,25 @@
 {
   "nav": {
     "overview": "Overview",
+    "dashboardSeoul": "Dashboard - Seoul",
+    "dashboardBusan": "Dashboard - Busan",
+    "comingSoon": "Coming soon",
     "signup": "Sign up",
     "login": "Login",
+    "cohortVerification": "Cohort verification",
+    "editVerification": "Edit my verification",
     "adminUsers": "Admin users",
+    "adminVerifications": "Verification admin",
     "capture": "Persona shell",
     "mySubmissions": "Dummy submissions",
-    "demoPersona": "Creator profile",
-    "sejongPersona": "Creator profile"
+    "demoPersona": "Creator PR",
+    "sejongPersona": "Creator PR"
   },
   "sidebar": {
     "phase": "AI SW Maestro",
-    "tagline": "A service for getting to know 450 fellow 17th-cohort members across Seoul and Busan.",
+    "tagline": "Find your 450 fellow 17th-cohort members across Seoul and Busan, and get ready for team building.",
+    "openChat": "Open chat",
+    "directInquiry": "1:1 inquiry",
     "currentBaseline": "Current baseline",
     "sessionTitle": "Session",
     "signedInAs": "Signed in as {{userId}}",

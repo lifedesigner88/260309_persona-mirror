@@ -12,6 +12,15 @@
     "copyBtn": "Copy →",
     "copiedBtn": "Done"
   },
+  "creatorIntro": {
+    "badge": "Creator note",
+    "title": "I built a demo version of the service I want to create.",
+    "description": "This is my introduction page, created after AI read through 19 years of my life. If you log in, you can ask me simple questions based on my data, and every question and answer is recorded.",
+    "contact": "If you'd like to team up with me and help grow this service, please send me an email at the address below.",
+    "repoButton": "View Hupository",
+    "emailCopy": "Copy",
+    "emailCopied": "Copied"
+  },
   "mbti": {
     "typeLabel": "MBTI type",
     "turbulent": "· Turbulent",
@@ -36,21 +45,66 @@
       "name": "The Advocate",
       "description": "Idealistic and principled — connects deep values to long-horizon vision, builds systems that serve people."
     },
-    "INTJ": { "name": "The Architect", "description": "Strategic and determined — turns complex systems into elegant, long-term plans." },
-    "INFP": { "name": "The Mediator", "description": "Poetic and kind — driven by values and a deep desire to make the world better." },
-    "INTP": { "name": "The Logician", "description": "Innovative and curious — endlessly analyzes ideas in pursuit of deeper truth." },
-    "ENFJ": { "name": "The Protagonist", "description": "Charismatic and inspiring — leads people toward a shared, meaningful vision." },
-    "ENTJ": { "name": "The Commander", "description": "Bold and decisive — naturally steps into leadership to drive progress." },
-    "ENFP": { "name": "The Campaigner", "description": "Enthusiastic and creative — sees life as full of exciting possibilities." },
-    "ENTP": { "name": "The Debater", "description": "Smart and curious — loves challenging ideas and sparking intellectual debate." },
-    "ISFJ": { "name": "The Defender", "description": "Dedicated and warm — protects and supports the people they care about." },
-    "ISTJ": { "name": "The Logistician", "description": "Practical and reliable — upholds tradition and duty with quiet determination." },
-    "ISFP": { "name": "The Adventurer", "description": "Flexible and charming — always ready to explore new experiences." },
-    "ISTP": { "name": "The Virtuoso", "description": "Bold and practical — masters tools and crafts with calm, hands-on expertise." },
-    "ESFJ": { "name": "The Consul", "description": "Caring and popular — attentive to others' needs and eager to contribute." },
-    "ESTJ": { "name": "The Executive", "description": "Excellent administrator — manages people and processes with clear principles." },
-    "ESFP": { "name": "The Entertainer", "description": "Spontaneous and energetic — brings fun and excitement wherever they go." },
-    "ESTP": { "name": "The Entrepreneur", "description": "Smart and energetic — thrives on living on the edge and solving problems in action." }
+    "INTJ": {
+      "name": "The Architect",
+      "description": "Strategic and determined — turns complex systems into elegant, long-term plans."
+    },
+    "INFP": {
+      "name": "The Mediator",
+      "description": "Poetic and kind — driven by values and a deep desire to make the world better."
+    },
+    "INTP": {
+      "name": "The Logician",
+      "description": "Innovative and curious — endlessly analyzes ideas in pursuit of deeper truth."
+    },
+    "ENFJ": {
+      "name": "The Protagonist",
+      "description": "Charismatic and inspiring — leads people toward a shared, meaningful vision."
+    },
+    "ENTJ": {
+      "name": "The Commander",
+      "description": "Bold and decisive — naturally steps into leadership to drive progress."
+    },
+    "ENFP": {
+      "name": "The Campaigner",
+      "description": "Enthusiastic and creative — sees life as full of exciting possibilities."
+    },
+    "ENTP": {
+      "name": "The Debater",
+      "description": "Smart and curious — loves challenging ideas and sparking intellectual debate."
+    },
+    "ISFJ": {
+      "name": "The Defender",
+      "description": "Dedicated and warm — protects and supports the people they care about."
+    },
+    "ISTJ": {
+      "name": "The Logistician",
+      "description": "Practical and reliable — upholds tradition and duty with quiet determination."
+    },
+    "ISFP": {
+      "name": "The Adventurer",
+      "description": "Flexible and charming — always ready to explore new experiences."
+    },
+    "ISTP": {
+      "name": "The Virtuoso",
+      "description": "Bold and practical — masters tools and crafts with calm, hands-on expertise."
+    },
+    "ESFJ": {
+      "name": "The Consul",
+      "description": "Caring and popular — attentive to others' needs and eager to contribute."
+    },
+    "ESTJ": {
+      "name": "The Executive",
+      "description": "Excellent administrator — manages people and processes with clear principles."
+    },
+    "ESFP": {
+      "name": "The Entertainer",
+      "description": "Spontaneous and energetic — brings fun and excitement wherever they go."
+    },
+    "ESTP": {
+      "name": "The Entrepreneur",
+      "description": "Smart and energetic — thrives on living on the edge and solving problems in action."
+    }
   },
   "vectorLabels": {
     "learning_drive": ["Learning"],
@@ -68,13 +122,20 @@
     "currentDecade": "Current decade · 30s",
     "directions": "Directions"
   },
+  "teamUp": {
+    "sectionLabel": "Team-up snapshot",
+    "availability": "Availability",
+    "targetDomains": "Good product spaces",
+    "whatIBring": "What I bring",
+    "lookingFor": "Looking for"
+  },
   "vectors": {
     "sectionLabel": "Drive vectors",
     "subtitle": "How strongly each internal drive shows up across values, behaviors, and life history. Scored 1–5.",
     "aiNote": "AI prediction — drive strengths are inferred from values, career patterns, and behavioral history, not a self-reported assessment. The more input data PersonaMirror has, the more precise these scores become."
   },
   "sdg": {
-    "sectionLabel": "SDG alignment",
+    "sectionLabel": "SDGs alignment",
     "aiNote": "AI prediction — alignment is inferred from values, career history, and community activity, not a self-reported assessment. The more input data PersonaMirror has, the more precise this alignment becomes."
   },
   "timeline": {
@@ -84,12 +145,12 @@
     "sectionLabel": "Strengths"
   },
   "watchouts": {
-    "sectionLabel": "Watch outs"
+    "sectionLabel": "Weaknesses"
   },
   "qa": {
     "badge": "Ask this persona",
-    "title": "Have a conversation",
-    "description": "Ask anything — the persona answers based on their values, experiences, and worldview.",
+    "title": "Talk with Sejong Persona",
+    "description": "Ask anything — Sejong Persona answers based on his values, experiences, and worldview.",
     "thinking": "Thinking…",
     "placeholder": "Ask a question… (Enter to send)",
     "ask": "Ask",

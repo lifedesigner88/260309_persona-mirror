@@ -27,15 +27,23 @@ export type GoalsVision = {
   long_term_directions: string[];
 };
 
+export type TeamUpProfile = {
+  pitch: string;
+  availability: string;
+  target_domains: string[];
+  what_i_bring: string[];
+  looking_for: string[];
+};
+
 export type MbtiProfile = {
-  type: string;          // e.g. "INFJ"
-  identity: "A" | "T";  // Assertive | Turbulent
+  type: string; // e.g. "INFJ"
+  identity: "A" | "T"; // Assertive | Turbulent
   scores: {
-    introverted: number;  // 0–100 (vs Extraverted)
-    intuitive: number;    // 0–100 (vs Observant)
-    feeling: number;      // 0–100 (vs Thinking)
-    judging: number;      // 0–100 (vs Prospecting)
-    turbulent: number;    // 0–100 (vs Assertive)
+    introverted: number; // 0–100 (vs Extraverted)
+    intuitive: number; // 0–100 (vs Observant)
+    feeling: number; // 0–100 (vs Thinking)
+    judging: number; // 0–100 (vs Prospecting)
+    turbulent: number; // 0–100 (vs Assertive)
   };
 };
 
@@ -56,6 +64,7 @@ export type PersonaProfile = {
   strengths: string[];
   watchouts: string[];
   goals_vision: GoalsVision;
+  team_up?: TeamUpProfile;
   fit_vectors: FitVectors;
   sdg_alignment: SdgAlignment[];
   identity_shifts: IdentityShift[];

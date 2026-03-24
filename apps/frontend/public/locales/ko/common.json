@@ -1,17 +1,25 @@
 {
   "nav": {
     "overview": "개요",
+    "dashboardSeoul": "대시보드 - 서울",
+    "dashboardBusan": "대시보드 - 부산",
+    "comingSoon": "Coming soon",
     "signup": "회원가입",
     "login": "로그인",
+    "cohortVerification": "합격자 인증",
+    "editVerification": "내 인증정보 수정",
     "adminUsers": "관리자 목록",
+    "adminVerifications": "인증 관리",
     "capture": "페르소나 구조",
     "mySubmissions": "더미 제출 목록",
-    "demoPersona": "만든 사람",
-    "sejongPersona": "만든 사람"
+    "demoPersona": "만든 사람 PR",
+    "sejongPersona": "만든 사람 PR"
   },
   "sidebar": {
     "phase": "AI SW Maestro",
-    "tagline": "서울 + 부산 450명의 17기 동료를 알아가기 위한 서비스",
+    "tagline": "서울 + 부산 450명의 17기 동료를 찾고, 팀빌딩을 준비하세요",
+    "openChat": "오픈채팅방 바로가기",
+    "directInquiry": "1:1 문의하기",
     "currentBaseline": "현재 기준선",
     "sessionTitle": "세션",
     "signedInAs": "{{userId}} 로그인 중",

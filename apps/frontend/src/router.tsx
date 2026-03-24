@@ -1,8 +1,15 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { App, HomePage, RouteErrorBoundary, homeAction, homeLoader } from "./App";
 import { AdminUsersPage, adminUsersLoader } from "./features/admin";
-import { LoginPage, ResetPinPage, SignupPage, loginAction, rootLoader, signupAction } from "./features/auth";
+import {
+  LoginPage,
+  ResetPinPage,
+  SignupPage,
+  loginAction,
+  rootLoader,
+  signupAction
+} from "./features/auth";
 import {
   CaptureLayout,
   CaptureOverviewPage,
@@ -19,7 +26,7 @@ import {
   imageAction,
   resetCaptureAction,
   submitCaptureAction,
-  voiceAction,
+  voiceAction
 } from "./features/capture";
 import { DashboardPage } from "./features/dashboard";
 import { PersonaPage, personaLoader } from "./features/persona";
@@ -36,6 +43,10 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Navigate to="/seoul/dashboard" replace />
+      },
+      {
+        path: "home",
         element: <HomePage />,
         loader: homeLoader,
         action: homeAction
@@ -48,42 +59,42 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <CaptureOverviewPage />,
+            element: <CaptureOverviewPage />
           },
           {
             path: "submissions",
             element: <CaptureSubmissionsPage />,
-            loader: captureJobsLoader,
+            loader: captureJobsLoader
           },
           {
             path: "submissions/:jobId",
             element: <CaptureSubmissionDetailPage />,
             loader: captureJobDetailLoader,
-            action: captureJobDetailAction,
+            action: captureJobDetailAction
           },
           {
             path: "interview",
-            element: <InterviewCapturePage />,
+            element: <InterviewCapturePage />
           },
           {
             path: "voice",
             element: <VoiceCapturePage />,
-            action: voiceAction,
+            action: voiceAction
           },
           {
             path: "image",
             element: <ImageCapturePage />,
-            action: imageAction,
+            action: imageAction
           },
           {
             path: "review",
             element: <CaptureReviewPage />,
-            action: submitCaptureAction,
+            action: submitCaptureAction
           },
           {
             path: "reset",
-            action: resetCaptureAction,
-          },
+            action: resetCaptureAction
+          }
         ]
       },
       {
@@ -98,7 +109,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "auth/reset-pin",
-        element: <ResetPinPage />,
+        element: <ResetPinPage />
       },
       {
         path: "admin/users",
@@ -107,20 +118,24 @@ export const router = createBrowserRouter([
       },
       {
         path: "admin/verifications",
-        element: <AdminVerificationsPage />,
+        element: <AdminVerificationsPage />
       },
       {
         path: "verification",
-        element: <VerificationPage />,
+        element: <VerificationPage />
       },
       {
         path: "dashboard",
-        element: <DashboardPage />,
+        element: <Navigate to="/seoul/dashboard" replace />
+      },
+      {
+        path: "seoul/dashboard",
+        element: <DashboardPage />
       },
       {
         path: "persona/:personId",
         element: <PersonaPage />,
-        loader: personaLoader,
+        loader: personaLoader
       }
     ]
   }
