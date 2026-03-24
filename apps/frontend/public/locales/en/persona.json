@@ -14,9 +14,13 @@
   },
   "creatorIntro": {
     "badge": "Real team-building PR",
-    "title": "This page should show what kind of team picture appears when we build together, not just whether I seem like a nice person.",
-    "description": "This is not just a persona demo page. It is a Creator PR page built so the right SW Maestro 17 teammates can decide quickly whether we should team up.",
-    "contact": "If you feel close to one of the two owner roles below, I would love to talk before team building. Please use the email below.",
+    "title": "A short view of my role and team fit.",
+    "description": "A concise Creator PR page to quickly see whether we may be a good team for AI SW Maestro 17.",
+    "contact": "I am looking for teammates who want to build and grow together, not only fully polished experts.",
+    "aiBadge": "AI Note",
+    "aiTitle": "AI-generated page",
+    "aiNote": "This page was created with AI based on data from Sejong's Hupository.",
+    "aiSignature": "with Codex GPT 5.4",
     "repoButton": "View Hupository",
     "emailCopy": "Copy",
     "emailCopied": "Copied"
@@ -24,12 +28,12 @@
   "creatorPr": {
     "heroRole": "Strongest role",
     "teamSectionLabel": "Looking for teammates",
-    "teamSectionTitle": "The team is strongest when these two owners join.",
+    "teamSectionTitle": "I would love to build a team with these two kinds of partners.",
     "avoidMatches": "Probably not a fit",
-    "projectSectionLabel": "Project direction",
+    "projectSectionLabel": "What to build",
     "whyNow": "Why now",
-    "whyMe": "Why me",
-    "ctaSectionLabel": "Call to action",
+    "whyMe": "What I can own",
+    "ctaSectionLabel": "Contact",
     "contactButton": "Copy email"
   },
   "mbti": {
@@ -146,8 +150,8 @@
     "aiNote": "AI prediction — drive strengths are inferred from values, career patterns, and behavioral history, not a self-reported assessment. The more input data PersonaMirror has, the more precise these scores become."
   },
   "sdg": {
-    "sectionLabel": "SDGs alignment",
-    "aiNote": "AI prediction — alignment is inferred from values, career history, and community activity, not a self-reported assessment. The more input data PersonaMirror has, the more precise this alignment becomes."
+    "sectionLabel": "SDGs of interest",
+    "aiNote": "AI prediction — interest is inferred from values, career history, and community activity, not a self-reported assessment. The more input data PersonaMirror has, the more precise this interest estimate becomes."
   },
   "timeline": {
     "sectionLabel": "Identity timeline"
@@ -160,16 +164,41 @@
   },
   "qa": {
     "badge": "Ask this persona",
+    "compactBadge": "AI Sejong",
     "title": "Talk with Sejong Persona",
+    "compactTitle": "Have a short chat with AI Sejong",
     "description": "Ask anything — Sejong Persona answers based on his values, experiences, and worldview.",
+    "compactDescription": "Ask a short question to get a quick sense of how he thinks before team building.",
+    "disclaimer": "This is an AI-generated response, so it may differ from Sejong's actual opinion or wording.",
+    "loggingNotice": "Questions and answers are being logged to discourage careless or excessive use.",
     "thinking": "Thinking…",
+    "historyLoading": "Loading recent chat history…",
+    "historyLoadFailed": "Couldn't load the recent chat history.",
+    "resetSessionButton": "Reset session",
+    "resetSessionFailed": "Couldn't reset the current session.",
+    "sessionResetNotice": "A new chat session started. Older records are still stored in the DB, but they will not be loaded again here.",
     "placeholder": "Ask a question… (Enter to send)",
     "ask": "Ask",
     "hint": "Press Enter to send · Shift+Enter for new line",
-    "errorMessage": "Sorry, I couldn't answer that right now."
+    "rateLimitHint": "Logged-in users can ask up to 10 questions per hour.",
+    "rateLimitError": "You can ask up to 10 questions per hour. Please try again a little later.",
+    "errorMessage": "Sorry, I couldn't answer that right now.",
+    "howItWorksButton": "How it works",
+    "howItWorksBadge": "Developer note",
+    "howItWorksTitle": "How the AI Sejong chat works",
+    "howItWorksDescription": "It feels lightweight on the page, but underneath it runs as a logged multi-turn chat flow.",
+    "howItWorksAccessLabel": "Access",
+    "howItWorksAccessBody": "Only logged-in users can use this chat, and each user can ask up to 10 questions per hour. That keeps the feature more intentional and reduces low-signal misuse.",
+    "howItWorksContextLabel": "Grounding data",
+    "howItWorksContextBody": "Answers are grounded in Sejong's persona data, Creator PR content, and selected core documents from his Hupository.",
+    "howItWorksMemoryLabel": "Multi-turn memory",
+    "howItWorksMemoryBody": "The full conversation is stored in the DB, while only a recent slice of turns is sent back into the model for efficiency.",
+    "howItWorksLoggingLabel": "Logging",
+    "howItWorksLoggingBody": "Every question and answer is saved in the DB. That makes it possible to review common question patterns later.",
+    "howItWorksClose": "Close"
   },
   "loginPrompt": {
-    "message": "Log in to ask this persona a question.",
+    "message": "This chat is available only to logged-in users.",
     "loginBtn": "Log in"
   }
 }

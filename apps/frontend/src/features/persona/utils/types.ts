@@ -108,8 +108,23 @@ export type PersonaProfile = {
 };
 
 export type PersonaQAMessage = {
-  role: "user" | "persona";
+  message_id?: number;
+  role: "user" | "assistant";
   content: string;
+  lang?: string;
+  created_at?: string;
+};
+
+export type PersonaChatHistoryResponse = {
+  messages: PersonaQAMessage[];
+};
+
+export type PersonaAskResponse = {
+  answer: string;
+};
+
+export type PersonaChatResetResponse = {
+  session_id: number;
 };
 
 export type PersonaBilingualResponse = {

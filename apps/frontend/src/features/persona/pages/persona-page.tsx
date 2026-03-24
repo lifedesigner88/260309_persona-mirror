@@ -1,4 +1,5 @@
-import { type ReactNode, useRef, useState, useCallback } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLoaderData, useRouteLoaderData } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -14,7 +15,14 @@ import {
 import type { RootLoaderData } from "@/features/auth";
 import { cn } from "@/lib/utils";
 
-import { requestPersonaAsk } from "../utils/api";
+import {
+  readPersonaAskResponse,
+  readPersonaChatHistoryResponse,
+  readPersonaChatResetResponse,
+  requestPersonaAsk,
+  requestPersonaChatHistory,
+  requestPersonaChatReset
+} from "../utils/api";
 import type {
   CreatorPrProfile,
   MbtiProfile,
@@ -706,52 +714,6 @@ function TeamUpCard({ profile }: { profile: PersonaProfile }) {
   );
 }
 
-function CreatorPrHighlights({
-  data,
-  showValues,
-  values
-}: {
-  data: CreatorPrProfile;
-  showValues: boolean;
-  values: string[];
-}) {
-  const { t } = useTranslation("persona");
-
-  return (
-    <div className="space-y-4">
-      <SectionPanel label={t("creatorPr.heroRole")} labelClassName="text-emerald-700/80">
-        <p className="text-sm leading-7 text-slate-800">{data.role_summary}</p>
-      </SectionPanel>
-      <div className="grid gap-3 lg:grid-cols-3">
-        {data.quick_facts.map((fact) => (
-          <SectionPanel
-            key={fact.label}
-            label={fact.label}
-            labelClassName="text-slate-500"
-            className="bg-white/82"
-          >
-            <p className="text-sm leading-6 text-slate-800">{fact.value}</p>
-          </SectionPanel>
-        ))}
-      </div>
-      {showValues ? (
-        <SectionPanel label={t("hero.topValues")} labelClassName="text-slate-500">
-          <div className="flex flex-wrap gap-2">
-            {values.map((value) => (
-              <span
-                key={value}
-                className="rounded-full border border-sky-200/80 bg-sky-50/80 px-3 py-1 text-sm font-medium text-slate-700"
-              >
-                {value}
-              </span>
-            ))}
-          </div>
-        </SectionPanel>
-      ) : null}
-    </div>
-  );
-}
-
 function CreatorPrRolesCard({ data }: { data: CreatorPrProfile }) {
   const { t } = useTranslation("persona");
 
@@ -796,16 +758,18 @@ function CreatorPrRolesCard({ data }: { data: CreatorPrProfile }) {
             </SectionPanel>
           ))}
         </div>
-        <SectionPanel label={t("creatorPr.avoidMatches")} labelClassName="text-amber-700/80">
-          <ul className="space-y-1.5">
-            {data.avoid_matches.map((item) => (
-              <li key={item} className="flex gap-2 text-sm leading-6 text-slate-700">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </SectionPanel>
+        {data.avoid_matches.length > 0 ? (
+          <SectionPanel label={t("creatorPr.avoidMatches")} labelClassName="text-amber-700/80">
+            <ul className="space-y-1.5">
+              {data.avoid_matches.map((item) => (
+                <li key={item} className="flex gap-2 text-sm leading-6 text-slate-700">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </SectionPanel>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -924,14 +888,6 @@ function CreatorPrCtaCard({
       </CardHeader>
       <CardContent className={cn(SECTION_CONTENT_BASE, "pt-0")}>
         <div className="flex flex-wrap items-center gap-3">
-          <a
-            href={HUPOSITORY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-600/90 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          >
-            {t("creatorIntro.repoButton")}
-          </a>
           {email ? (
             <button
               type="button"
@@ -954,29 +910,301 @@ function CreatorPrCtaCard({
 
 // ─── Q&A panel (auth-gated) ───────────────────────────────────────────────────
 
-function PersonaQAPanel({ personId, lang }: { personId: string; lang: string }) {
+function PersonaChatHowItWorksButton({
+  compact = false
+}: {
+  compact?: boolean;
+}) {
+  const { t } = useTranslation("persona");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  const dialog =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <button
+              type="button"
+              aria-label={t("qa.howItWorksClose")}
+              onClick={() => setOpen(false)}
+              className="absolute inset-0 bg-slate-950/36 backdrop-blur-[2px]"
+            />
+
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="persona-chat-how-title"
+              className="relative z-10 w-full max-w-3xl"
+            >
+              <Card className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[30px] border-white/80 bg-white/97 shadow-2xl">
+                <CardHeader className="gap-3 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <SectionEyebrow className="text-sky-600">{t("qa.howItWorksBadge")}</SectionEyebrow>
+                      <CardTitle
+                        id="persona-chat-how-title"
+                        className="text-xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-[1.45rem]"
+                      >
+                        {t("qa.howItWorksTitle")}
+                      </CardTitle>
+                      <p className={SECTION_TEXT_BASE}>{t("qa.howItWorksDescription")}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setOpen(false)}
+                      className="text-slate-500 hover:text-slate-900"
+                    >
+                      {t("qa.howItWorksClose")}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className={SECTION_CONTENT_BASE}>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SectionPanel
+                      label={t("qa.howItWorksAccessLabel")}
+                      labelClassName="text-emerald-600"
+                      className="border-emerald-200/80 bg-emerald-50/70"
+                    >
+                      <p className={SECTION_TEXT_BASE}>{t("qa.howItWorksAccessBody")}</p>
+                    </SectionPanel>
+                    <SectionPanel
+                      label={t("qa.howItWorksContextLabel")}
+                      labelClassName="text-sky-600"
+                      className="border-sky-200/80 bg-sky-50/80"
+                    >
+                      <p className={SECTION_TEXT_BASE}>{t("qa.howItWorksContextBody")}</p>
+                    </SectionPanel>
+                    <SectionPanel
+                      label={t("qa.howItWorksMemoryLabel")}
+                      labelClassName="text-violet-600"
+                      className="border-violet-200/80 bg-violet-50/70"
+                    >
+                      <p className={SECTION_TEXT_BASE}>{t("qa.howItWorksMemoryBody")}</p>
+                    </SectionPanel>
+                    <SectionPanel
+                      label={t("qa.howItWorksLoggingLabel")}
+                      labelClassName="text-amber-600"
+                      className="border-amber-200/80 bg-amber-50/80"
+                    >
+                      <p className={SECTION_TEXT_BASE}>{t("qa.howItWorksLoggingBody")}</p>
+                    </SectionPanel>
+                  </div>
+
+                  <SectionNote
+                    className="border-amber-200/90 bg-amber-50/90"
+                    iconClassName="text-amber-500"
+                  >
+                    {t("qa.loggingNotice")}
+                  </SectionNote>
+                </CardContent>
+              </Card>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "border-sky-300 bg-sky-50/95 text-sky-700 hover:border-sky-400 hover:bg-sky-100 hover:text-sky-800",
+          compact ? "self-start" : ""
+        )}
+      >
+        {t("qa.howItWorksButton")}
+      </Button>
+      {dialog}
+    </>
+  );
+}
+
+function renderChatMessageContent(content: string): ReactNode {
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-1.5 overflow-visible">
+      {lines.map((line, lineIndex) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+          return <div key={`line-${lineIndex}`} className="h-1.5" />;
+        }
+
+        const headingMatch = trimmedLine.match(/^(#{1,3})\s+(.+)$/);
+        if (headingMatch) {
+          const level = headingMatch[1].length;
+          const title = headingMatch[2];
+          const headingEmoji = level === 1 ? "✨" : level === 2 ? "🔹" : "▫️";
+          const headingClassName =
+            level === 1
+              ? "text-[0.95rem] font-semibold tracking-[-0.015em]"
+              : level === 2
+                ? "text-[0.84rem] font-semibold tracking-[-0.01em] opacity-90"
+                : "text-[0.78rem] font-medium tracking-[-0.01em] opacity-85";
+
+          return (
+            <div
+              key={`line-${lineIndex}`}
+              className={cn(
+                "flex items-center gap-1.5 pt-1 pb-0.5",
+                lineIndex > 0 ? "mt-2" : ""
+              )}
+            >
+              <span aria-hidden="true" className="shrink-0 opacity-80">
+                {headingEmoji}
+              </span>
+              <span className={headingClassName}>{title}</span>
+            </div>
+          );
+        }
+
+        const parts: ReactNode[] = [];
+        const boldPattern = /\*\*(.+?)\*\*/g;
+        let cursor = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = boldPattern.exec(line)) !== null) {
+          if (match.index > cursor) {
+            parts.push(line.slice(cursor, match.index));
+          }
+          parts.push(
+            <strong key={`bold-${lineIndex}-${match.index}`} className="font-semibold">
+              {match[1]}
+            </strong>
+          );
+          cursor = match.index + match[0].length;
+        }
+
+        if (cursor < line.length) {
+          parts.push(line.slice(cursor));
+        }
+
+        if (parts.length === 0) {
+          parts.push("");
+        }
+
+        return (
+          <p key={`line-${lineIndex}`} className="break-words text-sm leading-6">
+            {parts}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function PersonaQAPanel({
+  personId,
+  lang,
+  compact = false
+}: {
+  personId: string;
+  lang: string;
+  compact?: boolean;
+}) {
   const { t } = useTranslation("persona");
   const [messages, setMessages] = useState<PersonaQAMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState("");
+  const [resettingSession, setResettingSession] = useState(false);
+  const [sessionResetNoticeVisible, setSessionResetNoticeVisible] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHistory() {
+      setHistoryLoading(true);
+      setHistoryError("");
+      setSessionResetNoticeVisible(false);
+      setMessages([]);
+      try {
+        const response = await requestPersonaChatHistory(personId, lang);
+        if (!response.ok) {
+          throw new Error("history-load-failed");
+        }
+        const data = await readPersonaChatHistoryResponse(response);
+        if (!cancelled) {
+          setMessages(data.messages);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessages([]);
+          setHistoryError(t("qa.historyLoadFailed"));
+        }
+      } finally {
+        if (!cancelled) {
+          setHistoryLoading(false);
+        }
+      }
+    }
+
+    void loadHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [lang, personId, t]);
+
+  async function handleSessionReset() {
+    if (resettingSession) return;
+    setResettingSession(true);
+    setHistoryError("");
+    try {
+      const response = await requestPersonaChatReset(personId, lang);
+      if (!response.ok) {
+        throw new Error("reset-session-failed");
+      }
+      await readPersonaChatResetResponse(response);
+      setMessages([]);
+      setInput("");
+      setSessionResetNoticeVisible(true);
+    } catch {
+      setHistoryError(t("qa.resetSessionFailed"));
+    } finally {
+      setResettingSession(false);
+      inputRef.current?.focus();
+    }
+  }
 
   async function handleAsk() {
     const question = input.trim();
     if (!question || loading) return;
+    setSessionResetNoticeVisible(false);
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: question }]);
+    setMessages((prev) => [...prev, { role: "user", content: question, lang }]);
     setLoading(true);
     try {
       const response = await requestPersonaAsk(personId, question, lang);
       if (response.ok) {
-        const data = (await response.json()) as { answer: string };
-        setMessages((prev) => [...prev, { role: "persona", content: data.answer }]);
+        const data = await readPersonaAskResponse(response);
+        setMessages((prev) => [...prev, { role: "assistant", content: data.answer, lang }]);
+      } else if (response.status === 429) {
+        setMessages((prev) => [...prev, { role: "assistant", content: t("qa.rateLimitError"), lang }]);
       } else {
-        setMessages((prev) => [...prev, { role: "persona", content: t("qa.errorMessage") }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: t("qa.errorMessage"), lang }]);
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "persona", content: t("qa.errorMessage") }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: t("qa.errorMessage"), lang }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -991,28 +1219,68 @@ function PersonaQAPanel({ personId, lang }: { personId: string; lang: string }) 
   }
 
   return (
-    <Card className={cn(SECTION_CARD_BASE, "bg-white/94")}>
+    <Card className={cn(SECTION_CARD_BASE, "overflow-visible bg-white/94")}>
       <CardHeader className={SECTION_HEADER_BASE}>
-        <SectionEyebrow className="text-slate-500">{t("qa.badge")}</SectionEyebrow>
-        <CardTitle className={SECTION_TITLE_BASE}>{t("qa.title")}</CardTitle>
-        <p className={SECTION_TEXT_BASE}>{t("qa.description")}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-2">
+            <SectionEyebrow className="text-slate-500">
+              {compact ? t("qa.compactBadge") : t("qa.badge")}
+            </SectionEyebrow>
+            <CardTitle
+              className={
+                compact
+                  ? "text-lg font-semibold tracking-[-0.03em] text-slate-950 sm:text-[1.35rem]"
+                  : SECTION_TITLE_BASE
+              }
+            >
+              {compact ? t("qa.compactTitle") : t("qa.title")}
+            </CardTitle>
+            <p className={SECTION_TEXT_BASE}>
+              {compact ? t("qa.compactDescription") : t("qa.description")}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {compact ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSessionReset}
+                disabled={historyLoading || resettingSession || messages.length === 0}
+                className="border-emerald-300 bg-emerald-50/90 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 hover:text-emerald-800"
+              >
+                {t("qa.resetSessionButton")}
+              </Button>
+            ) : null}
+            {compact ? <PersonaChatHowItWorksButton compact /> : null}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className={SECTION_CONTENT_BASE}>
+        {historyLoading ? <p className={SECTION_SUBTEXT_BASE}>{t("qa.historyLoading")}</p> : null}
+        {historyError ? <p className="text-xs leading-5 text-rose-600">{historyError}</p> : null}
+
+        {sessionResetNoticeVisible && !historyLoading ? (
+          <SectionNote className="border-emerald-200 bg-emerald-50/80" iconClassName="text-emerald-500">
+            {t("qa.sessionResetNotice")}
+          </SectionNote>
+        ) : null}
+
         {messages.length > 0 ? (
-          <div className="space-y-3 rounded-2xl border border-slate-200/70 bg-white/75 p-4 shadow-sm">
+          <div className="space-y-3 overflow-visible rounded-2xl border border-slate-200/70 bg-white/75 p-4 shadow-sm">
             {messages.map((msg, i) => (
               <div
-                key={i}
+                key={msg.message_id ?? `${msg.role}-${i}-${msg.content.slice(0, 24)}`}
                 className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                  className={`max-w-[80%] overflow-visible rounded-2xl px-4 py-3.5 text-sm leading-6 ${
                     msg.role === "user"
                       ? "bg-foreground text-background"
                       : "border border-sky-200/80 bg-sky-50/90 text-slate-800"
                   }`}
                 >
-                  {msg.content}
+                  <div className="break-words overflow-visible">{renderChatMessageContent(msg.content)}</div>
                 </div>
               </div>
             ))}
@@ -1040,6 +1308,13 @@ function PersonaQAPanel({ personId, lang }: { personId: string; lang: string }) 
             {t("qa.ask")}
           </Button>
         </div>
+        <SectionNote className="border-slate-200 bg-slate-50/80" iconClassName="text-slate-400">
+          {t("qa.disclaimer")}
+        </SectionNote>
+        <SectionNote className="border-amber-200 bg-amber-50/80" iconClassName="text-amber-500">
+          {t("qa.loggingNotice")}
+        </SectionNote>
+        <p className={SECTION_SUBTEXT_BASE}>{t("qa.rateLimitHint")}</p>
         <p className={SECTION_SUBTEXT_BASE}>{t("qa.hint")}</p>
       </CardContent>
     </Card>
@@ -1058,6 +1333,7 @@ export function PersonaPage() {
   const lang = i18n.resolvedLanguage?.startsWith("ko") ? "ko" : "en";
   const profile = lang === "ko" && dataKor ? dataKor : dataEng;
   const isCreatorProfile = personaId === "sejong";
+  const showExtendedPersonaSections = !isCreatorProfile;
   const creatorPr = isCreatorProfile ? (profile.creator_pr ?? null) : null;
 
   // Very-light tinted backgrounds derived from dominant MBTI colors
@@ -1084,6 +1360,81 @@ export function PersonaPage() {
     setTimeout(() => setCopied(false), 2000);
   }, [profile]);
 
+  const sdgSection =
+    profile.sdg_alignment.length > 0 ? (
+      <Card
+        className={cn(SECTION_CARD_BASE, "bg-white/94")}
+        style={{ background: mbtiCardBg(2, 3) }}
+      >
+        <CardHeader className={SECTION_HEADER_BASE}>
+          <SectionEyebrow className="text-slate-500">{t("sdg.sectionLabel")}</SectionEyebrow>
+        </CardHeader>
+        <CardContent className={SECTION_CONTENT_BASE}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {profile.sdg_alignment.map((s) => (
+              <SdgBadge key={s.sdg} {...s} />
+            ))}
+          </div>
+          <SectionNote className="border-slate-200 bg-slate-50/80" iconClassName="text-slate-400">
+            {t("sdg.aiNote")}
+          </SectionNote>
+        </CardContent>
+      </Card>
+    ) : null;
+
+  const timelineSection =
+    profile.identity_shifts.length > 0
+      ? (() => {
+          const mbtiColors = profile.mbti ? getMbtiDominantColors(profile.mbti) : [];
+          return (
+            <Card
+              className={cn(SECTION_CARD_BASE, "bg-white/94")}
+              style={{ background: mbtiCardBg(0, 4, 160) }}
+            >
+              <CardHeader className={SECTION_HEADER_BASE}>
+                <SectionEyebrow className="text-slate-500">{t("timeline.sectionLabel")}</SectionEyebrow>
+              </CardHeader>
+              <CardContent className={SECTION_CONTENT_BASE}>
+                <div className="space-y-0">
+                  {[...profile.identity_shifts].reverse().map((shift, i) => {
+                    const color = mbtiColors[i % mbtiColors.length] ?? "#14b8a6";
+                    return (
+                      <div key={shift.period} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div
+                            className="h-3 w-3 rounded-full ring-2 ring-white shadow-sm shrink-0"
+                            style={{ background: color }}
+                          />
+                          {i < profile.identity_shifts.length - 1 && (
+                            <div
+                              className="w-0.5 flex-1 min-h-[2rem]"
+                              style={{
+                                background: `linear-gradient(to bottom, ${color}, ${mbtiColors[(i + 1) % mbtiColors.length] ?? color})`
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="pb-5">
+                          <div className="text-xs font-bold tracking-wide" style={{ color }}>
+                            {shift.period}
+                          </div>
+                          <div className="mt-0.5 text-sm font-semibold text-foreground">
+                            {shift.label}
+                          </div>
+                          <div className="mt-1 text-sm leading-6 text-muted-foreground">
+                            {shift.note}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()
+      : null;
+
   return (
     <div className="space-y-5">
       {isCreatorProfile ? (
@@ -1093,69 +1444,69 @@ export function PersonaPage() {
             "border-slate-200 bg-[linear-gradient(155deg,rgba(244,249,252,0.98),rgba(247,250,252,0.95))]"
           )}
         >
-          <CardHeader className={cn(SECTION_HEADER_BASE, "pb-5")}>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{t("creatorIntro.badge")}</Badge>
-              {creatorPr ? <Badge variant="success">{creatorPr.event_badge}</Badge> : null}
-            </div>
-            <CardTitle className={cn(SECTION_TITLE_BASE, "max-w-3xl")}>
-              {t("creatorIntro.title")}
-            </CardTitle>
-            <p className={cn(SECTION_TEXT_BASE, "max-w-3xl")}>{t("creatorIntro.description")}</p>
-            {creatorPr ? (
-              <SectionNote className="border-sky-200/70 bg-sky-50/65" iconClassName="text-sky-300">
-                {creatorPr.event_note}
-              </SectionNote>
-            ) : null}
-            <p className={cn(SECTION_TEXT_BASE, "max-w-3xl")}>{t("creatorIntro.contact")}</p>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <a
-                href={HUPOSITORY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-600/90 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-              >
-                {t("creatorIntro.repoButton")}
-              </a>
-              {email ? (
-                <button
-                  type="button"
-                  onClick={handleEmailCopy}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                >
-                  {emailCopied ? (
+          <CardHeader className={cn(SECTION_HEADER_BASE, "pb-5 sm:pb-6")}>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-start">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{t("creatorIntro.badge")}</Badge>
+                  {creatorPr ? <Badge variant="success">{creatorPr.event_badge}</Badge> : null}
+                </div>
+                <CardTitle className={cn(SECTION_TITLE_BASE, "max-w-3xl")}>
+                  {t("creatorIntro.title")}
+                </CardTitle>
+                <p className={cn(SECTION_TEXT_BASE, "max-w-3xl")}>
+                  {t("creatorIntro.description")}
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={HUPOSITORY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
+                  >
+                    <span aria-hidden="true">✅</span>
+                    {t("creatorIntro.repoButton")}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                       className="h-4 w-4"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                        clipRule="evenodd"
-                      />
+                      <path d="M7 17 17 7" />
+                      <path d="M9 7h8v8" />
                     </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="h-4 w-4"
-                    >
-                      <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
-                      <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
-                    </svg>
-                  )}
-                  <span>{email}</span>
-                  <span className="text-slate-500">
-                    {emailCopied ? t("creatorIntro.emailCopied") : t("creatorIntro.emailCopy")}
-                  </span>
-                </button>
-              ) : null}
+                  </a>
+                  <p className="text-xs leading-5 text-slate-500">{t("creatorIntro.contact")}</p>
+                </div>
+              </div>
+
+              <div className="flex h-full min-h-[168px] flex-col rounded-[24px] border border-sky-200/80 bg-[linear-gradient(145deg,rgba(236,253,255,0.96),rgba(255,251,235,0.94))] p-4 shadow-[0_14px_34px_rgba(14,165,233,0.12)] backdrop-blur-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="border-sky-200 bg-sky-100/90 text-sky-700"
+                  >
+                    {t("creatorIntro.aiBadge")}
+                  </Badge>
+                </div>
+                <p className="mt-3 text-base font-semibold leading-6 text-slate-900">
+                  {t("creatorIntro.aiTitle")}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{t("creatorIntro.aiNote")}</p>
+                <div className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-600">
+                  {t("creatorIntro.aiSignature")}
+                </div>
+              </div>
             </div>
           </CardHeader>
         </Card>
+      ) : null}
+
+      {/* Tech Stack */}
+      {isCreatorProfile && profile.tech_stack && profile.tech_stack.length > 0 ? (
+        <TechStackCard items={profile.tech_stack} />
       ) : null}
 
       {/* Hero card */}
@@ -1225,7 +1576,18 @@ export function PersonaPage() {
         </CardHeader>
         <CardContent className={SECTION_CONTENT_BASE}>
           {creatorPr ? (
-            <CreatorPrHighlights data={creatorPr} showValues={true} values={profile.top3_values} />
+            <SectionPanel label={t("hero.topValues")} labelClassName="text-slate-500">
+              <div className="flex flex-wrap gap-2">
+                {profile.top3_values.map((value) => (
+                  <span
+                    key={value}
+                    className="rounded-full border border-sky-200/80 bg-sky-50/80 px-3 py-1 text-sm font-medium text-slate-700"
+                  >
+                    {value}
+                  </span>
+                ))}
+              </div>
+            </SectionPanel>
           ) : (
             <SectionPanel label={t("hero.topValues")} labelClassName="text-slate-500">
               <div className="flex flex-wrap gap-2">
@@ -1241,62 +1603,28 @@ export function PersonaPage() {
             </SectionPanel>
           )}
 
-          {/* Copy CTA */}
-          <button
-            onClick={handleCopy}
-            className="group w-full rounded-2xl border border-sky-200/80 bg-white/72 px-5 py-4 text-left shadow-sm transition hover:bg-sky-50/70 active:scale-[0.99]"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-slate-800">
-                  {copied ? t("hero.copiedHeading") : t("hero.copyHeading")}
+          {!isCreatorProfile ? (
+            <button
+              onClick={handleCopy}
+              className="group w-full rounded-2xl border border-sky-200/80 bg-white/72 px-5 py-4 text-left shadow-sm transition hover:bg-sky-50/70 active:scale-[0.99]"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    {copied ? t("hero.copiedHeading") : t("hero.copyHeading")}
+                  </div>
+                  <div className="mt-1 text-xs leading-5 text-slate-600">
+                    {copied ? t("hero.copiedSubtext") : t("hero.copySubtext")}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs leading-5 text-slate-600">
-                  {copied ? t("hero.copiedSubtext") : t("hero.copySubtext")}
-                </div>
+                <span className="shrink-0 rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition group-hover:border-sky-300">
+                  {copied ? t("hero.copiedBtn") : t("hero.copyBtn")}
+                </span>
               </div>
-              <span className="shrink-0 rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition group-hover:border-sky-300">
-                {copied ? t("hero.copiedBtn") : t("hero.copyBtn")}
-              </span>
-            </div>
-          </button>
+            </button>
+          ) : null}
         </CardContent>
       </Card>
-
-      {creatorPr ? <CreatorPrRolesCard data={creatorPr} /> : null}
-
-      {creatorPr ? <CreatorPrProjectCard data={creatorPr} /> : null}
-
-      {creatorPr ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <CreatorPrWhyCard
-            label={t("creatorPr.whyNow")}
-            section={creatorPr.why_now}
-            accent="sky"
-          />
-          <CreatorPrWhyCard
-            label={t("creatorPr.whyMe")}
-            section={creatorPr.why_me}
-            accent="emerald"
-          />
-        </div>
-      ) : null}
-
-      {creatorPr ? (
-        <CreatorPrCtaCard
-          data={creatorPr}
-          email={email}
-          emailCopied={emailCopied}
-          onEmailCopy={handleEmailCopy}
-        />
-      ) : null}
-
-      <TeamUpCard profile={profile} />
-
-      {/* Tech Stack */}
-      {profile.tech_stack && profile.tech_stack.length > 0 && (
-        <TechStackCard items={profile.tech_stack} />
-      )}
 
       {/* MBTI */}
       {profile.mbti ? (
@@ -1368,45 +1696,75 @@ export function PersonaPage() {
         </Card>
       ) : null}
 
+      {creatorPr ? <CreatorPrProjectCard data={creatorPr} /> : null}
+
+      {isCreatorProfile ? sdgSection : null}
+
+      {isCreatorProfile ? timelineSection : null}
+
+      {creatorPr ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <CreatorPrWhyCard
+            label={t("creatorPr.whyNow")}
+            section={creatorPr.why_now}
+            accent="sky"
+          />
+          <CreatorPrWhyCard
+            label={t("creatorPr.whyMe")}
+            section={creatorPr.why_me}
+            accent="emerald"
+          />
+        </div>
+      ) : null}
+
+      {showExtendedPersonaSections ? <TeamUpCard profile={profile} /> : null}
+
+      {/* Tech Stack */}
+      {!isCreatorProfile && profile.tech_stack && profile.tech_stack.length > 0 && (
+        <TechStackCard items={profile.tech_stack} />
+      )}
+
       {/* Goals & vision */}
-      <Card
-        className={cn(
-          SECTION_CARD_BASE,
-          "border-slate-200 bg-[linear-gradient(160deg,rgba(252,249,242,0.98),rgba(250,245,230,0.94))]"
-        )}
-      >
-        <CardHeader className={SECTION_HEADER_BASE}>
-          <SectionEyebrow className="text-amber-600">{t("goals.sectionLabel")}</SectionEyebrow>
-          <CardTitle className={cn(SECTION_TITLE_BASE, "text-amber-900")}>
-            {profile.goals_vision.long_term_vision}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className={SECTION_CONTENT_BASE}>
-          <SectionPanel label={t("goals.lifetimeMission")} labelClassName="text-amber-600">
-            <p className="text-sm leading-6 text-amber-900">
-              {profile.goals_vision.lifetime_mission}
-            </p>
-          </SectionPanel>
-          <SectionPanel label={t("goals.currentDecade")} labelClassName="text-amber-600">
-            <p className="text-sm leading-6 text-amber-900">
-              {profile.goals_vision.current_decade_mission}
-            </p>
-          </SectionPanel>
-          <SectionPanel label={t("goals.directions")} labelClassName="text-amber-600">
-            <ul className="space-y-1.5">
-              {profile.goals_vision.long_term_directions.map((d) => (
-                <li key={d} className="flex gap-2 text-sm leading-6 text-amber-900/80">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  {d}
-                </li>
-              ))}
-            </ul>
-          </SectionPanel>
-        </CardContent>
-      </Card>
+      {showExtendedPersonaSections ? (
+        <Card
+          className={cn(
+            SECTION_CARD_BASE,
+            "border-slate-200 bg-[linear-gradient(160deg,rgba(252,249,242,0.98),rgba(250,245,230,0.94))]"
+          )}
+        >
+          <CardHeader className={SECTION_HEADER_BASE}>
+            <SectionEyebrow className="text-amber-600">{t("goals.sectionLabel")}</SectionEyebrow>
+            <CardTitle className={cn(SECTION_TITLE_BASE, "text-amber-900")}>
+              {profile.goals_vision.long_term_vision}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className={SECTION_CONTENT_BASE}>
+            <SectionPanel label={t("goals.lifetimeMission")} labelClassName="text-amber-600">
+              <p className="text-sm leading-6 text-amber-900">
+                {profile.goals_vision.lifetime_mission}
+              </p>
+            </SectionPanel>
+            <SectionPanel label={t("goals.currentDecade")} labelClassName="text-amber-600">
+              <p className="text-sm leading-6 text-amber-900">
+                {profile.goals_vision.current_decade_mission}
+              </p>
+            </SectionPanel>
+            <SectionPanel label={t("goals.directions")} labelClassName="text-amber-600">
+              <ul className="space-y-1.5">
+                {profile.goals_vision.long_term_directions.map((d) => (
+                  <li key={d} className="flex gap-2 text-sm leading-6 text-amber-900/80">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </SectionPanel>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Fit vectors — radar */}
-      {Object.keys(profile.fit_vectors).length > 0 ? (
+      {showExtendedPersonaSections && Object.keys(profile.fit_vectors).length > 0 ? (
         <Card className={cn(SECTION_CARD_BASE, "bg-white/94")}>
           <CardHeader className={SECTION_HEADER_BASE}>
             <SectionEyebrow className="text-slate-500">{t("vectors.sectionLabel")}</SectionEyebrow>
@@ -1422,130 +1780,98 @@ export function PersonaPage() {
       ) : null}
 
       {/* SDG alignment */}
-      {profile.sdg_alignment.length > 0 ? (
-        <Card
-          className={cn(SECTION_CARD_BASE, "bg-white/94")}
-          style={{ background: mbtiCardBg(2, 3) }}
-        >
-          <CardHeader className={SECTION_HEADER_BASE}>
-            <SectionEyebrow className="text-slate-500">{t("sdg.sectionLabel")}</SectionEyebrow>
-          </CardHeader>
-          <CardContent className={SECTION_CONTENT_BASE}>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {profile.sdg_alignment.map((s) => (
-                <SdgBadge key={s.sdg} {...s} />
-              ))}
-            </div>
-            <SectionNote className="border-slate-200 bg-slate-50/80" iconClassName="text-slate-400">
-              {t("sdg.aiNote")}
-            </SectionNote>
-          </CardContent>
-        </Card>
-      ) : null}
+      {!isCreatorProfile ? sdgSection : null}
 
       {/* Identity shifts timeline */}
-      {profile.identity_shifts.length > 0
-        ? (() => {
-            const mbtiColors = profile.mbti ? getMbtiDominantColors(profile.mbti) : [];
-            return (
-              <Card
-                className={cn(SECTION_CARD_BASE, "bg-white/94")}
-                style={{ background: mbtiCardBg(0, 4, 160) }}
-              >
-                <CardHeader className={SECTION_HEADER_BASE}>
-                  <SectionEyebrow className="text-slate-500">
-                    {t("timeline.sectionLabel")}
-                  </SectionEyebrow>
-                </CardHeader>
-                <CardContent className={SECTION_CONTENT_BASE}>
-                  <div className="space-y-0">
-                    {[...profile.identity_shifts].reverse().map((shift, i) => {
-                      const color = mbtiColors[i % mbtiColors.length] ?? "#14b8a6";
-                      return (
-                        <div key={shift.period} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div
-                              className="h-3 w-3 rounded-full ring-2 ring-white shadow-sm shrink-0"
-                              style={{ background: color }}
-                            />
-                            {i < profile.identity_shifts.length - 1 && (
-                              <div
-                                className="w-0.5 flex-1 min-h-[2rem]"
-                                style={{
-                                  background: `linear-gradient(to bottom, ${color}, ${mbtiColors[(i + 1) % mbtiColors.length] ?? color})`
-                                }}
-                              />
-                            )}
-                          </div>
-                          <div className="pb-5">
-                            <div className="text-xs font-bold tracking-wide" style={{ color }}>
-                              {shift.period}
-                            </div>
-                            <div className="mt-0.5 text-sm font-semibold text-foreground">
-                              {shift.label}
-                            </div>
-                            <div className="mt-1 text-sm leading-6 text-muted-foreground">
-                              {shift.note}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()
-        : null}
+      {!isCreatorProfile ? timelineSection : null}
+
+      {creatorPr ? <CreatorPrRolesCard data={creatorPr} /> : null}
+
+      {creatorPr ? (
+        <CreatorPrCtaCard
+          data={creatorPr}
+          email={email}
+          emailCopied={emailCopied}
+          onEmailCopy={handleEmailCopy}
+        />
+      ) : null}
 
       {/* Strengths + weaknesses — compact */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card
-          className={cn(SECTION_CARD_BASE, "bg-white/94")}
-          style={{ background: mbtiCardBg(0, 1) }}
-        >
-          <CardHeader className={SECTION_HEADER_BASE}>
-            <SectionEyebrow className="text-slate-500">
-              {t("strengths.sectionLabel")}
-            </SectionEyebrow>
-          </CardHeader>
-          <CardContent className={cn(SECTION_CONTENT_BASE, "pt-4")}>
-            <ul className="space-y-1">
-              {profile.strengths.map((s) => (
-                <li key={s} className="flex gap-2 text-sm leading-6 text-slate-700">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      {showExtendedPersonaSections ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className={cn(SECTION_CARD_BASE, "bg-white/94")}
+            style={{ background: mbtiCardBg(0, 1) }}
+          >
+            <CardHeader className={SECTION_HEADER_BASE}>
+              <SectionEyebrow className="text-slate-500">
+                {t("strengths.sectionLabel")}
+              </SectionEyebrow>
+            </CardHeader>
+            <CardContent className={cn(SECTION_CONTENT_BASE, "pt-4")}>
+              <ul className="space-y-1">
+                {profile.strengths.map((s) => (
+                  <li key={s} className="flex gap-2 text-sm leading-6 text-slate-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-        <Card
-          className={cn(SECTION_CARD_BASE, "bg-white/94")}
-          style={{ background: mbtiCardBg(3, 4) }}
-        >
-          <CardHeader className={SECTION_HEADER_BASE}>
-            <SectionEyebrow className="text-slate-500">
-              {t("watchouts.sectionLabel")}
-            </SectionEyebrow>
-          </CardHeader>
-          <CardContent className={cn(SECTION_CONTENT_BASE, "pt-4")}>
-            <ul className="space-y-1">
-              {profile.watchouts.map((w) => (
-                <li key={w} className="flex gap-2 text-sm leading-6 text-slate-700">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  {w}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+          <Card
+            className={cn(SECTION_CARD_BASE, "bg-white/94")}
+            style={{ background: mbtiCardBg(3, 4) }}
+          >
+            <CardHeader className={SECTION_HEADER_BASE}>
+              <SectionEyebrow className="text-slate-500">
+                {t("watchouts.sectionLabel")}
+              </SectionEyebrow>
+            </CardHeader>
+            <CardContent className={cn(SECTION_CONTENT_BASE, "pt-4")}>
+              <ul className="space-y-1">
+                {profile.watchouts.map((w) => (
+                  <li key={w} className="flex gap-2 text-sm leading-6 text-slate-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                    {w}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       {/* Q&A — auth-gated */}
       {sessionUser ? (
-        <PersonaQAPanel personId={personaId} lang={lang} />
+        <PersonaQAPanel personId={personaId} lang={lang} compact={isCreatorProfile} />
+      ) : isCreatorProfile ? (
+        <Card className={cn(SECTION_CARD_BASE, "bg-white/88")}>
+          <CardHeader className={SECTION_HEADER_BASE}>
+            <SectionEyebrow className="text-slate-500">{t("qa.compactBadge")}</SectionEyebrow>
+            <CardTitle className="text-lg font-semibold tracking-[-0.03em] text-slate-950 sm:text-[1.35rem]">
+              {t("qa.compactTitle")}
+            </CardTitle>
+            <p className={SECTION_TEXT_BASE}>{t("qa.compactDescription")}</p>
+          </CardHeader>
+          <CardContent className={SECTION_CONTENT_BASE}>
+            <SectionNote className="border-slate-200 bg-slate-50/80" iconClassName="text-slate-400">
+              {t("qa.disclaimer")}
+            </SectionNote>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className={SECTION_TEXT_BASE}>{t("loginPrompt.message")}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <PersonaChatHowItWorksButton compact />
+                <a href="/auth/login">
+                  <Button variant="outline" size="sm">
+                    {t("loginPrompt.loginBtn")}
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <Card className={cn(SECTION_CARD_BASE, "bg-white/88")}>
           <CardContent className={cn(SECTION_CONTENT_BASE, "sm:py-5")}>

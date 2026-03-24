@@ -14,7 +14,7 @@ from app.features.persona.models import Persona
 DEMO_USER_EMAIL = os.getenv("DEMO_USER_EMAIL", "lifedesigner88@gmail.com")
 DEMO_USER_PIN   = os.getenv("DEMO_USER_PIN",   "1234")                 # login: email + 1234
 DEMO_PERSONA_ID = os.getenv("DEMO_PERSONA_ID", "sejong")               # /persona/sejong
-DEMO_PERSONA_TITLE = "박세종 · SW Maestro 17 Team Building"
+DEMO_PERSONA_TITLE = "박세종 · AI SW Maestro 17 Team Building"
 DEMO_USER_NAME = "박세종"
 DEMO_USER_GENDER = "M"
 DEMO_USER_BIRTH_DATE = date(1988, 9, 12)
@@ -46,10 +46,10 @@ _DATA_ENG: dict = {
         },
     },
     "one_liner": (
-        "My strongest lane is founder-PM work: defining the problem, understanding users, "
-        "setting direction, writing the docs, and keeping a small team aligned. For SW "
-        "Maestro 17, I am looking for two serious owners before the April 3, 2026 team-building "
-        "event: one for Backend-AI-Infra and one for Frontend-UX-Product."
+        "I want to lead the Founder-PM side: clarifying the problem, understanding users, "
+        "setting direction, and keeping a small team aligned through writing. Right now, "
+        "I am looking for one Backend-AI-Infra partner and one Frontend-UX-Product partner "
+        "to test one product together."
     ),
     "top3_values": ["User Understanding", "Community", "Education x Technology"],
     "strengths": [
@@ -116,108 +116,90 @@ _DATA_ENG: dict = {
         ],
     },
     "creator_pr": {
-        "event_badge": "SW Maestro 17",
+        "event_badge": "AI SW Maestro 17",
         "event_note": (
-            "First goal of this page: help the right two teammates decide fast before the "
-            "April 3, 2026 team-building and networking event. The long-term Persona / "
-            "Life Design vision still matters, but the first read should make the team picture obvious."
+            "First goal of this page: help potential teammates quickly understand the team picture "
+            "before the April 3, 2026 team-building event."
         ),
         "role_summary": (
-            "Strongest position: Founder-PM / domain understanding / user understanding / "
-            "community / documentation / direction setting."
+            "My strongest lane is Founder-PM: problem framing, user understanding, documentation, and direction setting."
         ),
         "quick_facts": [
             {
                 "label": "My role",
-                "value": "Founder-PM who frames the problem, understands users, and keeps the roadmap coherent",
+                "value": "Founder-PM",
             },
             {
                 "label": "Need now",
-                "value": "1 Backend-AI-Infra owner + 1 Frontend-UX-Product owner",
+                "value": "1 Backend-AI-Infra partner + 1 Frontend-UX-Product partner",
             },
             {
-                "label": "What we could build",
-                "value": (
-                    "A user-facing AI product around self-introduction, team formation, learning, "
-                    "or life design"
-                ),
+                "label": "Team vibe",
+                "value": "Not a perfect team from day one, but a small team that can grow while shipping",
             },
         ],
         "teammate_roles": [
             {
                 "title": "Backend-AI-Infra owner",
                 "summary": (
-                    "A teammate who can take technical ownership instead of waiting for perfect "
-                    "specs before moving."
+                    "Someone who wants to own the backend, AI, and infra side with the team."
                 ),
                 "bullets": [
-                    "Owns FastAPI, LangGraph, and the data model",
-                    "Can stabilize deployment, ops, and real service reliability",
-                    "Translates product ambiguity into a trustworthy backend system",
+                    "Can own FastAPI, LangGraph, and the data model",
+                    "Will carry deployment, ops, and stability to the end",
                 ],
             },
             {
                 "title": "Frontend-UX-Product owner",
                 "summary": (
-                    "A teammate who can turn the first impression and the core user flow into a "
-                    "convincing, high-clarity screen."
+                    "Someone who wants to shape the product surface and improve it with users."
                 ),
                 "bullets": [
-                    "Owns intro flow, card UI, information hierarchy, and conversion moments",
-                    "Makes product decisions while implementing instead of only following tickets",
-                    "Cares about trust, clarity, and mobile readability as much as visuals",
+                    "Can design and build the intro flow, card UI, and first impression",
+                    "Cares about clarity, trust, and mobile readability",
                 ],
             },
         ],
-        "avoid_matches": [
-            "Broad generalists who widen direction but do not take a core surface to the end",
-            "People who care more about the technology itself than the user problem underneath it",
-            "Strong talkers who rarely carry things all the way through deployment and live feedback",
-        ],
+        "avoid_matches": [],
         "project": {
-            "title": "A product that helps people understand themselves and each other faster",
+            "title": "A product that helps people understand fit faster",
             "summary": (
-                "I want us to start from a high-stakes moment like team building, networking, "
-                "learning, or collaboration and build a product that improves the next real decision."
+                "I want us to start from a real moment like team building or self-introduction and make the next decision easier."
             ),
             "bullets": [
-                "Start from a painful workflow like self-introduction, fit discovery, team formation, or follow-up after networking",
-                "Use AI to structure messy personal or context data into something people can actually act on",
-                "Keep it practical: better first impression, better matching, better next conversation",
-                "If it works in SoMa or education/community settings, grow it later into a broader Persona / Life Design product",
+                "Start from a painful flow such as self-introduction, fit discovery, or team formation",
+                "Use AI to organize messy personal context into something people can actually act on",
+                "If it works, grow it from SoMa into a broader product later",
             ],
         },
         "why_now": {
-            "title": "Why now",
+            "title": "Why faster communication matters",
             "summary": (
-                "The April 3, 2026 team-building event gives us a real deadline, a concentrated "
-                "user group of around 300 people, and immediate feedback on whether the product story resonates."
+                "The offline team-building window is short. Sharing context early helps people start better conversations and make faster team decisions."
             ),
             "bullets": [
-                "There is a real event and a real decision window, not a fake demo context",
-                "We can watch how people introduce themselves and choose teammates in the wild",
-                "The SoMa calendar rewards teams that align early and execute weekly",
+                "See whom to talk to first before meeting in person",
+                "Share role, GitHub, and intro links early",
+                "Make the short offline time more useful",
             ],
         },
         "why_me": {
-            "title": "Why me",
+            "title": "What I can own",
             "summary": (
-                "I am strongest when I stay in the founder-PM lane: understanding the user, "
-                "deciding direction, documenting the reasoning, and keeping the team moving toward one product."
+                "I am strongest in the Founder-PM lane: narrowing the problem, understanding users, documenting decisions, and keeping the team moving."
             ),
             "bullets": [
-                "Education and community background gives me strong user and domain intuition",
-                "I naturally write documents that make decisions, tradeoffs, and next steps visible",
-                "I care about whether this can become a company, not just a polished presentation",
+                "I bring strong user and domain intuition from education and community work",
+                "I naturally write docs that make decisions and next steps visible",
+                "I care about building something real, not only making a polished presentation",
             ],
         },
         "cta": {
             "title": (
-                "If you feel close to one of these two owner roles, I want to talk before team building."
+                "If you feel close to one of these two roles, I would love to talk before team building."
             ),
             "body": (
-                "If you can own backend-AI-infra or frontend-UX-product and want to build one "
-                "serious product rather than just join a nice team, please email me."
+                "You do not need to be a finished expert. If you want to take ownership of one side, ship together, and grow through one product, please email me."
             ),
         },
     },
@@ -307,10 +289,9 @@ _DATA_KOR: dict = {
         },
     },
     "one_liner": (
-        "제가 가장 잘하는 포지션은 Founder-PM 역할입니다. 문제를 정의하고, 사용자를 이해하고, "
-        "방향을 잡고, 문서로 정리하고, 작은 팀을 한 제품으로 정렬시키는 일에 강합니다. "
-        "SW마에스트로 17기에서는 2026년 4월 3일 팀빌딩 전까지 "
-        "Backend-AI-Infra 오너 1명과 Frontend-UX-Product 오너 1명을 찾고 있습니다."
+        "제가 맡고 싶은 역할은 Founder-PM입니다. 문제를 좁히고, 사용자를 이해하고, 방향을 정리하고, "
+        "문서로 팀을 맞추는 쪽에 강합니다. 지금은 Backend-AI-Infra 1명, "
+        "Frontend-UX-Product 1명과 함께 한 제품을 작게 검증해보고 싶습니다."
     ),
     "top3_values": ["사용자 이해", "커뮤니티", "교육 x 기술"],
     "strengths": [
@@ -375,102 +356,87 @@ _DATA_KOR: dict = {
         ],
     },
     "creator_pr": {
-        "event_badge": "SW Maestro 17",
+        "event_badge": "AI SW Maestro 17",
         "event_note": (
-            "이 페이지의 1차 목적은 2026년 4월 3일 팀빌딩·네트워킹 전에 맞는 두 팀원이 "
-            "빠르게 판단할 수 있게 만드는 것입니다. 장기적인 Persona / Life Design 비전은 남기되, "
-            "첫 화면에서는 팀 그림이 먼저 보여야 합니다."
+            "이 페이지의 1차 목적은 2026년 4월 3일 팀빌딩 전에 팀 그림을 빠르게 이해하게 만드는 것입니다."
         ),
         "role_summary": (
-            "가장 강한 포지션: Founder-PM / 도메인 이해 / 사용자 이해 / 커뮤니티 / 문서화 / 방향성 제시."
+            "제가 가장 잘하는 역할은 Founder-PM입니다. 문제 정의, 사용자 이해, 문서화, 방향 정리를 맡겠습니다."
         ),
         "quick_facts": [
             {
                 "label": "내 역할",
-                "value": "문제 정의, 사용자 이해, 제품 방향, 문서화를 맡는 Founder-PM",
+                "value": "Founder-PM",
             },
             {
                 "label": "지금 찾는 2명",
-                "value": "Backend-AI-Infra 오너 1명 + Frontend-UX-Product 오너 1명",
+                "value": "Backend-AI-Infra 1명 · Frontend-UX-Product 1명",
             },
             {
-                "label": "함께 만들 그림",
-                "value": (
-                    "자기소개, 팀빌딩, 학습, 라이프디자인 문제를 푸는 사용자용 AI 제품"
-                ),
+                "label": "팀 분위기",
+                "value": "완성형보다 같이 만들고 같이 성장하는 작은 팀",
             },
         ],
         "teammate_roles": [
             {
                 "title": "Backend-AI-Infra 오너",
                 "summary": (
-                    "명세를 기다리기보다 기술 면을 스스로 정의하고 끝까지 책임질 수 있는 사람을 찾습니다."
+                    "백엔드·AI·인프라를 주도적으로 맡아 함께 키워갈 사람을 찾습니다."
                 ),
                 "bullets": [
-                    "FastAPI, LangGraph, 데이터모델을 오너십 있게 설계할 수 있는 사람",
-                    "배포 안정화, 운영, 서비스 신뢰성까지 책임질 수 있는 사람",
-                    "제품 방향의 모호함을 믿을 수 있는 백엔드 시스템으로 바꿀 수 있는 사람",
+                    "FastAPI, LangGraph, 데이터 구조를 함께 책임질 사람",
+                    "배포와 운영 안정화까지 끝까지 챙길 사람",
                 ],
             },
             {
                 "title": "Frontend-UX-Product 오너",
                 "summary": (
-                    "첫인상과 핵심 사용자 흐름을 실제 전환이 일어나는 화면으로 만들 수 있는 사람을 찾습니다."
+                    "제품 화면과 사용자 흐름을 직접 만들고 개선해갈 사람을 찾습니다."
                 ),
                 "bullets": [
-                    "자기소개 흐름, 카드 UI, 정보 구조, CTA 순간을 스스로 설계하고 구현할 수 있는 사람",
-                    "티켓만 처리하는 개발자가 아니라 구현하면서도 제품 판단을 할 수 있는 사람",
-                    "비주얼뿐 아니라 신뢰감, 명확성, 모바일 가독성까지 중요하게 보는 사람",
+                    "자기소개 흐름, 카드 UI, 정보 구조를 설계하고 구현할 사람",
+                    "비주얼뿐 아니라 신뢰감과 모바일 가독성을 중요하게 볼 사람",
                 ],
             },
         ],
-        "avoid_matches": [
-            "방향만 넓히고 핵심 면을 끝까지 책임지지 않는 제너럴리스트",
-            "사용자 문제보다 기술 그 자체에만 더 몰입하는 사람",
-            "말은 많지만 배포와 실제 피드백까지 밀어본 경험이 약한 사람",
-        ],
+        "avoid_matches": [],
         "project": {
-            "title": "서로를 더 빨리 이해하게 만드는 사용자용 제품",
+            "title": "사람과 팀의 fit을 더 빨리 이해하게 만드는 제품",
             "summary": (
-                "팀빌딩, 네트워킹, 학습, 협업처럼 실제 판단이 일어나는 순간에서 시작해, "
-                "다음 행동을 더 잘 결정하게 돕는 제품을 함께 만들고 싶습니다."
+                "팀빌딩이나 자기소개처럼 실제 선택이 일어나는 순간을 더 선명하게 만드는 제품을 함께 만들고 싶습니다."
             ),
             "bullets": [
-                "자기소개, 팀 적합도 파악, 팀 구성, 네트워킹 후속 대화처럼 실제로 불편한 흐름에서 출발합니다.",
-                "AI를 이용해 사람의 맥락과 데이터를 정리하되, 결과는 바로 행동으로 이어질 수 있어야 합니다.",
-                "좋은 첫인상, 더 나은 매칭, 더 나은 다음 대화를 만드는 제품이면 좋습니다.",
-                "소마나 교육·커뮤니티 환경에서 검증되면 이후 Persona / Life Design 제품으로 확장할 수 있습니다.",
+                "자기소개, 팀 적합도 파악, 팀 구성처럼 실제로 불편한 흐름에서 출발합니다.",
+                "AI를 쓰더라도 결과가 바로 다음 행동으로 이어져야 합니다.",
+                "소마에서 검증되면 이후 더 넓은 제품으로 확장할 수 있습니다.",
             ],
         },
         "why_now": {
-            "title": "Why now",
+            "title": "빠른 소통의 필요성",
             "summary": (
-                "2026년 4월 3일 팀빌딩은 실제 데드라인이고, 약 300명 규모의 밀집된 사용자군이 있으며, "
-                "제품 이야기가 먹히는지 바로 확인할 수 있는 드문 타이밍입니다."
+                "오프라인 팀빌딩 시간은 짧습니다. 미리 맥락을 공유하고 대화를 시작할수록 팀 판단이 쉬워집니다."
             ),
             "bullets": [
-                "가짜 데모 맥락이 아니라 실제 팀 선택이 일어나는 장면이 있습니다.",
-                "사람들이 어떻게 자기소개하고 팀원을 고르는지 현장에서 바로 관찰할 수 있습니다.",
-                "소마 6개월은 초반 정렬이 빠른 팀에게 훨씬 유리합니다.",
+                "누구와 먼저 이야기할지 미리 정할 수 있습니다.",
+                "역할, GitHub, 자기소개 링크를 먼저 공유할 수 있습니다.",
+                "짧은 현장 시간을 더 의미 있게 쓸 수 있습니다.",
             ],
         },
         "why_me": {
-            "title": "Why me",
+            "title": "제가 맡을 수 있는 역할",
             "summary": (
-                "저는 Founder-PM 포지션에 있을 때 가장 강합니다. 사용자를 이해하고, 방향을 정하고, "
-                "판단 근거를 문서화하고, 팀이 한 제품으로 움직이게 만드는 역할에 자신이 있습니다."
+                "저는 문제를 좁히고, 사용자 이야기를 듣고, 팀이 같은 방향으로 움직이게 만드는 역할에 강합니다."
             ),
             "bullets": [
                 "교육과 커뮤니티 경험 덕분에 사용자와 도메인을 읽는 감각이 좋습니다.",
-                "의사결정, 트레이드오프, 다음 액션이 보이도록 문서를 쓰는 습관이 강합니다.",
-                "좋은 발표보다 실제 제품 가능성과 창업 가능성을 더 중요하게 봅니다.",
+                "의사결정과 다음 액션이 보이게 문서를 정리하는 편입니다.",
+                "좋은 발표보다 실제 제품 가능성과 실행을 더 중요하게 봅니다.",
             ],
         },
         "cta": {
-            "title": "이 두 오너 포지션 중 하나에 가깝다면, 팀빌딩 전에 꼭 이야기해보고 싶습니다.",
+            "title": "두 역할 중 하나에 가깝다면, 팀빌딩 전에 편하게 이야기해보고 싶습니다.",
             "body": (
-                "Backend-AI-Infra 또는 Frontend-UX-Product를 실제로 오너십 있게 맡을 수 있고, "
-                "좋은 사람 모임이 아니라 한 제품을 진지하게 만들 팀을 찾고 있다면 메일 주세요."
+                "이미 완성된 사람이 아니어도 괜찮습니다. 한 영역을 책임지고 같이 배우며 한 제품을 끝까지 밀어보고 싶다면 메일 주세요."
             ),
         },
     },

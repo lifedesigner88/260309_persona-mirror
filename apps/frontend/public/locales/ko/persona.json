@@ -14,9 +14,13 @@
   },
   "creatorIntro": {
     "badge": "실전 팀빌딩 PR",
-    "title": "좋은 사람 소개보다, 같이 팀하면 어떤 그림이 나오는지 먼저 보여드리고 싶습니다.",
-    "description": "이 페이지는 단순한 persona/demo 페이지가 아니라, SW마에스트로 17기 팀빌딩 전에 저와 잘 맞는 팀원이 빠르게 판단할 수 있도록 만든 Creator PR 페이지입니다.",
-    "contact": "아래 두 오너 포지션 중 하나에 가깝다면, 팀빌딩 전에 아래 이메일로 먼저 이야기해보고 싶습니다.",
+    "title": "박세종의 역할과 팀 조합만 짧게 보여드리고 싶습니다.",
+    "description": "AI SW Maestro 17 팀빌딩 전에 같이 팀해볼 만한지 빠르게 보는 Creator PR 페이지입니다.",
+    "contact": "완성형보다 같이 만들고 같이 성장할 팀을 찾고 있습니다.",
+    "aiBadge": "AI 제작 메모",
+    "aiTitle": "AI를 활용해 생성된 페이지",
+    "aiNote": "세종 휴포지토리의 데이터를 바탕으로 AI를 활용해 제작된 페이지입니다.",
+    "aiSignature": "with Codex GPT 5.4",
     "repoButton": "휴포지토리 보기",
     "emailCopy": "복사",
     "emailCopied": "복사됨"
@@ -24,12 +28,12 @@
   "creatorPr": {
     "heroRole": "가장 강한 포지션",
     "teamSectionLabel": "찾는 팀원",
-    "teamSectionTitle": "이 두 오너가 붙으면 팀이 가장 강해진다고 생각합니다.",
+    "teamSectionTitle": "이런 역할의 두 분과 함께 팀을 만들어보고 싶습니다.",
     "avoidMatches": "이 조합은 잘 안 맞을 가능성이 큽니다.",
-    "projectSectionLabel": "함께 만들 프로젝트",
-    "whyNow": "Why now",
-    "whyMe": "Why me",
-    "ctaSectionLabel": "CTA",
+    "projectSectionLabel": "함께 만들 방향",
+    "whyNow": "지금",
+    "whyMe": "제가 맡을 역할",
+    "ctaSectionLabel": "연락",
     "contactButton": "메일 복사"
   },
   "mbti": {
@@ -146,8 +150,8 @@
     "aiNote": "AI 예측 — 드라이브 강도는 가치관, 커리어 패턴, 행동 이력에서 추론된 것이며 자기 보고 평가가 아닙니다. PersonaMirror에 입력 데이터가 많을수록 이 점수가 더 정확해집니다."
   },
   "sdg": {
-    "sectionLabel": "SDGs 정렬",
-    "aiNote": "AI 예측 — 정렬은 가치관, 커리어 이력, 커뮤니티 활동에서 추론된 것이며 자기 보고 평가가 아닙니다. PersonaMirror에 입력 데이터가 많을수록 이 정렬이 더 정확해집니다."
+    "sectionLabel": "관심있는 SDGs",
+    "aiNote": "AI 예측 — 관심은 가치관, 커리어 이력, 커뮤니티 활동에서 추론된 것이며 자기 보고 평가가 아닙니다. PersonaMirror에 입력 데이터가 많을수록 이 관심 추정이 더 정확해집니다."
   },
   "timeline": {
     "sectionLabel": "아이덴티티 타임라인"
@@ -160,16 +164,41 @@
   },
   "qa": {
     "badge": "이 페르소나에게 묻기",
+    "compactBadge": "AI 세종",
     "title": "세종 페르소나와 대화하기",
+    "compactTitle": "AI 세종과 짧게 대화하기",
     "description": "무엇이든 물어보세요 — 세종 페르소나가 자신의 가치관, 경험, 세계관을 바탕으로 답변합니다.",
+    "compactDescription": "궁금한 점을 짧게 물어보세요. 팀빌딩 전에 분위기와 생각을 가볍게 확인할 수 있습니다.",
+    "disclaimer": "AI가 생성한 답변이라 실제 세종의 생각이나 표현과 다를 수 있습니다.",
+    "loggingNotice": "질문과 답변은 무분별한 사용을 막기 위해 기록되고 있습니다.",
     "thinking": "생각 중…",
+    "historyLoading": "이전 대화를 불러오는 중…",
+    "historyLoadFailed": "이전 대화를 불러오지 못했습니다.",
+    "resetSessionButton": "세션 초기화",
+    "resetSessionFailed": "세션을 초기화하지 못했습니다.",
+    "sessionResetNotice": "새 채팅 세션을 시작했습니다. 이전 기록은 DB에 남아 있지만 다시 불러오지 않습니다.",
     "placeholder": "질문을 입력하세요… (Enter로 전송)",
     "ask": "질문",
     "hint": "Enter로 전송 · Shift+Enter로 줄바꿈",
-    "errorMessage": "죄송합니다, 지금은 답변하기 어렵습니다."
+    "rateLimitHint": "로그인 사용자 기준 1시간에 최대 10개의 질문만 할 수 있습니다.",
+    "rateLimitError": "질문은 1시간에 최대 10개까지만 가능합니다. 잠시 후 다시 시도해 주세요.",
+    "errorMessage": "죄송합니다, 지금은 답변하기 어렵습니다.",
+    "howItWorksButton": "작동 방식 보기",
+    "howItWorksBadge": "개발자 메모",
+    "howItWorksTitle": "AI 세종 채팅은 이렇게 작동합니다",
+    "howItWorksDescription": "팀빌딩용 대화이지만, 내부적으로는 기록형 멀티턴 구조로 동작합니다.",
+    "howItWorksAccessLabel": "이용 조건",
+    "howItWorksAccessBody": "이 채팅은 로그인한 사용자만 사용할 수 있고, 1시간에 최대 10개의 질문까지만 가능합니다. 이상한 질문이나 무분별한 사용을 줄이기 위한 기본 장치입니다.",
+    "howItWorksContextLabel": "참고 데이터",
+    "howItWorksContextBody": "세종의 페르소나 데이터와 Creator PR, 그리고 휴포지토리 핵심 문서를 함께 참고해 답변합니다.",
+    "howItWorksMemoryLabel": "멀티턴 방식",
+    "howItWorksMemoryBody": "전체 대화는 DB에 저장하고, 답변할 때는 최근 대화 일부만 다시 넣어 성능과 비용을 함께 관리합니다.",
+    "howItWorksLoggingLabel": "기록 방식",
+    "howItWorksLoggingBody": "질문과 답변은 모두 DB에 저장됩니다. 나중에 자주 묻는 질문 패턴이나 팀빌딩 관심사를 살펴볼 수 있습니다.",
+    "howItWorksClose": "닫기"
   },
   "loginPrompt": {
-    "message": "이 페르소나에게 질문하려면 로그인하세요.",
+    "message": "이 채팅은 로그인한 사용자만 이용할 수 있습니다.",
     "loginBtn": "로그인"
   }
 }

@@ -24,12 +24,17 @@ from app.features.verification.router import router as verification_router
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(bind=engine)
-    if engine.dialect.name != "sqlite":
-        with engine.begin() as connection:
-            inspector = inspect(connection)
-            user_columns = {column["name"] for column in inspector.get_columns("users")}
-            if "interview_start_time" not in user_columns:
-                connection.execute(text("ALTER TABLE users ADD COLUMN interview_start_time TIME"))
+    with engine.begin() as connection:
+        inspector = inspect(connection)
+        user_columns = {column["name"] for column in inspector.get_columns("users")}
+        if "interview_start_time" not in user_columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN interview_start_time TIME"))
+        if inspector.has_table("persona_chat_messages"):
+            chat_columns = {column["name"] for column in inspector.get_columns("persona_chat_messages")}
+            if "session_id" not in chat_columns:
+                connection.execute(
+                    text("ALTER TABLE persona_chat_messages ADD COLUMN session_id INTEGER NOT NULL DEFAULT 1")
+                )
     with SessionLocal() as db:
         sync_admin_seed(db)
         sync_demo_seed(db)
