@@ -108,6 +108,12 @@ Build SoMa Community step by step — not just fast, but in a way that makes str
 - Personal data (verification info, phone numbers, links, voice/images): handled conservatively.
 - Heavy AI tasks: async, separated from web request cycle.
 
+### Hupository Data Ownership
+
+- `apps/backend/hupository/data` is managed in another workflow and is not the default editing target in this repo.
+- Do not update Hupository data files during normal tasks unless the user explicitly asks for that specific change.
+- If a task needs current-state wording, prefer updating repo docs, code, or UI copy rather than patching Hupository source data.
+
 ## Quality Rules
 
 | Task          | Command              |
