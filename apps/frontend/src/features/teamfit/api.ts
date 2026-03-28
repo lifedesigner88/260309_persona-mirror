@@ -1,9 +1,13 @@
 import i18n from "@/lib/i18n";
 
 import type {
+  TeamFitCandidateDirectoryResponse,
+  TeamFitConversationPriorityResponse,
   TeamFitExplorerMeResponse,
   TeamFitExplorerProfile,
   TeamFitFinalSaveRequest,
+  TeamFitFitCheckState,
+  TeamFitFitCheckUpdate,
   TeamFitFollowupAnswerRequest,
   TeamFitInterviewQuestionRequest,
   TeamFitInterviewQuestionResponse,
@@ -120,6 +124,30 @@ export async function requestTeamFitFollowupQuestion(): Promise<TeamFitInterview
   return postJson<TeamFitInterviewQuestionResponse, undefined>("/team-fit/interview/follow-up");
 }
 
+export async function fetchTeamFitRecommendations(): Promise<TeamFitConversationPriorityResponse> {
+  const response = await fetch(`${API_BASE_URL}/team-fit/recommendations`, {
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    await throwTeamFitError("teamfit.errors.recommendationsLoadFailed", response);
+  }
+
+  return readJson<TeamFitConversationPriorityResponse>(response);
+}
+
+export async function fetchTeamFitCandidateDirectory(): Promise<TeamFitCandidateDirectoryResponse> {
+  const response = await fetch(`${API_BASE_URL}/team-fit/candidates`, {
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    await throwTeamFitError("teamfit.errors.recommendationsLoadFailed", response);
+  }
+
+  return readJson<TeamFitCandidateDirectoryResponse>(response);
+}
+
 export async function saveTeamFitFollowupAnswer(
   payload: TeamFitFollowupAnswerRequest
 ): Promise<TeamFitExplorerProfile> {
@@ -127,4 +155,24 @@ export async function saveTeamFitFollowupAnswer(
     "/team-fit/interview/follow-up-answer",
     payload
   );
+}
+
+export async function saveTeamFitFitCheck(
+  targetUserId: number,
+  payload: TeamFitFitCheckUpdate
+): Promise<TeamFitFitCheckState> {
+  const response = await fetch(`${API_BASE_URL}/team-fit/fit-checks/${targetUserId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    await throwTeamFitError("teamfit.errors.fitCheckSaveFailed", response);
+  }
+
+  return readJson<TeamFitFitCheckState>(response);
 }

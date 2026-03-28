@@ -17,6 +17,10 @@ export type TeamFitInterviewTurnDraft = {
   answer: string;
 };
 
+export type TeamFitInterviewTurnSaveInput = TeamFitInterviewTurnDraft & {
+  phase?: TeamFitExplorerPhase;
+};
+
 export type TeamFitInterviewTurn = TeamFitInterviewTurnDraft & {
   id: number;
   sequence_no: number;
@@ -56,7 +60,9 @@ export type TeamFitInterviewQuestionResponse = {
   question: string;
 };
 
-export type TeamFitFinalSaveRequest = TeamFitInterviewQuestionRequest;
+export type TeamFitFinalSaveRequest = Omit<TeamFitInterviewQuestionRequest, "history"> & {
+  history: TeamFitInterviewTurnSaveInput[];
+};
 
 export type TeamFitFollowupAnswerRequest = {
   question: string;
@@ -122,6 +128,69 @@ export type TeamFitRecommendation = {
   structured_fit_score: number;
 };
 
+export type TeamFitRecommendationType = "safe_fit" | "complementary_fit" | "wildcard_fit";
+
+export type TeamFitRecommendationReasonDetail = {
+  problem_resonance: string;
+  role_complementarity: string;
+  work_style: string;
+  value_alignment: string;
+  conversation_potential: string;
+};
+
+export type TeamFitConversationPriorityRecommendation = {
+  type: TeamFitRecommendationType;
+  candidate_id: string;
+  user_id: number;
+  name: string;
+  problem_statement: string;
+  offered_role: string;
+  sdgs: string[];
+  mbti?: string | null;
+  base_score: number;
+  reason_summary: string;
+  reason_detail: TeamFitRecommendationReasonDetail;
+  first_question_to_ask: string;
+  uncertainty_note: string;
+  is_verified: boolean;
+  email?: string | null;
+  github_address?: string | null;
+  notion_url?: string | null;
+  history: TeamFitInterviewTurn[];
+};
+
+export type TeamFitFitCheckUpdate = {
+  fit_score: number | null;
+  fit_note?: string | null;
+};
+
+export type TeamFitFitCheckState = {
+  target_user_id: number;
+  fit_score: number | null;
+  fit_note?: string | null;
+  updated_at: string;
+};
+
+export type TeamFitRejectedCandidate = {
+  candidate_id: string;
+  name: string;
+  reason: string;
+  problem_statement: string;
+  offered_role: string;
+  sdgs: string[];
+  mbti?: string | null;
+  is_verified: boolean;
+  email?: string | null;
+  github_address?: string | null;
+  notion_url?: string | null;
+};
+
+export type TeamFitRecommendationSystemNotes = {
+  scoring_explanation: string;
+  limits: string;
+  next_improvement: string;
+};
+
 export type TeamFitMapPoint = {
   user_id: number;
   bucket: TeamFitBucket;
@@ -139,6 +208,44 @@ export type TeamFitRecommendationsResponse = {
   unexpected?: TeamFitRecommendation[];
   map_points?: TeamFitMapPoint[];
   active_profile_count?: number;
+};
+
+export type TeamFitConversationPriorityResponse = {
+  requires_profile: boolean;
+  requires_approval: boolean;
+  active_profile_count: number;
+  recommended_people: TeamFitConversationPriorityRecommendation[];
+  rejected_or_low_signal_candidates: TeamFitRejectedCandidate[];
+  system_notes: TeamFitRecommendationSystemNotes;
+};
+
+export type TeamFitCandidateDirectoryItem = {
+  user_id: number;
+  candidate_id: string;
+  name: string;
+  has_teamfit_profile: boolean;
+  fit_score?: number | null;
+  fit_note?: string | null;
+  reason_summary: string;
+  reason_detail?: TeamFitRecommendationReasonDetail | null;
+  problem_statement: string;
+  offered_role: string;
+  sdgs: string[];
+  mbti?: string | null;
+  is_verified: boolean;
+  email?: string | null;
+  github_address?: string | null;
+  notion_url?: string | null;
+  history: TeamFitInterviewTurn[];
+  created_at: string;
+  profile_updated_at?: string | null;
+  teamfit_score?: number | null;
+  teamfit_rank?: number | null;
+};
+
+export type TeamFitCandidateDirectoryResponse = {
+  candidates: TeamFitCandidateDirectoryItem[];
+  total_count: number;
 };
 
 export type TeamFitSession = SessionUser | null;

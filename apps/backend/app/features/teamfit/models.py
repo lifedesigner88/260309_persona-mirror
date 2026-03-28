@@ -48,6 +48,11 @@ class TeamfitExplorerProfile(Base):
     mbti_axis_values: Mapped[dict[str, int]] = mapped_column(JSON, nullable=False, default=dict)
     sdg_tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     narrative_markdown: Mapped[str] = mapped_column(Text, nullable=False)
+    extracted_signals_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    recommendation_embedding_input: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommendation_embedding_json: Mapped[list[float] | None] = mapped_column(JSON, nullable=True)
+    extraction_version: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    extracted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -65,6 +70,25 @@ class TeamfitExplorerTurn(Base):
     phase: Mapped[str] = mapped_column(String(20), nullable=False)
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class TeamfitFitCheck(Base):
+    __tablename__ = "teamfit_fit_checks"
+
+    viewer_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
+    target_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
+    fit_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fit_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -49,6 +49,10 @@ The current implementation is the first product experiment around that question.
 - In Step 1, enter `one problem sentence + MBTI 5 axes + 4 SDGs`
 - In Step 2, write up to 800 characters of Markdown context
 - After clicking save, let AI ask 3 follow-up questions one by one before the profile is finally stored
+- After saving, open the `Candidates` tab first to review the first 3 people worth talking to
+- Below the `Candidates` tab recommendations, browse all signed-up users 10 at a time and narrow by `with fit record / without fit record / team-fit order`
+- Switch to the `Team-fit profile` tab to edit the saved intake fields and interview transcript, then save again
+- In recommendation details or signed-up-user details, save a `0–100 fit score` plus a short memo after a real conversation, and remove already-scored candidates from the next recommendation round
 - Continue the saved interview later through the `answer again` follow-up action
 - Open `/persona/sejong` and review Sejong's builder profile
 - Use the login-only `AI Sejong` multi-turn chat at `/ai/sejong`
@@ -65,8 +69,10 @@ The current implementation is the first product experiment around that question.
 3. After logging in, Step 1 captures `one problem sentence + MBTI 5 axes + 4 SDGs`.
 4. Step 2 captures up to 800 characters of Markdown context about the problem, motivation, and desired team shape.
 5. Clicking save starts an AI interview that asks 3 additional questions one at a time.
-6. Once the third answer is complete, the interview is saved and the user can later append more follow-up answers.
-7. If needed, they continue into `/persona/sejong`, `AI Sejong`, or the Seoul dashboard for more context.
+6. Once the third answer is complete, the interview is saved and the `Candidates` tab opens first.
+7. The `Candidates` tab shows `safe fit / complementary fit / wildcard` cards, and below them a full signed-up-user directory in 10-person pages that can be re-sorted by `with fit record / without fit record / team-fit order`.
+8. After a real conversation, the user can store a `0–100 fit score` plus a short memo inside candidate details, and scored candidates are excluded from the next recommendation pass.
+9. If needed, they continue into `/persona/sejong`, `AI Sejong`, or the Seoul dashboard for more context.
 
 ## Key Features
 
@@ -75,8 +81,12 @@ The current implementation is the first product experiment around that question.
 - Step 1 `one problem sentence + MBTI 5 axes + 4 SDGs`
 - Step 2 Markdown narrative capped at 800 characters
 - AI interview dialog that generates 3 sequential follow-up questions before saving
-- Saved transcript view plus incremental follow-up questions through `answer again`
-- Recommendation surfaces temporarily hidden until they are redesigned around the new data model
+- Saved `Candidates` / `Team-fit profile` tab switch after the first save
+- Editable saved intake fields and interview transcript
+- Incremental follow-up questions through `answer again`
+- Conversation-priority recommendation cards that suggest the first 3 people worth talking to
+- Signed-up-user directory under the recommendation cards with 10-per-page browsing, fit-record filters, and team-fit-order sorting
+- Post-conversation fit scoring and memo capture from both recommendation details and signed-up-user details, with scored candidates removed from the next recommendation pass
 - Builder profile page at `/persona/sejong`
 - Login-only `AI Sejong`
 - Email signup, login, and PIN reset
@@ -103,7 +113,7 @@ The immediate goal is not to become a giant community platform.
 The current product direction is to make these parts sharper first:
 
 - smoother team-fit profile intake
-- redesigning recommendations around the new interview-first team-fit data model
+- improving recommendation weights and explanations using real conversation feedback
 - shortlist / trio support that genuinely helps decisions
 - better grounding, retrieval, and conversation quality for `AI Sejong`
 
@@ -165,6 +175,8 @@ If you use the AI worker, keep the same `DATABASE_URL` in both `apps/backend/.en
 
 By default, Hupository-backed answers read from `apps/backend/hupository`.
 If you want another location, set `HUPOSITORY_ROOT` in `apps/backend/.env`.
+
+Unless `TEAMFIT_DEMO_SEED_ENABLED` is disabled, backend startup also seeds 12 demo explorer profiles for the team-fit flow.
 
 ### Run locally
 

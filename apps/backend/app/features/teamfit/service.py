@@ -1,35 +1,49 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import os
 import re
 from collections.abc import Iterable
+from datetime import datetime, timezone
 from functools import lru_cache
 
 import anthropic
 from fastapi import HTTPException, status
 from openai import OpenAI
-from sqlalchemy import Select, func, select, text
+from sqlalchemy import Select, func, inspect, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.features.auth.models import User
 
-from .models import TeamfitExplorerProfile, TeamfitExplorerTurn, TeamfitProfile
+from .models import TeamfitExplorerProfile, TeamfitExplorerTurn, TeamfitFitCheck, TeamfitProfile
 from .schemas import (
+    TeamfitCandidateDirectoryItem,
+    TeamfitCandidateDirectoryResponse,
+    TeamfitConversationPriorityRecommendation,
     TeamfitExplorerMeResponse,
+    TeamfitExtractedSignals,
+    TeamfitFitCheckState,
+    TeamfitFitCheckUpdate,
     TeamfitExplorerProfileResponse,
     TeamfitExplorerProfileSaveRequest,
     TeamfitFollowupAnswerRequest,
     TeamfitInterviewQuestionRequest,
     TeamfitInterviewQuestionResponse,
     TeamfitInterviewTurnInput,
+    TeamfitInterviewTurnSaveInput,
     TeamfitInterviewTurnResponse,
     TeamfitMeResponse,
     TeamfitProfileResponse,
     TeamfitProfileUpsertRequest,
+    TeamfitRecommendationReasonDetail,
     TeamfitRecommendationsResponse,
+    TeamfitRecommendationSystemNotes,
+    TeamfitRejectedCandidate,
+    TeamfitSignalConfidence,
+    TeamfitWorkStyleSignals,
 )
 
 VECTOR_DIMENSIONS = 1536
@@ -38,6 +52,13 @@ MAX_RECOMMENDATIONS_PER_BUCKET = 4
 TOP_K_CANDIDATES = 50
 PGVECTOR_EMBEDDING_READY_KEY = "teamfit_pgvector_embedding_ready"
 MBTI_AXIS_IDS = ("mind", "energy", "nature", "tactics", "identity")
+MBTI_AXIS_WEIGHTS = {
+    "mind": 0.10,
+    "energy": 0.30,
+    "nature": 0.20,
+    "tactics": 0.30,
+    "identity": 0.10,
+}
 MBTI_AXIS_LETTERS = {
     "mind": ("I", "E"),
     "energy": ("N", "S"),
@@ -48,7 +69,53 @@ MBTI_AXIS_LETTERS = {
 DEFAULT_MBTI_LEFT_PERCENT = 74
 DEFAULT_MBTI_RIGHT_PERCENT = 26
 TEAMFIT_INTERVIEW_MODEL = os.getenv("ANTHROPIC_TEAMFIT_MODEL", "claude-haiku-4-5-20251001")
+TEAMFIT_EXTRACTION_MODEL = os.getenv("ANTHROPIC_TEAMFIT_EXTRACTION_MODEL", TEAMFIT_INTERVIEW_MODEL)
 INITIAL_INTERVIEW_QUESTION_LIMIT = 3
+EXTRACTION_VERSION = "conversation_priority_v2"
+SAFE_FIT_THRESHOLD = 0.58
+COMPLEMENTARY_THRESHOLD = 0.52
+WILDCARD_THRESHOLD = 0.46
+FALLBACK_RECOMMENDATION_CONFIDENCE_THRESHOLD = 0.35
+FALLBACK_RECOMMENDATION_SCORE_THRESHOLD = 0.30
+ROLE_KEYWORDS = {
+    "pm_operator": ("pm", "product", "기획", "프로덕트", "운영", "operator"),
+    "frontend": ("frontend", "front-end", "프론트", "ux", "ui"),
+    "backend": ("backend", "back-end", "백엔드", "api", "infra", "server"),
+    "ai": ("ai", "ml", "llm", "model", "machine learning", "인공지능"),
+    "design": ("design", "designer", "디자인"),
+    "data_research": ("data", "research", "analytics", "리서치", "데이터"),
+    "fullstack": ("fullstack", "full-stack", "풀스택"),
+    "operations": ("ops", "operation", "운영", "community"),
+}
+ROLE_COMPATIBILITY = {
+    "pm_operator": {"frontend", "backend", "fullstack", "design", "ai"},
+    "frontend": {"pm_operator", "backend", "fullstack", "design"},
+    "backend": {"pm_operator", "frontend", "fullstack", "ai", "data_research"},
+    "ai": {"backend", "data_research", "pm_operator", "fullstack"},
+    "design": {"pm_operator", "frontend", "fullstack"},
+    "data_research": {"ai", "backend", "pm_operator"},
+    "fullstack": {"pm_operator", "frontend", "backend", "ai", "design"},
+    "operations": {"pm_operator", "design", "frontend"},
+}
+SDG_FAMILIES = {
+    "no_poverty": {"equity", "wellbeing"},
+    "zero_hunger": {"equity", "wellbeing"},
+    "good_health_well_being": {"wellbeing"},
+    "quality_education": {"learning", "equity"},
+    "gender_equality": {"equity"},
+    "clean_water_sanitation": {"sustainability", "wellbeing"},
+    "affordable_clean_energy": {"sustainability", "innovation"},
+    "decent_work_economic_growth": {"economy", "equity"},
+    "industry_innovation_infrastructure": {"innovation", "economy"},
+    "reduced_inequalities": {"equity"},
+    "sustainable_cities_communities": {"sustainability", "community"},
+    "responsible_consumption_production": {"sustainability"},
+    "climate_action": {"sustainability"},
+    "life_below_water": {"sustainability"},
+    "life_on_land": {"sustainability"},
+    "peace_justice_strong_institutions": {"governance", "equity"},
+    "partnerships_for_the_goals": {"governance", "community"},
+}
 
 
 @lru_cache(maxsize=1)
@@ -132,6 +199,41 @@ def ensure_teamfit_pgvector_schema(db: Session) -> None:
     except SQLAlchemyError:
         db.rollback()
         db.info[PGVECTOR_EMBEDDING_READY_KEY] = False
+
+
+def ensure_teamfit_explorer_schema(db: Session) -> None:
+    bind = db.get_bind()
+    if bind is None:
+        return
+
+    extracted_at_type = "TIMESTAMP WITH TIME ZONE" if bind.dialect.name == "postgresql" else "DATETIME"
+
+    with bind.begin() as connection:
+        inspector = inspect(connection)
+        if not inspector.has_table("teamfit_explorer_profiles"):
+            return
+
+        columns = {column["name"] for column in inspector.get_columns("teamfit_explorer_profiles")}
+        if "extracted_signals_json" not in columns:
+            connection.execute(text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN extracted_signals_json JSON"))
+        if "recommendation_embedding_input" not in columns:
+            connection.execute(
+                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_input TEXT")
+            )
+        if "recommendation_embedding_json" not in columns:
+            connection.execute(
+                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_json JSON")
+            )
+        if "extraction_version" not in columns:
+            connection.execute(
+                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN extraction_version VARCHAR(48)")
+            )
+        if "extracted_at" not in columns:
+            connection.execute(
+                text(
+                    f"ALTER TABLE teamfit_explorer_profiles ADD COLUMN extracted_at {extracted_at_type}"
+                )
+            )
 
 
 def _normalize_text(value: str, label: str, *, max_length: int = 160) -> str:
@@ -353,6 +455,35 @@ def _normalize_interview_turns(
     return normalized_turns
 
 
+def _normalize_interview_turns_for_save(
+    turns: list[TeamfitInterviewTurnSaveInput],
+) -> list[TeamfitInterviewTurnSaveInput]:
+    normalized_turns: list[TeamfitInterviewTurnSaveInput] = []
+    for index, turn in enumerate(turns, start=1):
+        phase = turn.phase or ("initial" if index <= INITIAL_INTERVIEW_QUESTION_LIMIT else "followup")
+        normalized_turns.append(
+            TeamfitInterviewTurnSaveInput(
+                question=_normalize_text(turn.question, "질문", max_length=500),
+                answer=_normalize_markdown_text(turn.answer, "답변", max_length=2000),
+                phase=phase,
+            )
+        )
+
+    if any(turn.phase != "initial" for turn in normalized_turns[:INITIAL_INTERVIEW_QUESTION_LIMIT]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"처음 {INITIAL_INTERVIEW_QUESTION_LIMIT}개 문답은 초기 인터뷰여야 합니다.",
+        )
+
+    if any(turn.phase != "followup" for turn in normalized_turns[INITIAL_INTERVIEW_QUESTION_LIMIT:]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="초기 인터뷰 이후 문답은 추가 질문으로 저장되어야 합니다.",
+        )
+
+    return normalized_turns
+
+
 def _build_embedding_input(payload: TeamfitProfileUpsertRequest) -> str:
     def humanize(values: Iterable[str]) -> list[str]:
         return [value.replace("_", " ") for value in values]
@@ -476,6 +607,432 @@ def _normalize_explorer_payload(
         _normalize_sdg_tags(sdg_tags),
         _normalize_markdown_text(narrative_markdown, "2단계 본문", max_length=800),
     )
+
+
+def _markdown_sections(markdown: str) -> dict[str, str]:
+    sections: dict[str, str] = {}
+    current_key: str | None = None
+    current_lines: list[str] = []
+
+    def flush() -> None:
+        if current_key is None:
+            return
+        value = "\n".join(line.rstrip() for line in current_lines).strip()
+        if value:
+            sections[current_key] = value
+
+    for raw_line in markdown.splitlines():
+        line = raw_line.strip()
+        if line.startswith("## "):
+            flush()
+            current_key = line[3:].strip().casefold()
+            current_lines = []
+            continue
+        if current_key is not None:
+            current_lines.append(raw_line)
+
+    flush()
+    return sections
+
+
+def _section_value(markdown: str, *labels: str) -> str:
+    sections = _markdown_sections(markdown)
+    for label in labels:
+        value = sections.get(label.casefold())
+        if value:
+            return value
+    return ""
+
+
+def _split_sentences(text_value: str) -> list[str]:
+    collapsed = re.sub(r"\s+", " ", text_value.replace("\r\n", "\n")).strip()
+    if not collapsed:
+        return []
+    chunks = re.split(r"(?<=[.!?。！？])\s+|\n+", collapsed)
+    return [chunk.strip(" -") for chunk in chunks if chunk.strip(" -")]
+
+
+def _limit_unique(values: Iterable[str], *, max_items: int) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        cleaned = " ".join(str(value).split()).strip()
+        if not cleaned:
+            continue
+        lowered = cleaned.casefold()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        result.append(cleaned)
+        if len(result) >= max_items:
+            break
+    return result
+
+
+def _keyword_tokens(text_value: str) -> list[str]:
+    stopwords = {
+        "the",
+        "and",
+        "for",
+        "with",
+        "that",
+        "this",
+        "from",
+        "then",
+        "have",
+        "want",
+        "will",
+        "하는",
+        "하고",
+        "지금",
+        "문제",
+        "프로젝트",
+        "사람",
+        "팀",
+        "같이",
+        "먼저",
+        "정말",
+        "그냥",
+        "대한",
+        "에서",
+        "으로",
+        "하기",
+    }
+    tokens = re.findall(r"[0-9A-Za-z가-힣][0-9A-Za-z가-힣_-]{1,}", text_value.lower())
+    return [token for token in tokens if token not in stopwords]
+
+
+def _extract_theme_tokens(*parts: str, max_items: int = 6) -> list[str]:
+    counts: dict[str, int] = {}
+    for part in parts:
+        for token in _keyword_tokens(part):
+            counts[token] = counts.get(token, 0) + 1
+    sorted_tokens = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return [token.replace("_", " ") for token, _ in sorted_tokens[:max_items]]
+
+
+def _infer_role(text_value: str) -> str:
+    lowered = text_value.casefold()
+    best_role = ""
+    best_score = 0
+    for role, keywords in ROLE_KEYWORDS.items():
+        score = sum(1 for keyword in keywords if keyword in lowered)
+        if score > best_score:
+            best_role = role
+            best_score = score
+    return best_role
+
+
+def _extract_work_style(text_value: str) -> TeamfitWorkStyleSignals:
+    lowered = text_value.casefold()
+
+    planning_style = "adaptive_planning"
+    if any(keyword in lowered for keyword in ("문서", "documentation", "structured", "구조")):
+        planning_style = "structured_planning"
+    elif any(keyword in lowered for keyword in ("research", "리서치", "조사")):
+        planning_style = "research_first"
+
+    communication_style = "direct_sync"
+    if any(keyword in lowered for keyword in ("async", "비동기", "문서로", "글로")):
+        communication_style = "async_first"
+    elif any(keyword in lowered for keyword in ("대화", "talk", "sync", "회의")):
+        communication_style = "sync_conversation"
+
+    decision_style = "bias_for_action"
+    if any(keyword in lowered for keyword in ("합의", "consensus", "함께 결정")):
+        decision_style = "consensus_then_commit"
+    elif any(keyword in lowered for keyword in ("데이터", "실험", "evidence", "근거")):
+        decision_style = "evidence_driven"
+
+    execution_speed = "steady_execution"
+    if any(keyword in lowered for keyword in ("빠르게", "fast", "speed", "신속", "즉시")):
+        execution_speed = "fast_iteration"
+    elif any(keyword in lowered for keyword in ("깊게", "deep", "차분", "steady")):
+        execution_speed = "deep_and_steady"
+
+    return TeamfitWorkStyleSignals(
+        planning_style=planning_style,
+        communication_style=communication_style,
+        decision_style=decision_style,
+        execution_speed=execution_speed,
+    )
+
+
+def _build_enriched_markdown(
+    problem_statement: str,
+    narrative_markdown: str,
+    turns: list[TeamfitInterviewTurnInput] | list[TeamfitExplorerTurn],
+) -> str:
+    sections = [
+        f"# Problem statement\n{problem_statement}",
+        f"# Narrative\n{narrative_markdown.strip()}",
+    ]
+    if turns:
+        transcript_lines: list[str] = ["# Interview transcript"]
+        for turn in turns:
+            transcript_lines.append(f"Q: {turn.question}")
+            transcript_lines.append(f"A: {turn.answer}")
+        sections.append("\n".join(transcript_lines))
+    return "\n\n".join(section for section in sections if section.strip())
+
+
+def _fallback_extract_signals(
+    *,
+    problem_statement: str,
+    sdg_tags: list[str],
+    narrative_markdown: str,
+    turns: list[TeamfitInterviewTurnInput] | list[TeamfitExplorerTurn],
+) -> TeamfitExtractedSignals:
+    why_now = _section_value(
+        narrative_markdown,
+        "왜 이 문제를 풀고 싶나",
+        "why do i want to solve this problem?",
+    )
+    role_section = _section_value(
+        narrative_markdown,
+        "내가 팀에서 맡고 싶은 역할",
+        "what role do i want to take in the team?",
+    )
+    strengths_section = _section_value(
+        narrative_markdown,
+        "내가 줄 수 있는 것",
+        "what can i contribute?",
+    )
+    teammate_section = _section_value(
+        narrative_markdown,
+        "같이 대화해보고 싶은 사람",
+        "who do i want to talk with first?",
+    )
+    collaboration_section = _section_value(
+        narrative_markdown,
+        "잘 맞는 협업 / 피하고 싶은 협업",
+        "what collaboration fits me / what do i want to avoid?",
+    )
+
+    history_answers = [turn.answer for turn in turns if turn.answer]
+    why_this_problem_now = why_now or (history_answers[0] if history_answers else "")
+    offered_role = _infer_role(role_section or strengths_section)
+    wanted_teammate_role = _infer_role(teammate_section)
+    work_style_source = "\n".join(part for part in [collaboration_section, *history_answers] if part)
+    work_style = _extract_work_style(work_style_source)
+
+    core_strengths = _limit_unique(
+        _split_sentences(strengths_section) + _extract_theme_tokens(strengths_section, max_items=4),
+        max_items=4,
+    )
+    must_have_signals = _limit_unique(_split_sentences(teammate_section), max_items=4)
+    avoid_signals = _limit_unique(
+        [
+            sentence
+            for sentence in _split_sentences(collaboration_section)
+            if any(keyword in sentence.casefold() for keyword in ("피하", "싫", "avoid", "not", "갈등"))
+        ],
+        max_items=4,
+    )
+    conversation_hooks = _limit_unique(
+        [
+            *[problem_statement],
+            *(_split_sentences(why_this_problem_now)[:2]),
+            *(_split_sentences(strengths_section)[:2]),
+            *(history_answers[:2]),
+        ],
+        max_items=4,
+    )
+    tension_points = _limit_unique(
+        [
+            *avoid_signals,
+            *[
+                sentence
+                for sentence in _split_sentences("\n".join(history_answers))
+                if any(keyword in sentence.casefold() for keyword in ("보완", "부족", "uncertain", "확인", "걱정"))
+            ],
+        ],
+        max_items=4,
+    )
+    problem_themes = _extract_theme_tokens(problem_statement, why_this_problem_now, narrative_markdown, max_items=6)
+    value_themes = _limit_unique(
+        [family for sdg in sdg_tags for family in SDG_FAMILIES.get(sdg, set())],
+        max_items=6,
+    )
+
+    presence_scores = [
+        1.0 if problem_statement else 0.0,
+        1.0 if why_this_problem_now else 0.0,
+        1.0 if offered_role else 0.0,
+        1.0 if must_have_signals else 0.0,
+        1.0 if conversation_hooks else 0.0,
+    ]
+    profile_clarity_score = round(min(1.0, sum(presence_scores) / len(presence_scores) + len(history_answers) * 0.05), 3)
+
+    signals = TeamfitExtractedSignals(
+        problem_statement=problem_statement,
+        problem_themes=problem_themes,
+        why_this_problem_now=why_this_problem_now,
+        offered_role=offered_role,
+        wanted_teammate_role=wanted_teammate_role,
+        core_strengths=core_strengths,
+        value_themes=value_themes,
+        work_style=work_style,
+        must_have_signals=must_have_signals,
+        avoid_signals=avoid_signals,
+        sdgs=list(sdg_tags),
+        conversation_hooks=conversation_hooks,
+        tension_points=tension_points,
+        profile_clarity_score=profile_clarity_score,
+        signal_confidence=TeamfitSignalConfidence(
+            problem_statement=1.0 if problem_statement else 0.0,
+            role=0.85 if offered_role else 0.3,
+            work_style=0.75 if work_style_source else 0.25,
+        ),
+    )
+    signals.summary_for_embedding = " | ".join(
+        part
+        for part in [
+            signals.problem_statement,
+            signals.why_this_problem_now,
+            signals.offered_role,
+            signals.wanted_teammate_role,
+            ", ".join(signals.problem_themes[:4]),
+            ", ".join(signals.core_strengths[:3]),
+            ", ".join(signals.must_have_signals[:3]),
+            ", ".join(signals.sdgs),
+            ", ".join(signals.conversation_hooks[:2]),
+        ]
+        if part
+    )
+    return signals
+
+
+def _strip_code_fences(text_value: str) -> str:
+    stripped = text_value.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?", "", stripped).strip()
+        stripped = re.sub(r"```$", "", stripped).strip()
+    return stripped
+
+
+def _extract_signals_with_llm(
+    *,
+    problem_statement: str,
+    mbti: str,
+    sdg_tags: list[str],
+    narrative_markdown: str,
+    turns: list[TeamfitInterviewTurnInput] | list[TeamfitExplorerTurn],
+) -> TeamfitExtractedSignals:
+    client = _anthropic_client()
+    if client is None:
+        return _fallback_extract_signals(
+            problem_statement=problem_statement,
+            sdg_tags=sdg_tags,
+            narrative_markdown=narrative_markdown,
+            turns=turns,
+        )
+
+    prompt = f"""
+You extract structured signals for a conversation-priority team recommendation system.
+
+Rules:
+- Output valid JSON only.
+- Be conservative. Do not invent facts.
+- Empty string or empty array is better than overclaiming.
+- Keep values concise and interpretable.
+- signal_confidence fields must be numbers between 0 and 1.
+- work_style fields should be short snake_case style labels when possible.
+- offered_role and wanted_teammate_role should be short labels, not long paragraphs.
+
+Return this schema exactly:
+{{
+  "problem_statement": "",
+  "problem_themes": [],
+  "why_this_problem_now": "",
+  "offered_role": "",
+  "wanted_teammate_role": "",
+  "core_strengths": [],
+  "value_themes": [],
+  "work_style": {{
+    "planning_style": "",
+    "communication_style": "",
+    "decision_style": "",
+    "execution_speed": ""
+  }},
+  "must_have_signals": [],
+  "avoid_signals": [],
+  "sdgs": [],
+  "conversation_hooks": [],
+  "tension_points": [],
+  "profile_clarity_score": 0.0,
+  "signal_confidence": {{
+    "problem_statement": 0.0,
+    "role": 0.0,
+    "work_style": 0.0
+  }},
+  "summary_for_embedding": ""
+}}
+
+Problem statement: {problem_statement}
+MBTI: {mbti}
+SDGs: {", ".join(sdg_tags)}
+
+Narrative:
+{narrative_markdown}
+
+Interview:
+{_build_enriched_markdown(problem_statement, narrative_markdown, turns)}
+""".strip()
+
+    try:
+        response = client.messages.create(
+            model=TEAMFIT_EXTRACTION_MODEL,
+            max_tokens=1400,
+            system="Extract structured team-fit recommendation signals. Output JSON only.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        payload = json.loads(_strip_code_fences(response.content[0].text))
+        signals = TeamfitExtractedSignals.model_validate(payload)
+        if not signals.summary_for_embedding:
+            signals.summary_for_embedding = " | ".join(
+                part
+                for part in [
+                    signals.problem_statement,
+                    signals.why_this_problem_now,
+                    signals.offered_role,
+                    signals.wanted_teammate_role,
+                    ", ".join(signals.problem_themes[:4]),
+                    ", ".join(signals.conversation_hooks[:2]),
+                ]
+                if part
+            )
+        return signals
+    except Exception:  # noqa: BLE001
+        return _fallback_extract_signals(
+            problem_statement=problem_statement,
+            sdg_tags=sdg_tags,
+            narrative_markdown=narrative_markdown,
+            turns=turns,
+        )
+
+
+def _sync_explorer_profile_artifacts(
+    profile: TeamfitExplorerProfile,
+    turns: list[TeamfitExplorerTurn],
+) -> None:
+    signals = _extract_signals_with_llm(
+        problem_statement=profile.problem_statement,
+        mbti=profile.mbti,
+        sdg_tags=list(profile.sdg_tags or []),
+        narrative_markdown=profile.narrative_markdown,
+        turns=turns,
+    )
+    embedding_input = signals.summary_for_embedding or _build_enriched_markdown(
+        profile.problem_statement,
+        profile.narrative_markdown,
+        turns,
+    )
+    profile.extracted_signals_json = signals.model_dump(mode="python")
+    profile.recommendation_embedding_input = embedding_input
+    profile.recommendation_embedding_json = embed_text(embedding_input, allow_fallback_on_error=True)
+    profile.extraction_version = EXTRACTION_VERSION
+    profile.extracted_at = datetime.now(timezone.utc)
 
 
 def _teamfit_interview_prompt(
@@ -690,12 +1247,20 @@ def save_teamfit_explorer_profile(
             payload.narrative_markdown,
         )
     )
-    normalized_history = _normalize_interview_turns(
-        payload.history,
-        expected_count=INITIAL_INTERVIEW_QUESTION_LIMIT,
-    )
+    normalized_history = _normalize_interview_turns_for_save(payload.history)
 
     profile = db.get(TeamfitExplorerProfile, current_user.user_id)
+    if profile is None and len(normalized_history) != INITIAL_INTERVIEW_QUESTION_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"초기 인터뷰 답변은 정확히 {INITIAL_INTERVIEW_QUESTION_LIMIT}개여야 합니다.",
+        )
+    if profile is not None and len(normalized_history) < INITIAL_INTERVIEW_QUESTION_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"초기 인터뷰 답변은 최소 {INITIAL_INTERVIEW_QUESTION_LIMIT}개가 필요합니다.",
+        )
+
     if profile is None:
         profile = TeamfitExplorerProfile(user_id=current_user.user_id)
         db.add(profile)
@@ -716,15 +1281,17 @@ def save_teamfit_explorer_profile(
             TeamfitExplorerTurn(
                 user_id=current_user.user_id,
                 sequence_no=index,
-                phase="initial",
+                phase=turn.phase,
                 question=turn.question,
                 answer=turn.answer,
             )
         )
 
+    db.flush()
+    turns = _load_explorer_turns(db, current_user.user_id)
+    _sync_explorer_profile_artifacts(profile, turns)
     db.commit()
     db.refresh(profile)
-    turns = _load_explorer_turns(db, current_user.user_id)
     return _explorer_profile_to_response(profile, turns)
 
 
@@ -780,10 +1347,13 @@ def save_teamfit_followup_answer(
             answer=answer,
         )
     )
+    db.flush()
+    turns = _load_explorer_turns(db, current_user.user_id)
+    _sync_explorer_profile_artifacts(profile, turns)
     db.commit()
     db.refresh(profile)
 
-    return _explorer_profile_to_response(profile, _load_explorer_turns(db, current_user.user_id))
+    return _explorer_profile_to_response(profile, turns)
 
 
 def _active_profile_count_query() -> Select[tuple[int]]:
@@ -1078,20 +1648,492 @@ def _bucket_scores(viewer: TeamfitProfile, candidate: TeamfitProfile) -> dict[st
     }
 
 
-def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendationsResponse:
-    viewer_profile = db.get(TeamfitProfile, current_user.user_id)
-    active_profile_count = int(db.scalar(_active_profile_count_query()) or 0)
-    viewer_approved = current_user.is_admin or current_user.applicant_status == "approved"
+def _restore_extracted_signals(value: dict | None) -> TeamfitExtractedSignals:
+    if not value:
+        return TeamfitExtractedSignals()
+    try:
+        return TeamfitExtractedSignals.model_validate(value)
+    except Exception:  # noqa: BLE001
+        return TeamfitExtractedSignals()
 
-    if viewer_profile is None or not viewer_profile.embedding_json:
+
+def _candidate_id(user_id: int) -> str:
+    return f"u_{user_id}"
+
+
+def _role_family(value: str) -> str:
+    if not value:
+        return ""
+    if value in ROLE_KEYWORDS:
+        return value
+    return _infer_role(value)
+
+
+def _role_label(value: str) -> str:
+    labels = {
+        "pm_operator": "PM/기획",
+        "frontend": "프론트엔드",
+        "backend": "백엔드",
+        "ai": "AI",
+        "design": "디자인",
+        "data_research": "데이터/리서치",
+        "fullstack": "풀스택",
+        "operations": "운영",
+    }
+    return labels.get(value, value or "역할 신호 미확정")
+
+
+def _text_similarity(left: str, right: str) -> float:
+    return _jaccard_similarity(_keyword_tokens(left), _keyword_tokens(right))
+
+
+def _average_confidence(signals: TeamfitExtractedSignals) -> float:
+    return (
+        signals.signal_confidence.problem_statement
+        + signals.signal_confidence.role
+        + signals.signal_confidence.work_style
+    ) / 3
+
+
+def _mbti_soft_score(left: dict[str, int], right: dict[str, int]) -> float:
+    total = 0.0
+    for axis_id in MBTI_AXIS_IDS:
+        diff = abs(left.get(axis_id, 50) - right.get(axis_id, 50)) / 100
+        total += (1.0 - diff) * MBTI_AXIS_WEIGHTS[axis_id]
+    return min(1.0, max(0.0, total))
+
+
+def _problem_resonance_score(
+    viewer_profile: TeamfitExplorerProfile,
+    candidate_profile: TeamfitExplorerProfile,
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+) -> float:
+    semantic = _cosine_similarity(
+        viewer_profile.recommendation_embedding_json,
+        candidate_profile.recommendation_embedding_json,
+    )
+    theme_overlap = _jaccard_similarity(viewer_signals.problem_themes, candidate_signals.problem_themes)
+    motivation_overlap = _text_similarity(
+        viewer_signals.why_this_problem_now,
+        candidate_signals.why_this_problem_now,
+    )
+    return min(1.0, semantic * 0.65 + theme_overlap * 0.25 + motivation_overlap * 0.10)
+
+
+def _role_complementarity_score(
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+) -> float:
+    viewer_offered = _role_family(viewer_signals.offered_role)
+    viewer_wanted = _role_family(viewer_signals.wanted_teammate_role)
+    candidate_role = _role_family(candidate_signals.offered_role)
+
+    wanted_match = 0.55
+    if viewer_wanted:
+        if candidate_role == viewer_wanted:
+            wanted_match = 0.95
+        elif candidate_role in ROLE_COMPATIBILITY.get(viewer_wanted, set()):
+            wanted_match = 0.75
+        else:
+            wanted_match = 0.30
+
+    gap_bonus = 0.18 if viewer_offered and candidate_role and viewer_offered != candidate_role else 0.05
+    clone_penalty = (
+        0.25 if viewer_offered and candidate_role and viewer_offered == candidate_role and viewer_wanted != candidate_role else 0.0
+    )
+    return max(0.0, min(1.0, wanted_match + gap_bonus - clone_penalty))
+
+
+def _work_style_match(viewer_signals: TeamfitExtractedSignals, candidate_signals: TeamfitExtractedSignals) -> float:
+    viewer_style = viewer_signals.work_style
+    candidate_style = candidate_signals.work_style
+    field_scores = [
+        1.0 if viewer_style.planning_style == candidate_style.planning_style else 0.45,
+        1.0 if viewer_style.communication_style == candidate_style.communication_style else 0.45,
+        1.0 if viewer_style.decision_style == candidate_style.decision_style else 0.45,
+        1.0 if viewer_style.execution_speed == candidate_style.execution_speed else 0.45,
+    ]
+    structured_match = _safe_average(*field_scores)
+    mbti_match = _mbti_soft_score(viewer_signals.model_dump().get("mbti_axis_values", {}), {})
+    return structured_match, mbti_match
+
+
+def _work_style_compatibility_score(
+    viewer_profile: TeamfitExplorerProfile,
+    candidate_profile: TeamfitExplorerProfile,
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+) -> float:
+    viewer_style = viewer_signals.work_style
+    candidate_style = candidate_signals.work_style
+    field_scores = [
+        1.0 if viewer_style.planning_style == candidate_style.planning_style else 0.45,
+        1.0 if viewer_style.communication_style == candidate_style.communication_style else 0.45,
+        1.0 if viewer_style.decision_style == candidate_style.decision_style else 0.45,
+        1.0 if viewer_style.execution_speed == candidate_style.execution_speed else 0.45,
+    ]
+    structured_match = _safe_average(*field_scores)
+    mbti_match = _mbti_soft_score(viewer_profile.mbti_axis_values, candidate_profile.mbti_axis_values)
+    return min(1.0, structured_match * 0.7 + mbti_match * 0.3)
+
+
+def _sdg_family_overlap(left: list[str], right: list[str]) -> float:
+    left_families = {family for sdg in left for family in SDG_FAMILIES.get(sdg, set())}
+    right_families = {family for sdg in right for family in SDG_FAMILIES.get(sdg, set())}
+    if not left_families or not right_families:
+        return 0.0
+    return len(left_families & right_families) / len(left_families | right_families)
+
+
+def _value_alignment_score(
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+) -> float:
+    sdg_exact = _jaccard_similarity(viewer_signals.sdgs, candidate_signals.sdgs)
+    sdg_family = _sdg_family_overlap(viewer_signals.sdgs, candidate_signals.sdgs)
+    sdg_alignment = min(1.0, sdg_exact * 0.7 + sdg_family * 0.3)
+    value_overlap = _jaccard_similarity(viewer_signals.value_themes, candidate_signals.value_themes)
+    return min(1.0, sdg_alignment * 0.6 + value_overlap * 0.4)
+
+
+def _conversation_hook_quality(signals: TeamfitExtractedSignals) -> float:
+    hooks = signals.conversation_hooks
+    if not hooks:
+        return 0.0
+    density = min(1.0, len(hooks) / 3)
+    specificity = min(1.0, _safe_average(*[min(1.0, len(hook) / 70) for hook in hooks]))
+    return min(1.0, density * 0.6 + specificity * 0.4)
+
+
+def _conversation_potential_score(candidate_signals: TeamfitExtractedSignals) -> float:
+    hook_quality = _conversation_hook_quality(candidate_signals)
+    tension_richness = min(1.0, len(candidate_signals.tension_points) / 3)
+    return min(
+        1.0,
+        hook_quality * 0.4
+        + candidate_signals.profile_clarity_score * 0.3
+        + tension_richness * 0.3,
+    )
+
+
+def _recommendation_rejection_reason(
+    *,
+    base_score: float,
+    safe_candidate_id: int | None,
+    candidate_profile: TeamfitExplorerProfile,
+    viewer_profile: TeamfitExplorerProfile,
+    candidate_signals: TeamfitExtractedSignals,
+) -> str:
+    if _average_confidence(candidate_signals) < 0.35:
+        return "프로필 신호가 아직 약해 먼저 대화할 우선순위를 높이기 어렵습니다."
+    if base_score < WILDCARD_THRESHOLD:
+        return "문제 공명이나 협업 신호가 아직 충분히 강하지 않습니다."
+    if safe_candidate_id and safe_candidate_id == candidate_profile.user_id:
+        return "이미 더 높은 우선순위로 선택된 후보입니다."
+    if _cosine_similarity(viewer_profile.recommendation_embedding_json, candidate_profile.recommendation_embedding_json) > 0.92:
+        return "이미 고른 후보와 너무 비슷해 대화 학습 가치가 낮습니다."
+    return "현재 추천된 다른 후보들에 비해 역할 보완성이나 학습 가치가 낮았습니다."
+
+
+def _recommendation_system_notes(
+    recommended_people: list[TeamfitConversationPriorityRecommendation],
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_count: int,
+    fallback_count: int = 0,
+) -> TeamfitRecommendationSystemNotes:
+    limit_messages: list[str] = []
+    if candidate_count < 3:
+        limit_messages.append("승인된 저장 프로필 후보 수가 아직 적습니다.")
+    if viewer_signals.profile_clarity_score < 0.45:
+        limit_messages.append("내 프로필 신호가 아직 약해 추천 품질이 보수적으로 계산되었습니다.")
+    if len(recommended_people) < 3:
+        limit_messages.append("충분히 강한 신호를 가진 후보만 남겨서 3명보다 적게 반환했습니다.")
+    if fallback_count > 0:
+        limit_messages.append(
+            "추천 3명을 채우기 위해 상대적으로 불확실성이 큰 후보도 함께 포함했습니다."
+        )
+
+    return TeamfitRecommendationSystemNotes(
+        scoring_explanation="최종 팀 확정이 아니라, 지금 먼저 이야기해볼 가치가 높은 순서로 추천했습니다.",
+        limits=" ".join(limit_messages) or "추천은 프로필 텍스트와 인터뷰 신호에 크게 의존하므로, 실제 대화 전까지는 불확실성이 남아 있습니다.",
+        next_improvement="실제 대화 이후 피드백을 반영해 가중치와 질문 품질을 계속 보정할 예정입니다.",
+    )
+
+
+def _first_question_to_ask(
+    recommendation_type: str,
+    candidate_role: str,
+    strongest_factor: str,
+) -> str:
+    if strongest_factor == "role_complementarity" and candidate_role:
+        return f"{_role_label(candidate_role)} 관점에서 이 문제를 6개월 안에 가장 작게 증명한다면 어떤 역할 분담부터 해보고 싶나요?"
+    if strongest_factor == "work_style":
+        return "의견이 갈릴 때, 속도를 잃지 않으면서도 함께 결정하기 위해 어떤 방식을 가장 선호하나요?"
+    if strongest_factor == "value_alignment":
+        return "이 문제를 풀면서 절대 놓치고 싶지 않은 가치나 기준이 있다면 무엇인가요?"
+    if recommendation_type == "wildcard_fit":
+        return "이 문제를 지금과 다른 방식으로 풀어본다면, 가장 먼저 바꾸고 싶은 접근은 무엇인가요?"
+    return "이 문제를 6개월 안에 가장 작게 증명한다면 어떤 실험부터 같이 해보고 싶나요?"
+
+
+def _uncertainty_note(
+    candidate_signals: TeamfitExtractedSignals,
+    weakest_factor: str,
+    used_fallback: bool = False,
+) -> str:
+    if used_fallback:
+        return "다른 추천 후보보다 불확실성이 커서, 실제 대화로 빠르게 검증해보는 것이 좋습니다."
+    if _average_confidence(candidate_signals) < 0.45:
+        return "프로필 설명이 아직 짧아 실제 대화에서 역할과 협업 방식을 더 확인해봐야 합니다."
+    if weakest_factor == "work_style":
+        return "실제 갈등 상황에서의 의사결정 방식은 아직 확인되지 않았습니다."
+    if weakest_factor == "role_complementarity":
+        return "역할 기대치가 실제로 어디까지 맞는지는 대화로 더 좁혀봐야 합니다."
+    if weakest_factor == "value_alignment":
+        return "가치 기준은 비슷해 보여도 우선순위 차이는 직접 확인이 필요합니다."
+    return "좋은 출발점이지만, 실제 협업 장면에서의 긴장 포인트는 아직 남아 있습니다."
+
+
+def _reason_summary(
+    recommendation_type: str,
+    candidate_name: str,
+    strongest_factor: str,
+) -> str:
+    if recommendation_type == "safe_fit":
+        return f"{candidate_name}님은 문제의식이 가깝고 바로 깊은 대화를 시작하기 쉬운 후보입니다."
+    if recommendation_type == "complementary_fit":
+        return f"{candidate_name}님은 지금 부족한 역할이나 실행 관점을 보완해줄 가능성이 큰 후보입니다."
+    if strongest_factor == "problem_resonance":
+        return f"{candidate_name}님은 문제는 맞닿아 있지만 접근이 달라 새로운 시야를 열어줄 수 있는 후보입니다."
+    return f"{candidate_name}님은 아직 불확실성은 있지만 한 번 먼저 대화해볼 업사이드가 있는 후보입니다."
+
+
+def _reason_detail(
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+    factor_scores: dict[str, float],
+) -> TeamfitRecommendationReasonDetail:
+    candidate_role = _role_family(candidate_signals.offered_role)
+    return TeamfitRecommendationReasonDetail(
+        problem_resonance=(
+            "문제 정의와 why-now 맥락이 같은 영역에 가깝습니다."
+            if factor_scores["problem_resonance"] >= 0.65
+            else "문제 영역은 인접하지만 실제 우선순위는 대화로 더 확인해야 합니다."
+        ),
+        role_complementarity=(
+            f"지금 팀에 {_role_label(candidate_role)} 역할의 빈칸을 메워줄 가능성이 있습니다."
+            if factor_scores["role_complementarity"] >= 0.65 and candidate_role
+            else "역할 시너지는 보이지만 실제 책임 분담은 더 구체적으로 맞춰봐야 합니다."
+        ),
+        work_style=(
+            "일을 구조화하고 결정하는 방식이 크게 충돌하지 않을 가능성이 높습니다."
+            if factor_scores["work_style_compatibility"] >= 0.62
+            else "협업 속도나 결정 방식은 직접 대화로 확인해봐야 합니다."
+        ),
+        value_alignment=(
+            "SDGs와 가치 언어가 어느 정도 겹쳐 출발점이 좋습니다."
+            if factor_scores["value_alignment"] >= 0.55
+            else "가치 방향은 일부 맞지만 무엇을 더 우선하는지는 아직 불분명합니다."
+        ),
+        conversation_potential=(
+            "구체 사례와 긴장 포인트가 보여 첫 대화에서 빠르게 정보를 늘릴 수 있습니다."
+            if factor_scores["conversation_potential"] >= 0.55
+            else "대화 실마리는 있지만 아직 설명 밀도가 높지는 않습니다."
+        ),
+    )
+
+
+def _directory_reason_summary(
+    *,
+    viewer_profile_exists: bool,
+    has_teamfit_profile: bool,
+    strongest_factor: str | None,
+) -> str:
+    if not has_teamfit_profile:
+        return "아직 팀핏 탐색 프로필은 없지만, 기본 정보와 링크부터 먼저 확인할 수 있습니다."
+    if not viewer_profile_exists or strongest_factor is None:
+        return "팀핏 탐색 프로필이 있어 문제의식과 협업 신호를 바로 살펴볼 수 있습니다."
+    if strongest_factor == "problem_resonance":
+        return "문제의식이 가까워 먼저 읽어볼 가치가 있는 후보입니다."
+    if strongest_factor == "role_complementarity":
+        return "역할 보완 가능성이 보여 먼저 살펴볼 만한 후보입니다."
+    if strongest_factor == "work_style_compatibility":
+        return "협업 방식이 비교적 잘 맞을 가능성이 보이는 후보입니다."
+    if strongest_factor == "value_alignment":
+        return "가치와 SDGs 방향이 닿아 있어 읽어볼 만한 후보입니다."
+    return "대화 잠재력이 보여 먼저 살펴볼 만한 후보입니다."
+
+
+def _score_candidate_for_viewer(
+    *,
+    viewer_profile: TeamfitExplorerProfile,
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_profile: TeamfitExplorerProfile,
+) -> tuple[dict[str, float], float]:
+    candidate_signals = _restore_extracted_signals(candidate_profile.extracted_signals_json)
+    factor_scores = {
+        "problem_resonance": _problem_resonance_score(
+            viewer_profile,
+            candidate_profile,
+            viewer_signals,
+            candidate_signals,
+        ),
+        "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
+        "work_style_compatibility": _work_style_compatibility_score(
+            viewer_profile,
+            candidate_profile,
+            viewer_signals,
+            candidate_signals,
+        ),
+        "value_alignment": _value_alignment_score(viewer_signals, candidate_signals),
+        "conversation_potential": _conversation_potential_score(candidate_signals),
+    }
+    base_score = (
+        factor_scores["problem_resonance"] * 0.35
+        + factor_scores["role_complementarity"] * 0.25
+        + factor_scores["work_style_compatibility"] * 0.15
+        + factor_scores["value_alignment"] * 0.10
+        + factor_scores["conversation_potential"] * 0.15
+    )
+    return factor_scores, base_score
+
+
+def _build_conversation_priority_recommendation(
+    *,
+    recommendation_type: str,
+    viewer_user: User,
+    viewer_profile: TeamfitExplorerProfile,
+    candidate_user: User,
+    candidate_profile: TeamfitExplorerProfile,
+    candidate_turns: list[TeamfitExplorerTurn],
+    viewer_signals: TeamfitExtractedSignals,
+    candidate_signals: TeamfitExtractedSignals,
+    factor_scores: dict[str, float],
+    base_score: float,
+    used_fallback: bool = False,
+) -> TeamfitConversationPriorityRecommendation:
+    strongest_factor = max(factor_scores, key=factor_scores.get)
+    weakest_factor = min(factor_scores, key=factor_scores.get)
+    candidate_name = candidate_user.name or candidate_user.email.split("@", 1)[0]
+    candidate_role = _role_family(candidate_signals.offered_role)
+
+    return TeamfitConversationPriorityRecommendation(
+        type=recommendation_type,
+        candidate_id=_candidate_id(candidate_user.user_id),
+        user_id=candidate_user.user_id,
+        name=candidate_name,
+        problem_statement=candidate_profile.problem_statement,
+        offered_role=candidate_role,
+        sdgs=list(candidate_profile.sdg_tags or []),
+        mbti=candidate_profile.mbti,
+        base_score=round(base_score, 4),
+        reason_summary=_reason_summary(recommendation_type, candidate_name, strongest_factor),
+        reason_detail=_reason_detail(viewer_signals, candidate_signals, factor_scores),
+        first_question_to_ask=_first_question_to_ask(recommendation_type, candidate_role, strongest_factor),
+        uncertainty_note=_uncertainty_note(
+            candidate_signals,
+            weakest_factor,
+            used_fallback=used_fallback,
+        ),
+        is_verified=candidate_user.applicant_status == "approved",
+        email=candidate_user.email if _can_share_email(viewer_user, candidate_user) else None,
+        github_address=candidate_user.github_address,
+        notion_url=candidate_user.notion_url,
+        history=[_explorer_turn_to_response(turn) for turn in candidate_turns],
+    )
+
+
+def _build_rejected_candidate(
+    *,
+    viewer_user: User,
+    candidate_user: User,
+    candidate_profile: TeamfitExplorerProfile,
+    candidate_signals: TeamfitExtractedSignals,
+    reason: str,
+) -> TeamfitRejectedCandidate:
+    return TeamfitRejectedCandidate(
+        candidate_id=_candidate_id(candidate_user.user_id),
+        name=candidate_user.name or candidate_user.email.split("@", 1)[0],
+        reason=reason,
+        problem_statement=candidate_profile.problem_statement,
+        offered_role=_role_family(candidate_signals.offered_role),
+        sdgs=list(candidate_profile.sdg_tags or []),
+        mbti=candidate_profile.mbti,
+        is_verified=candidate_user.applicant_status == "approved",
+        email=candidate_user.email if _can_share_email(viewer_user, candidate_user) else None,
+        github_address=candidate_user.github_address,
+        notion_url=candidate_user.notion_url,
+    )
+
+
+def _pick_recommendation_candidate(
+    rows: list[dict],
+    *,
+    threshold: float,
+    problem_resonance_floor: float = 0.0,
+) -> tuple[dict | None, bool]:
+    def _eligible(item: dict) -> bool:
+        return (
+            _average_confidence(item["signals"]) >= FALLBACK_RECOMMENDATION_CONFIDENCE_THRESHOLD
+            and item["signals"].profile_clarity_score >= 0.40
+            and item["factor_scores"]["conversation_potential"] >= 0.35
+        )
+
+    strong_candidate = next(
+        (
+            item
+            for item in rows
+            if item["base_score"] >= threshold
+            and _eligible(item)
+            and item["factor_scores"]["problem_resonance"] >= problem_resonance_floor
+        ),
+        None,
+    )
+    if strong_candidate is not None:
+        return strong_candidate, False
+
+    fallback_candidate = next(
+        (
+            item
+            for item in rows
+            if item["base_score"] >= FALLBACK_RECOMMENDATION_SCORE_THRESHOLD
+            and _eligible(item)
+            and item["factor_scores"]["problem_resonance"] >= min(problem_resonance_floor, 0.0)
+        ),
+        None,
+    )
+    if fallback_candidate is not None:
+        return fallback_candidate, True
+
+    return None, False
+
+
+def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendationsResponse:
+    viewer_profile = db.get(TeamfitExplorerProfile, current_user.user_id)
+    active_profile_count = int(db.scalar(_active_explorer_profile_count_query()) or 0)
+    viewer_approved = current_user.is_admin or current_user.applicant_status == "approved"
+    scored_candidate_ids = set(
+        db.scalars(
+            select(TeamfitFitCheck.target_user_id).where(
+                TeamfitFitCheck.viewer_user_id == current_user.user_id,
+                TeamfitFitCheck.fit_score.is_not(None),
+            )
+        ).all()
+    )
+
+    if viewer_profile is None or not viewer_profile.recommendation_embedding_json:
         return TeamfitRecommendationsResponse(
             requires_profile=True,
             requires_approval=not viewer_approved,
             active_profile_count=active_profile_count,
-            similar=[],
-            complementary=[],
-            unexpected=[],
-            map_points=[],
+            recommended_people=[],
+            rejected_or_low_signal_candidates=[],
+            system_notes=TeamfitRecommendationSystemNotes(
+                scoring_explanation="추천은 저장된 팀핏 탐색 프로필이 있어야 계산할 수 있습니다.",
+                limits="문제 한 문장, SDGs, MBTI, 인터뷰 답변이 모두 저장된 뒤에만 추천이 열립니다.",
+                next_improvement="저장 후 인터뷰를 더 쌓을수록 추천 이유가 더 선명해집니다.",
+            ),
         )
 
     if not viewer_approved:
@@ -1099,22 +2141,64 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
             requires_profile=False,
             requires_approval=True,
             active_profile_count=active_profile_count,
-            similar=[],
-            complementary=[],
-            unexpected=[],
-            map_points=[],
+            recommended_people=[],
+            rejected_or_low_signal_candidates=[],
+            system_notes=TeamfitRecommendationSystemNotes(
+                scoring_explanation="지금은 먼저 이야기할 가치가 높은 후보만 추천합니다.",
+                limits="추천은 승인된 저장 프로필 후보만 대상으로 하며, 내 계정도 승인 상태여야 열립니다.",
+                next_improvement="승인 후에는 실제 대화 우선순위 추천이 자동으로 계산됩니다.",
+            ),
         )
 
-    candidates = _fetch_candidate_profiles(db, viewer_profile)
+    viewer_signals = _restore_extracted_signals(viewer_profile.extracted_signals_json)
+    if viewer_signals.profile_clarity_score < 0.25:
+        return TeamfitRecommendationsResponse(
+            requires_profile=False,
+            requires_approval=False,
+            active_profile_count=active_profile_count,
+            recommended_people=[],
+            rejected_or_low_signal_candidates=[],
+            system_notes=TeamfitRecommendationSystemNotes(
+                scoring_explanation="최종 팀 확정이 아니라, 먼저 이야기할 후보를 좁히는 추천입니다.",
+                limits="현재 프로필 신호가 아직 너무 약해 추천을 보수적으로 멈췄습니다. 800자 본문과 추가 질문 답변을 더 구체적으로 적어보세요.",
+                next_improvement="문제의식, 내가 맡고 싶은 역할, 피하고 싶은 협업을 더 선명하게 적으면 추천이 안정됩니다.",
+            ),
+        )
+
+    candidates = db.scalars(
+        select(TeamfitExplorerProfile)
+        .join(User, User.user_id == TeamfitExplorerProfile.user_id)
+        .where(
+            TeamfitExplorerProfile.user_id != current_user.user_id,
+            User.applicant_status == "approved",
+        )
+    ).all()
+    candidates = [
+        candidate
+        for candidate in candidates
+        if (
+            candidate.user_id not in scored_candidate_ids
+            and candidate.recommendation_embedding_json
+            and candidate.extracted_signals_json
+        )
+    ]
+    candidates = sorted(
+        candidates,
+        key=lambda candidate: _cosine_similarity(
+            viewer_profile.recommendation_embedding_json,
+            candidate.recommendation_embedding_json,
+        ),
+        reverse=True,
+    )[:TOP_K_CANDIDATES]
+
     if not candidates:
         return TeamfitRecommendationsResponse(
             requires_profile=False,
             requires_approval=False,
             active_profile_count=active_profile_count,
-            similar=[],
-            complementary=[],
-            unexpected=[],
-            map_points=[],
+            recommended_people=[],
+            rejected_or_low_signal_candidates=[],
+            system_notes=_recommendation_system_notes([], viewer_signals, 0),
         )
 
     users = db.scalars(
@@ -1122,93 +2206,381 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
     ).all()
     user_map = {user.user_id: user for user in users}
 
-    scored_candidates: list[tuple[TeamfitProfile, User, dict[str, float]]] = []
+    scored_candidates: list[dict] = []
     for candidate in candidates:
         candidate_user = user_map.get(candidate.user_id)
         if candidate_user is None:
             continue
-        scored_candidates.append((candidate, candidate_user, _bucket_scores(viewer_profile, candidate)))
-
-    similar_items = sorted(scored_candidates, key=lambda item: item[2]["similar"], reverse=True)
-    selected_ids: set[int] = set()
-
-    def pick_bucket(bucket: str, rows: list[tuple[TeamfitProfile, User, dict[str, float]]]) -> list[dict]:
-        picked: list[dict] = []
-        seen_in_bucket: set[int] = set()
-
-        for profile, user, scores in rows:
-            if user.user_id in selected_ids or user.user_id in seen_in_bucket:
-                continue
-            seen_in_bucket.add(user.user_id)
-            selected_ids.add(user.user_id)
-            picked.append(
-                _build_recommendation_payload(
-                    viewer_profile,
-                    current_user,
-                    profile,
-                    user,
-                    bucket,
-                    similarity_score=scores["cosine"],
-                    structured_fit_score=scores["structured_fit"],
-                )
-            )
-            if len(picked) >= MAX_RECOMMENDATIONS_PER_BUCKET:
-                break
-
-        if picked:
-            return picked
-
-        for profile, user, scores in rows:
-            if user.user_id in seen_in_bucket:
-                continue
-            seen_in_bucket.add(user.user_id)
-            picked.append(
-                _build_recommendation_payload(
-                    viewer_profile,
-                    current_user,
-                    profile,
-                    user,
-                    bucket,
-                    similarity_score=scores["cosine"],
-                    structured_fit_score=scores["structured_fit"],
-                )
-            )
-            if len(picked) >= MAX_RECOMMENDATIONS_PER_BUCKET:
-                break
-
-        return picked
-
-    similar = pick_bucket("similar", similar_items)
-    complementary = pick_bucket(
-        "complementary",
-        sorted(scored_candidates, key=lambda item: item[2]["complementary"], reverse=True),
-    )
-    unexpected = pick_bucket(
-        "unexpected",
-        sorted(scored_candidates, key=lambda item: item[2]["unexpected"], reverse=True),
-    )
-
-    map_point_index: dict[int, dict] = {}
-    for card in [*similar, *complementary, *unexpected]:
-        existing = map_point_index.get(card["user_id"])
-        if existing and existing["y"] >= card["structured_fit_score"]:
-            continue
-        map_point_index[card["user_id"]] = {
-            "user_id": card["user_id"],
-            "bucket": card["bucket"],
-            "name": card["name"],
-            "x": round(card["similarity_score"], 4),
-            "y": round(card["structured_fit_score"], 4),
-            "is_verified": card["is_verified"],
+        candidate_signals = _restore_extracted_signals(candidate.extracted_signals_json)
+        factor_scores = {
+            "problem_resonance": _problem_resonance_score(
+                viewer_profile,
+                candidate,
+                viewer_signals,
+                candidate_signals,
+            ),
+            "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
+            "work_style_compatibility": _work_style_compatibility_score(
+                viewer_profile,
+                candidate,
+                viewer_signals,
+                candidate_signals,
+            ),
+            "value_alignment": _value_alignment_score(viewer_signals, candidate_signals),
+            "conversation_potential": _conversation_potential_score(candidate_signals),
         }
-    map_points = list(map_point_index.values())
+        base_score = (
+            factor_scores["problem_resonance"] * 0.35
+            + factor_scores["role_complementarity"] * 0.25
+            + factor_scores["work_style_compatibility"] * 0.15
+            + factor_scores["value_alignment"] * 0.10
+            + factor_scores["conversation_potential"] * 0.15
+        )
+        scored_candidates.append(
+            {
+                "profile": candidate,
+                "user": candidate_user,
+                "signals": candidate_signals,
+                "factor_scores": factor_scores,
+                "base_score": base_score,
+            }
+        )
+
+    scored_candidates.sort(key=lambda item: item["base_score"], reverse=True)
+
+    selected: list[dict] = []
+    used_ids: set[int] = set()
+    rejected: list[TeamfitRejectedCandidate] = []
+    fallback_count = 0
+    candidate_turns_cache: dict[int, list[TeamfitExplorerTurn]] = {}
+
+    def _candidate_turns(user_id: int) -> list[TeamfitExplorerTurn]:
+        if user_id not in candidate_turns_cache:
+            candidate_turns_cache[user_id] = _load_explorer_turns(db, user_id)
+        return candidate_turns_cache[user_id]
+
+    safe_candidate, safe_used_fallback = _pick_recommendation_candidate(
+        scored_candidates,
+        threshold=SAFE_FIT_THRESHOLD,
+        problem_resonance_floor=0.25,
+    )
+    if safe_candidate is not None:
+        used_ids.add(safe_candidate["user"].user_id)
+        fallback_count += int(safe_used_fallback)
+        selected.append(
+            _build_conversation_priority_recommendation(
+                recommendation_type="safe_fit",
+                viewer_user=current_user,
+                viewer_profile=viewer_profile,
+                candidate_user=safe_candidate["user"],
+                candidate_profile=safe_candidate["profile"],
+                candidate_turns=_candidate_turns(safe_candidate["user"].user_id),
+                viewer_signals=viewer_signals,
+                candidate_signals=safe_candidate["signals"],
+                factor_scores=safe_candidate["factor_scores"],
+                base_score=safe_candidate["base_score"],
+                used_fallback=safe_used_fallback,
+            )
+        )
+
+    complementary_rows = [item for item in scored_candidates if item["user"].user_id not in used_ids]
+    if complementary_rows:
+        safe_profile = safe_candidate["profile"] if safe_candidate else None
+        complementary_rows.sort(
+            key=lambda item: (
+                item["base_score"]
+                + (0.12 if _role_family(viewer_signals.offered_role) != _role_family(item["signals"].offered_role) else 0.0)
+                - (
+                    _cosine_similarity(
+                        safe_profile.recommendation_embedding_json,
+                        item["profile"].recommendation_embedding_json,
+                    ) * 0.20
+                    if safe_profile is not None
+                    else 0.0
+                )
+            ),
+            reverse=True,
+        )
+        complementary_candidate, complementary_used_fallback = _pick_recommendation_candidate(
+            complementary_rows,
+            threshold=COMPLEMENTARY_THRESHOLD,
+            problem_resonance_floor=0.20,
+        )
+        if complementary_candidate is not None:
+            used_ids.add(complementary_candidate["user"].user_id)
+            fallback_count += int(complementary_used_fallback)
+            selected.append(
+                _build_conversation_priority_recommendation(
+                    recommendation_type="complementary_fit",
+                    viewer_user=current_user,
+                    viewer_profile=viewer_profile,
+                    candidate_user=complementary_candidate["user"],
+                    candidate_profile=complementary_candidate["profile"],
+                    candidate_turns=_candidate_turns(complementary_candidate["user"].user_id),
+                    viewer_signals=viewer_signals,
+                    candidate_signals=complementary_candidate["signals"],
+                    factor_scores=complementary_candidate["factor_scores"],
+                    base_score=complementary_candidate["base_score"],
+                    used_fallback=complementary_used_fallback,
+                )
+            )
+
+    wildcard_rows = [item for item in scored_candidates if item["user"].user_id not in used_ids]
+    if wildcard_rows:
+        safe_embedding = safe_candidate["profile"].recommendation_embedding_json if safe_candidate else None
+        wildcard_rows.sort(
+            key=lambda item: (
+                item["base_score"]
+                + (1.0 - _cosine_similarity(viewer_profile.recommendation_embedding_json, item["profile"].recommendation_embedding_json)) * 0.15
+                + min(1.0, len(item["signals"].tension_points) / 3) * 0.10
+                + (
+                    (1.0 - _cosine_similarity(safe_embedding, item["profile"].recommendation_embedding_json)) * 0.10
+                    if safe_embedding is not None
+                    else 0.0
+                )
+            ),
+            reverse=True,
+        )
+        wildcard_candidate, wildcard_used_fallback = _pick_recommendation_candidate(
+            wildcard_rows,
+            threshold=WILDCARD_THRESHOLD,
+            problem_resonance_floor=0.18,
+        )
+        if wildcard_candidate is not None:
+            used_ids.add(wildcard_candidate["user"].user_id)
+            fallback_count += int(wildcard_used_fallback)
+            selected.append(
+                _build_conversation_priority_recommendation(
+                    recommendation_type="wildcard_fit",
+                    viewer_user=current_user,
+                    viewer_profile=viewer_profile,
+                    candidate_user=wildcard_candidate["user"],
+                    candidate_profile=wildcard_candidate["profile"],
+                    candidate_turns=_candidate_turns(wildcard_candidate["user"].user_id),
+                    viewer_signals=viewer_signals,
+                    candidate_signals=wildcard_candidate["signals"],
+                    factor_scores=wildcard_candidate["factor_scores"],
+                    base_score=wildcard_candidate["base_score"],
+                    used_fallback=wildcard_used_fallback,
+                )
+            )
+
+    safe_candidate_id = safe_candidate["profile"].user_id if safe_candidate else None
+    for item in scored_candidates:
+        if item["user"].user_id in used_ids:
+            continue
+        rejection_reason = _recommendation_rejection_reason(
+            base_score=item["base_score"],
+            safe_candidate_id=safe_candidate_id,
+            candidate_profile=item["profile"],
+            viewer_profile=viewer_profile,
+            candidate_signals=item["signals"],
+        )
+        rejected.append(
+            _build_rejected_candidate(
+                viewer_user=current_user,
+                candidate_user=item["user"],
+                candidate_profile=item["profile"],
+                candidate_signals=item["signals"],
+                reason=rejection_reason,
+            )
+        )
+        if len(rejected) >= 5:
+            break
 
     return TeamfitRecommendationsResponse(
         requires_profile=False,
         requires_approval=False,
         active_profile_count=active_profile_count,
-        similar=similar,
-        complementary=complementary,
-        unexpected=unexpected,
-        map_points=map_points if len(map_points) >= 8 else [],
+        recommended_people=selected,
+        rejected_or_low_signal_candidates=rejected,
+        system_notes=_recommendation_system_notes(
+            selected,
+            viewer_signals,
+            len(candidates),
+            fallback_count=fallback_count,
+        ),
+    )
+
+
+def get_teamfit_candidate_directory(
+    current_user: User,
+    db: Session,
+) -> TeamfitCandidateDirectoryResponse:
+    users = db.scalars(
+        select(User)
+        .where(User.user_id != current_user.user_id)
+        .order_by(User.created_at.desc(), User.user_id.desc())
+    ).all()
+
+    if not users:
+        return TeamfitCandidateDirectoryResponse(candidates=[], total_count=0)
+
+    user_ids = [user.user_id for user in users]
+    profiles = db.scalars(
+        select(TeamfitExplorerProfile).where(TeamfitExplorerProfile.user_id.in_(user_ids))
+    ).all()
+    profile_map = {profile.user_id: profile for profile in profiles}
+    fit_checks = db.scalars(
+        select(TeamfitFitCheck).where(
+            TeamfitFitCheck.viewer_user_id == current_user.user_id,
+            TeamfitFitCheck.target_user_id.in_(user_ids),
+        )
+    ).all()
+    fit_check_map = {fit_check.target_user_id: fit_check for fit_check in fit_checks}
+
+    viewer_profile = db.get(TeamfitExplorerProfile, current_user.user_id)
+    viewer_signals = (
+        _restore_extracted_signals(viewer_profile.extracted_signals_json)
+        if viewer_profile and viewer_profile.extracted_signals_json
+        else None
+    )
+
+    candidate_turns_cache: dict[int, list[TeamfitExplorerTurn]] = {}
+
+    def _candidate_turns(user_id: int) -> list[TeamfitExplorerTurn]:
+        if user_id not in candidate_turns_cache:
+            candidate_turns_cache[user_id] = _load_explorer_turns(db, user_id)
+        return candidate_turns_cache[user_id]
+
+    score_map: dict[int, float] = {}
+    strongest_factor_map: dict[int, str] = {}
+    if viewer_profile and viewer_profile.recommendation_embedding_json and viewer_signals:
+        for user in users:
+            candidate_profile = profile_map.get(user.user_id)
+            if (
+                candidate_profile is None
+                or not candidate_profile.recommendation_embedding_json
+                or not candidate_profile.extracted_signals_json
+            ):
+                continue
+            factor_scores, base_score = _score_candidate_for_viewer(
+                viewer_profile=viewer_profile,
+                viewer_signals=viewer_signals,
+                candidate_profile=candidate_profile,
+            )
+            score_map[user.user_id] = round(base_score, 4)
+            strongest_factor_map[user.user_id] = max(factor_scores, key=factor_scores.get)
+
+    ranked_user_ids = [
+        user_id
+        for user_id, _score in sorted(score_map.items(), key=lambda item: item[1], reverse=True)
+    ]
+    rank_map = {user_id: index for index, user_id in enumerate(ranked_user_ids, start=1)}
+
+    items: list[TeamfitCandidateDirectoryItem] = []
+    for user in users:
+        candidate_profile = profile_map.get(user.user_id)
+        has_teamfit_profile = candidate_profile is not None
+        candidate_signals = (
+            _restore_extracted_signals(candidate_profile.extracted_signals_json)
+            if candidate_profile and candidate_profile.extracted_signals_json
+            else None
+        )
+        items.append(
+            TeamfitCandidateDirectoryItem(
+                user_id=user.user_id,
+                candidate_id=_candidate_id(user.user_id),
+                name=user.name or user.email.split("@", 1)[0],
+                has_teamfit_profile=has_teamfit_profile,
+                fit_score=fit_check_map.get(user.user_id).fit_score if fit_check_map.get(user.user_id) else None,
+                fit_note=fit_check_map.get(user.user_id).fit_note if fit_check_map.get(user.user_id) else None,
+                reason_summary=_directory_reason_summary(
+                    viewer_profile_exists=viewer_profile is not None,
+                    has_teamfit_profile=has_teamfit_profile,
+                    strongest_factor=strongest_factor_map.get(user.user_id),
+                ),
+                reason_detail=(
+                    _reason_detail(viewer_signals, candidate_signals, {
+                        "problem_resonance": _problem_resonance_score(
+                            viewer_profile,
+                            candidate_profile,
+                            viewer_signals,
+                            candidate_signals,
+                        ),
+                        "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
+                        "work_style_compatibility": _work_style_compatibility_score(
+                            viewer_profile,
+                            candidate_profile,
+                            viewer_signals,
+                            candidate_signals,
+                        ),
+                        "value_alignment": _value_alignment_score(viewer_signals, candidate_signals),
+                        "conversation_potential": _conversation_potential_score(candidate_signals),
+                    })
+                    if viewer_profile and viewer_signals and candidate_profile and candidate_signals
+                    else None
+                ),
+                problem_statement=candidate_profile.problem_statement if candidate_profile else "",
+                offered_role=_role_family(candidate_signals.offered_role) if candidate_signals else "",
+                sdgs=list(candidate_profile.sdg_tags or []) if candidate_profile else [],
+                mbti=candidate_profile.mbti if candidate_profile else None,
+                is_verified=user.applicant_status == "approved",
+                email=user.email if _can_share_email(current_user, user) else None,
+                github_address=user.github_address,
+                notion_url=user.notion_url,
+                history=[_explorer_turn_to_response(turn) for turn in _candidate_turns(user.user_id)]
+                if candidate_profile
+                else [],
+                created_at=user.created_at,
+                profile_updated_at=candidate_profile.updated_at if candidate_profile else None,
+                teamfit_score=score_map.get(user.user_id),
+                teamfit_rank=rank_map.get(user.user_id),
+            )
+        )
+
+    return TeamfitCandidateDirectoryResponse(candidates=items, total_count=len(items))
+
+
+def set_teamfit_fit_check(
+    target_user_id: int,
+    payload: TeamfitFitCheckUpdate,
+    current_user: User,
+    db: Session,
+) -> TeamfitFitCheckState:
+    if not current_user.is_admin and current_user.applicant_status != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="합격 인증 승인 후에만 팀핏 핏 점수를 저장할 수 있습니다.",
+        )
+
+    if target_user_id == current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="내 프로필에는 핏 점수를 저장할 수 없습니다.",
+        )
+
+    target_user = db.scalar(
+        select(User).where(
+            User.user_id == target_user_id,
+            User.applicant_status == "approved",
+        )
+    )
+    if target_user is None or db.get(TeamfitExplorerProfile, target_user_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="대상 후보를 찾을 수 없습니다.")
+
+    fit_check = db.scalar(
+        select(TeamfitFitCheck).where(
+            TeamfitFitCheck.viewer_user_id == current_user.user_id,
+            TeamfitFitCheck.target_user_id == target_user_id,
+        )
+    )
+    if fit_check is None:
+        fit_check = TeamfitFitCheck(
+            viewer_user_id=current_user.user_id,
+            target_user_id=target_user_id,
+        )
+        db.add(fit_check)
+
+    fit_check.fit_score = payload.fit_score
+    fit_check.fit_note = _normalize_optional_text(payload.fit_note, max_length=500)
+
+    db.commit()
+    db.refresh(fit_check)
+
+    return TeamfitFitCheckState(
+        target_user_id=target_user_id,
+        fit_score=fit_check.fit_score,
+        fit_note=fit_check.fit_note,
+        updated_at=fit_check.updated_at,
     )
