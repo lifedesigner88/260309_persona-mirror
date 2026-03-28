@@ -94,7 +94,6 @@ export function TeamFitHowItWorksButton({ className }: { className?: string }) {
                     >
                       {t("teamfit.howItWorks.title")}
                     </CardTitle>
-                    <p className={SECTION_TEXT_BASE}>{t("teamfit.howItWorks.description")}</p>
                   </div>
                 </CardHeader>
 

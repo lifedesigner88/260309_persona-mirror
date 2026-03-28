@@ -22,8 +22,26 @@ from app.features.persona.router import router as persona_router
 from app.features.teamfit import models as teamfit_models  # noqa: F401
 from app.features.teamfit.router import router as teamfit_router
 from app.features.teamfit.seed import sync_teamfit_demo_seed
-from app.features.teamfit.service import ensure_teamfit_pgvector_schema
+from app.features.teamfit.service import ensure_teamfit_explorer_schema, ensure_teamfit_pgvector_schema
 from app.features.verification.router import router as verification_router
+
+
+def _column_names(connection, inspector, table_name: str) -> set[str]:
+    if connection.dialect.name == "postgresql":
+        rows = connection.execute(
+            text(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = :table_name
+                  AND table_schema = ANY(current_schemas(false))
+                """
+            ),
+            {"table_name": table_name},
+        )
+        return {str(row[0]) for row in rows}
+
+    return {column["name"] for column in inspector.get_columns(table_name)}
 
 
 def ensure_postgres_user_gender_constraints() -> None:
@@ -46,21 +64,22 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(bind=engine)
     with engine.begin() as connection:
         inspector = inspect(connection)
-        user_columns = {column["name"] for column in inspector.get_columns("users")}
+        user_columns = _column_names(connection, inspector, "users")
         if "interview_start_time" not in user_columns:
             connection.execute(text("ALTER TABLE users ADD COLUMN interview_start_time TIME"))
         if inspector.has_table("persona_chat_messages"):
-            chat_columns = {column["name"] for column in inspector.get_columns("persona_chat_messages")}
+            chat_columns = _column_names(connection, inspector, "persona_chat_messages")
             if "session_id" not in chat_columns:
                 connection.execute(
                     text("ALTER TABLE persona_chat_messages ADD COLUMN session_id INTEGER NOT NULL DEFAULT 1")
                 )
         if inspector.has_table("teamfit_profiles"):
-            teamfit_columns = {column["name"] for column in inspector.get_columns("teamfit_profiles")}
+            teamfit_columns = _column_names(connection, inspector, "teamfit_profiles")
             if "mbti_axis_values" not in teamfit_columns:
                 connection.execute(text("ALTER TABLE teamfit_profiles ADD COLUMN mbti_axis_values JSON"))
     with SessionLocal() as db:
         ensure_teamfit_pgvector_schema(db)
+        ensure_teamfit_explorer_schema(db)
         sync_admin_seed(db)
         sync_demo_seed(db)
         sync_teamfit_demo_seed(db)
