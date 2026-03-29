@@ -33,6 +33,46 @@ def test_signup_login_me_and_logout_flow(client, signup_user, login_user):
     assert me_after_logout.status_code == 401
 
 
+def test_delete_me_removes_user_and_clears_session(client, signup_user, login_user):
+    result = signup_user(email="delete-me@example.com")
+    login_user(result["email"])
+
+    delete_response = client.request(
+        "DELETE",
+        "/auth/me",
+        json={"email": "DELETE-ME@example.com"},
+    )
+    assert delete_response.status_code == 204
+
+    me_after_delete = client.get("/auth/me")
+    assert me_after_delete.status_code == 401
+
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.email == "delete-me@example.com"))
+        assert user is None
+
+
+def test_delete_me_rejects_mismatched_email(client, signup_user, login_user):
+    result = signup_user(email="keep-me@example.com")
+    login_user(result["email"])
+
+    delete_response = client.request(
+        "DELETE",
+        "/auth/me",
+        json={"email": "someone-else@example.com"},
+    )
+    assert delete_response.status_code == 400
+    assert delete_response.json()["detail"] == "현재 로그인한 이메일을 입력해야 회원 탈퇴할 수 있습니다."
+
+    me_response = client.get("/auth/me")
+    assert me_response.status_code == 200
+    assert me_response.json()["email"] == "keep-me@example.com"
+
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.email == "keep-me@example.com"))
+        assert user is not None
+
+
 def test_signup_assigns_non_null_gender(client):
     signup_response = client.post("/auth/signup", json={"email": "gendered@example.com", "password": "123456"})
     assert signup_response.status_code == 201

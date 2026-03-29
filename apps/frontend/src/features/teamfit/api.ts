@@ -120,6 +120,19 @@ export async function saveTeamFitProfile(
   return readJson<TeamFitExplorerProfile>(response);
 }
 
+export async function deleteTeamFitInterviewTurn(turnId: number): Promise<TeamFitExplorerProfile> {
+  const response = await fetch(`${API_BASE_URL}/team-fit/me/interview-turns/${turnId}`, {
+    method: "DELETE",
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    await throwTeamFitError("teamfit.errors.deleteTurnFailed", response);
+  }
+
+  return readJson<TeamFitExplorerProfile>(response);
+}
+
 export async function requestTeamFitFollowupQuestion(): Promise<TeamFitInterviewQuestionResponse> {
   return postJson<TeamFitInterviewQuestionResponse, undefined>("/team-fit/interview/follow-up");
 }

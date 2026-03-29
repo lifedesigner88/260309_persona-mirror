@@ -3,12 +3,53 @@
 # 연락처/링크 상세 → data/profile.yaml 참조
 
 person_id: parksejong
+display_name: "박세종"
 username: lifedesigner88
+base: "Seoul, South Korea"
 
-education_summary:
-  degree: "서울시립대학교 전자전기컴퓨터공학부 학사"
-  graduation: "2015.02"
-  gpa: "2.91/4.5"
+one_line: "사람들이 자신의 삶을 스스로 설계할 수 있는 구조를 만들고 싶은 교육자형 개발자"
 
-career_total: "약 10년 (교육/기획/운영 포함)"
-dev_career_start: "2023-11"
+identity_keywords:
+  - "라이프디자이너"
+  - "성장 구조 설계자"
+  - "교육×기술 빌더"
+  - "커뮤니티 기획자"
+
+direction_origin_summary: >
+  20대 초반의 방황과 재부팅을 지나며 `삶은 설계될 수 있는가`라는 질문을 붙잡게 됐다.
+  이후 청년 공동체 운영, 국제캠프 기획, 입시·수학 지도, 학습 코칭을 거치며
+  사람들은 능력보다 방향과 구조의 부족 때문에 흔들린다는 문제의식을 키웠다.
+  30대 중반 개발 전환과 세종클래스 창업을 통해,
+  이제는 그 문제를 교육뿐 아니라 기술과 시스템으로 직접 풀고자 한다.
+
+orientation_signals:
+  sdg_alignment:
+    primary:
+      - label: "SDG 4 (양질의 교육)"
+        basis: "15년 이상 교육·커리큘럼 설계·학습 코칭 경험, 세종클래스 운영 방향"
+      - label: "SDG 8 (양질의 일자리와 경제성장)"
+        basis: "1인 창업, 교육×기술 기반 자립 모델 구축, 더 나은 일과 성장 구조에 대한 관심"
+    secondary:
+      - label: "SDG 10 (불평등 감소)"
+        basis: "비전공자·전직자·방향을 잃은 사람도 삶과 성장을 설계할 수 있어야 한다는 문제의식"
+      - label: "SDG 17 (글로벌 파트너십)"
+        basis: "국제캠프 PM 경험, 커뮤니티 기획과 협업 구조 설계에 대한 지속적 관심"
+    note: "values.yaml 및 lifetime.yaml 기반 AI 추정에서 출발했고, 이후 사용자 동의가 확인된 정렬"
+  esg_tilt:
+    primary: "S (Social)"
+    note: "교육, 일자리, 공동체, 파트너십 중심 활동 기준의 public summary"
+  mbti:
+    value: "INFJ-T (추정)"
+    confidence: low
+    basis:
+      - "I (72%): `작지만 진한 신뢰 기반 관계` 선호, 얕은 네트워킹 비선호"
+      - "N (84%): 삶의 방향, 성장 구조, 장기 비전 같은 추상적 문제의식에 지속적으로 몰입"
+      - "F (67%): 교육, 성장, 불평등 감소, 공동체 연결처럼 사람 중심 가치에 강하게 정렬"
+      - "J (61%): 루틴 설계, 문서화, 시스템화, 장기 계획을 통해 현실을 정리하려는 경향"
+      - "T (69%): 자기 성찰 강도가 높고, 중요한 기회 앞에서 긴장·자기점검·에너지 조절 이슈가 반복적으로 기록됨"
+    note: "16Personalities식 T/A 축까지 포함한 AI 추정에서 출발했고, 이후 사용자 동의가 확인됐으나 공식 검사 결과는 아님"
+
+refs:
+  profile: "data/profile.yaml"
+  persona: "data/01_identity/persona.yaml"
+  values: "data/01_identity/values.yaml"

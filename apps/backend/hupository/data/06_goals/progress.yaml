@@ -2,7 +2,7 @@
 # tree.yaml 기준 각 목표의 현재 진척과 근거를 기록합니다.
 # 이벤트 발생 시 갱신하고, 월간 리뷰 때 한 번 더 정리합니다.
 
-as_of: "2026-03-25"
+as_of: "2026-03-29"
 tracking_basis: "tree.yaml"
 
 goal_progress:
@@ -17,14 +17,21 @@ goal_progress:
       target: null
     notes: >
       플랫폼과 초기 유입 기반은 열렸고, 첫 결제 전환이 다음 분기점이다.
-      2026 주간 리뷰 시리즈는 시작했지만 실제 업로드 리듬은 아직 안정화 중이다.
+      2026 주간 리뷰 시리즈를 시작했고, W12 에피소드 업로드를 완료했다.
+      오늘은 세종클래스 주차별 유튜브 업로드를 실제 공개물로 다시 잇는 쪽으로 정리했고,
+      다음 공개물은 `휴포지토리 사용법` 콘텐츠로 이어갈 계획이다.
+      다만 실제 주간 업로드 리듬은 아직 안정화 중이다.
 
   - id: "G-SEJONG-03"
     title: "콘텐츠 채널 확장 (클래스101 등)"
     status: in_progress
-    next_checkpoint: "2026-03-27T15:00:00+09:00"
+    next_checkpoint: "2026-03-30T10:00:00+09:00"
     notes: >
-      클래스101 미팅 예정. 단기 수익보다 팬 확보와 채널 확장 관점에서 판단한다.
+      3/27 1차 오픈 미팅 완료.
+      제작 기간 단축 가능성과 수익 발생 시점 조율 가능성을 확인했다.
+      첫 미팅 당시 말한 `내일 오전 10시`는 현재 기준 3/30(월) 오전 10시로 해석하는 편이 맞다.
+      1:1 카카오톡방 링크 수신 후, 1차 커리큘럼 초안을 전달하면
+      기획 미팅 담당자와의 후속 미팅으로 이어질 가능성이 높다.
 
   - id: "G-AI-01"
     title: "AI Agent 개발 역량 확보 (LangGraph · FastAPI)"
@@ -44,7 +51,7 @@ goal_progress:
   - id: "G-PM-01"
     title: "PersonaMirror 공개 유즈케이스 정리 (3/25 목표)"
     status: in_progress
-    completion_pct: 80
+    completion_pct: 90
     milestones:
       - step: "Creator PR 페이지 /persona/sejong"
         status: completed
@@ -53,12 +60,16 @@ goal_progress:
       - step: "AI Sejong multi-turn chat"
         status: completed
       - step: "공유 링크 front door 정리"
-        status: in_progress
+        status: completed
       - step: "합격 직후 공유용 카피/링크 패키지"
         status: in_progress
     notes: >
-      PersonaMirror의 첫 공개 유즈케이스를 ASM 17 Community / Creator PR 맥락에서 검증 중이다.
-      핵심 과제는 제품 기능 추가보다 첫 공유 링크의 설득력 정리다.
+      PersonaMirror의 첫 공개 유즈케이스는 현재 `귀인`의 첫 team-building demo 레이어로 재해석되고 있다.
+      root `/`의 team-fit 탐색 흐름을 중심으로 signup → verification → profile → AI follow-up →
+      recommendation review → account management까지 이어지는 end-to-end 데모 동선이 한 번에 보이도록 정리했다.
+      roadmap도 chronological pivots와 code-reading hierarchy를 함께 보여주는 study-oriented map으로 다시 썼고,
+      top-level README intro 역시 현재 repo를 larger `귀인` 프로젝트 안의 `10일 바이브코딩 첫 데모`로 소개하는 방향으로 압축했다.
+      남은 핵심 과제는 기능 추가보다 독립 공유용 카피·링크 패키지와 후속 반응 검증이다.
 
   - id: "G-AI-03"
     title: "SW마에스트로 17기 합격 → AI 네트워크·역량 확보"
@@ -78,6 +89,15 @@ goal_progress:
     notes: >
       결과에 따라 단기 운영 전략이 갈린다.
       합격 시 팀빌딩 가속 옵션, 불합격 시 PersonaMirror와 클래스101 쪽으로 무게 이동.
+
+  - id: "G-LS-01"
+    title: "Hupository 강의 시리즈 기획 (강의 소재화)"
+    status: in_progress
+    completion_pct: 15
+    notes: >
+      2026-03-29 기준 Hupository starter와 2인 피드백 베타 구조를 먼저 정리했다.
+      다음 공개물은 `휴포지토리 사용법` 콘텐츠 1개이며,
+      큰 강의보다 작은 사용 구조와 시장 반응을 검증하는 방향으로 시작한다.
 
   - id: "G-LS-02"
     title: "PersonaMirror 독립 서비스 배포 및 운영"

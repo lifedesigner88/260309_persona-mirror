@@ -5,8 +5,13 @@ from app.common.db import get_db
 from app.features.auth.models import User
 from app.features.auth.service import get_current_user
 
-from .schemas import VerificationApplyRequest, VerificationStatusResponse
-from .service import apply_verification, get_my_status
+from .schemas import (
+    VerificationApplyRequest,
+    VerificationInviteCodeCheckRequest,
+    VerificationInviteCodeCheckResponse,
+    VerificationStatusResponse,
+)
+from .service import apply_verification, check_invite_code, get_my_status
 
 router = APIRouter(prefix="/verification", tags=["verification"])
 
@@ -20,6 +25,16 @@ def apply(
     return apply_verification(payload, current_user, db)
 
 
+@router.post("/invite-code/check", response_model=VerificationInviteCodeCheckResponse)
+def verify_invite_code(
+    payload: VerificationInviteCodeCheckRequest,
+    _: User = Depends(get_current_user),
+) -> VerificationInviteCodeCheckResponse:
+    return check_invite_code(payload.invite_code)
+
+
 @router.get("/me", response_model=VerificationStatusResponse)
-def my_status(current_user: User = Depends(get_current_user)) -> VerificationStatusResponse:
+def my_status(
+    current_user: User = Depends(get_current_user),
+) -> VerificationStatusResponse:
     return get_my_status(current_user)

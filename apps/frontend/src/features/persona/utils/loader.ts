@@ -14,8 +14,6 @@ async function loadPersonaData(personId: string): Promise<PersonaLoaderData> {
     title: data.title,
     dataEng: { ...data.data_eng, person_id: data.persona_id },
     dataKor: data.data_kor ? { ...data.data_kor, person_id: data.persona_id } : null,
-    email: data.email,
-    githubAddress: data.github_address,
     notionUrl: data.notion_url
   };
 }

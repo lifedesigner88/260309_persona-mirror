@@ -16,6 +16,14 @@ class VerificationApplyRequest(BaseModel):
     interview_room: int  # 1-5
 
 
+class VerificationInviteCodeCheckRequest(BaseModel):
+    invite_code: str | None = None
+
+
+class VerificationInviteCodeCheckResponse(BaseModel):
+    matches_auto_approve_invite_code: bool
+
+
 class VerificationStatusResponse(BaseModel):
     applicant_status: str
     name: str | None

@@ -5,11 +5,14 @@ import { useTranslation } from "react-i18next";
 import { Button, Field, Input, ShellCard, StatusPill } from "@/common/components";
 
 import type { AuthActionData } from "../types";
+import { localizeAuthError } from "../utils/localize-auth-error";
 
 export function LoginPage() {
   const { t } = useTranslation("auth");
   const actionData = useActionData() as AuthActionData | undefined;
   const [showPin, setShowPin] = useState(false);
+  const rawError = actionData?.error ?? null;
+  const localizedError = localizeAuthError(rawError, t);
 
   return (
     <ShellCard className="mx-auto max-w-xl bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,248,248,0.95))]">
@@ -44,10 +47,16 @@ export function LoginPage() {
         </Field>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <Link className="text-xs text-muted-foreground underline underline-offset-2" to="/auth/signup">
+            <Link
+              className="text-xs text-muted-foreground underline underline-offset-2"
+              to="/auth/signup"
+            >
               {t("login.signupBtn")}
             </Link>
-            <Link className="text-xs text-muted-foreground underline underline-offset-2" to="/auth/reset-pin">
+            <Link
+              className="text-xs text-muted-foreground underline underline-offset-2"
+              to="/auth/reset-pin"
+            >
               {t("login.forgotPin")}
             </Link>
           </div>
@@ -56,12 +65,15 @@ export function LoginPage() {
           </Button>
         </div>
       </Form>
-      {actionData?.error ? (
+      {localizedError ? (
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionData.error}
-          {actionData.error.includes("not verified") ? (
+          {localizedError}
+          {rawError?.includes("not verified") ? (
             <span className="ml-1">
-              — <Link className="underline" to="/auth/signup">{t("login.goBackVerify")}</Link>
+              —{" "}
+              <Link className="underline" to="/auth/signup">
+                {t("login.goBackVerify")}
+              </Link>
             </span>
           ) : null}
         </div>

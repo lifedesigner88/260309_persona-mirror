@@ -10,7 +10,12 @@ person_namespace:
   owner: parksejong
   note: "이 저장소 자체가 한 사람의 네임스페이스. 공개 데이터 루트(hupository/)가 곧 사람 단위."
   required_files:
-    - index.yaml
+    - README.md
+    - data/profile.yaml
+
+private_runtime_note: >
+  코칭 규칙, 프롬프트, AI 런타임 계약은 private repository 루트의 /ai 레이어에서 관리한다.
+  이 공개 mirror 에서는 data 구조와 공개 가능한 상태만 설명한다.
 
 layers:
   01_identity:
@@ -18,7 +23,7 @@ layers:
     format: yaml
     visibility_default: public
     files:
-      - core.yaml        # 이름, 생년, 연락처, 링크
+      - core.yaml        # 기본 신원, 한 줄 요약, 가벼운 방향 신호
       - persona.yaml     # 자기인식, 별칭, 반복 역할
       - values.yaml      # 가치관, 세계관
 
@@ -95,44 +100,24 @@ layers:
     format: mixed
     visibility_default: private
     files:
-      - "{decade}/{year}/{month}/{week}/YYYY-MM-DD.md"
+      - "{decade}/{year}/{month}/{week}/YYYY-MM-DD(요일).md"
       - "{decade}/{year}/{month}/{week}/session_draft.md"
       - "{decade}/{year}/{month}/{week}/session.md"
     prompts:
-      - ai/prompts/daily_reflection.md
-      - ai/prompts/weekly_coaching.md
-      - ai/prompts/monthly_review.md
+      - "private ai layer (/ai/prompts/daily_reflection.md)"
+      - "private ai layer (/ai/prompts/weekly_coaching.md)"
+      - "private ai layer (/ai/prompts/monthly_review.md)"
     operating_rule: >
       09_journal 은 "왜 이렇게 보고 있는가?"를 담는 레이어다.
       daily 는 하루 단위 사실/감정/배움, session_draft 는 진행 중인 해석과 질문,
       session.md 는 주간 코칭의 확정 결론을 담는다.
     flow: >
-      [매일]   GPT 대화 → {decade}/{year}/{month}/{week}/YYYY-MM-DD.md 저장.
+      [매일]   GPT 대화 → {decade}/{year}/{month}/{week}/YYYY-MM-DD(요일).md 저장.
       [세션 진행 중] 판단/질문/미확정 해석은 session_draft.md 에 누적.
       [주 1회] recent daily + 직전 session + lifetime/tree/snapshot →
                session_draft.md 작성/보강 후 session.md 확정.
       [월 1회] recent session + lifetime/tree/progress/snapshot →
-               ai/outputs/monthly_review/YYYY-MM.md 생성.
-
-  ai_layer:
-    purpose: "GPT 코칭 및 파생 문서 레이어"
-    format: mixed
-    visibility_default: public
-    files:
-      - context/weekly_coaching.yaml
-      - context/next_step.yaml
-      - prompts/daily_reflection.md
-      - prompts/weekly_coaching.md
-      - prompts/monthly_review.md
-      - prompts/resume_prompt.md
-      - prompts/intro_prompt.md
-      - prompts/matching_prompt.md
-      - outputs/monthly_review/
-      - outputs/next_step/
-      - outputs/resume_ko.md
-      - outputs/self_intro_30sec.md
-      - outputs/self_intro_full.md
-      - outputs/profile_tags.yaml
+               private doc/journal/monthly_review/YYYY-MM.md 생성.
 
 # ─────────────────────────────────────────
 # 데이터 표기 규칙 (Conventions)
@@ -148,13 +133,32 @@ conventions:
     example: "1988년 9월생 → 2026년 3월 기준 만 37세"
     applied_to:
       - "lifetime.yaml 의 age_range"
-      - "index.yaml 의 current_age"
+      - "private ai/index.yaml 의 current_age"
       - "모든 파일의 나이 관련 필드"
     note: "한국식 세는나이(+1), 연나이 사용 금지."
 
   date:
     standard: "ISO 8601"
     rule: "날짜는 YYYY-MM-DD, 주는 YYYY-WXX (ISO 8601 월요일 시작)"
+
+  datetime_local:
+    standard: "ISO 8601 with local offset"
+    rule: "시간은 YYYY-MM-DDTHH:MM:SS+09:00 같이 로컬 오프셋 포함 형식을 권장한다."
+
+  journal_time_fields:
+    standard:
+      - "record_started_at"
+      - "consultation_started_at"
+      - "timezone"
+      - "time_reference_note"
+    rule: >
+      daily 와 session 기록에는 가능하면 기록 시작 시각과 상담 시작 시각을 함께 남긴다.
+      기록 시작 시각이 근사치라면 time_reference_note 에 그 사실을 남긴다.
+
+  journal_daily_filename:
+    standard: "YYYY-MM-DD(요일).md"
+    rule: "09_journal 의 daily 파일명은 ISO 날짜 뒤에 한국어 요일을 괄호로 붙인다."
+    example: "2026-03-27(금).md"
 
   week:
     standard: "ISO 8601"

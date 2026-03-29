@@ -3,18 +3,11 @@ import { createPortal } from "react-dom";
 import { useLoaderData } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import {
-  Badge,
-  Button,
-  Field,
-  Input,
-  ShellCard,
-  StatusPill,
-  Textarea
-} from "@/common/components";
+import { Badge, Button, Field, Input, ShellCard, StatusPill, Textarea } from "@/common/components";
 import { cn } from "@/lib/utils";
 
 import {
+  deleteTeamFitInterviewTurn,
   fetchTeamFitCandidateDirectory,
   fetchTeamFitRecommendations,
   fetchTeamFitMe,
@@ -120,7 +113,7 @@ type MbtiAxisValues = TeamFitMbtiAxisValues;
 type DialogMode = TeamFitExplorerPhase | null;
 type TeamFitViewTab = "profile" | "recommendations";
 type TeamFitCandidateFilter = "all" | "with_fit_record" | "without_fit_record";
-type TeamFitCandidateSort = "teamfit" | "recent";
+type TeamFitCandidateSortDirection = "desc" | "asc";
 
 type TeamFitDraft = {
   problemStatement: string;
@@ -164,6 +157,7 @@ const EMPTY_RECOMMENDATIONS_RESPONSE: TeamFitConversationPriorityResponse = {
 };
 const TEAM_FIT_DRAFT_STORAGE_KEY = "team-fit-explorer-draft-v1";
 const CANDIDATE_DIRECTORY_PAGE_SIZE = 10;
+const INITIAL_INTERVIEW_TURN_MINIMUM = 3;
 
 function getMbtiAxisLetter(axis: (typeof MBTI_AXES)[number], leftPercent: number) {
   if (leftPercent > 50) {
@@ -206,7 +200,9 @@ function formatMbtiPreview(axisValues: MbtiAxisValues) {
   return `${letters.slice(0, 4).join("")}-${letters[4]}`;
 }
 
-function normalizeStoredMbtiAxisValues(values: TeamFitMbtiAxisValues | null | undefined): MbtiAxisValues {
+function normalizeStoredMbtiAxisValues(
+  values: TeamFitMbtiAxisValues | null | undefined
+): MbtiAxisValues {
   if (!values) {
     return { ...EMPTY_MBTI_AXIS_VALUES };
   }
@@ -289,11 +285,7 @@ function loadPersistedDraft(narrativeMarkdown: string): TeamFitPersistedDraft {
   }
 }
 
-function persistDraft(
-  draft: TeamFitDraft,
-  mbtiAxisValues: MbtiAxisValues,
-  currentStep: 1 | 2,
-) {
+function persistDraft(draft: TeamFitDraft, mbtiAxisValues: MbtiAxisValues, currentStep: 1 | 2) {
   if (typeof window === "undefined") {
     return;
   }
@@ -303,8 +295,8 @@ function persistDraft(
     JSON.stringify({
       draft,
       mbtiAxisValues,
-      currentStep,
-    } satisfies TeamFitPersistedDraft),
+      currentStep
+    } satisfies TeamFitPersistedDraft)
   );
 }
 
@@ -314,6 +306,20 @@ function clearPersistedDraft() {
   }
 
   window.localStorage.removeItem(TEAM_FIT_DRAFT_STORAGE_KEY);
+}
+
+function SpinnerIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={cn("animate-spin", className)}
+    >
+      <circle cx="12" cy="12" r="9" className="opacity-25" stroke="currentColor" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function TeamFitInterviewDialog({
@@ -359,7 +365,8 @@ function TeamFitInterviewDialog({
   }
 
   const isInitial = mode === "initial";
-  const progress = isInitial && question ? `${question.sequence_no}/3` : t("teamfit.interview.followupBadge");
+  const progress =
+    isInitial && question ? `${question.sequence_no}/3` : t("teamfit.interview.followupBadge");
   const submitLabel = isInitial
     ? turnCount >= 2
       ? t("teamfit.interview.finalCta")
@@ -387,7 +394,10 @@ function TeamFitInterviewDialog({
               <Badge className="border-sky-200 bg-sky-50 text-sky-700" variant="outline">
                 {progress}
               </Badge>
-              <h3 id="teamfit-interview-title" className="text-xl font-semibold tracking-[-0.03em] text-slate-950">
+              <h3
+                id="teamfit-interview-title"
+                className="text-xl font-semibold tracking-[-0.03em] text-slate-950"
+              >
                 {isInitial ? t("teamfit.interview.title") : t("teamfit.interview.followupTitle")}
               </h3>
               <p className="text-sm leading-6 text-slate-600">
@@ -403,16 +413,22 @@ function TeamFitInterviewDialog({
 
           <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/80 p-4">
             <div className="flex items-center gap-2">
-              <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700" variant="outline">
+              <Badge
+                className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                variant="outline"
+              >
                 {t("teamfit.interview.aiLabel")}
               </Badge>
             </div>
-            <div className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-slate-700 shadow-sm">
+            <div className="whitespace-pre-wrap break-words rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-slate-700 shadow-sm">
               {question?.question || t("teamfit.interview.loadingQuestion")}
             </div>
           </div>
 
-          <Field label={t("teamfit.interview.answerLabel")} hint={t("teamfit.interview.answerHint")}>
+          <Field
+            label={t("teamfit.interview.answerLabel")}
+            hint={t("teamfit.interview.answerHint")}
+          >
             <Textarea
               value={answer}
               onChange={(event) => onAnswerChange(event.target.value)}
@@ -438,7 +454,10 @@ function TeamFitInterviewDialog({
                 disabled={busy || !question || !answer.trim()}
                 className="bg-slate-950 text-white hover:bg-slate-800"
               >
-                {busy ? t("teamfit.interview.submitting") : submitLabel}
+                <span className="flex items-center gap-2">
+                  {busy ? <SpinnerIcon className="h-4 w-4" /> : null}
+                  <span>{busy ? t("teamfit.interview.submitting") : submitLabel}</span>
+                </span>
               </Button>
             </div>
           </div>
@@ -497,14 +516,21 @@ function TeamFitStepLockDialog({
             <Badge className="border-amber-200 bg-amber-50 text-amber-700" variant="outline">
               {t("teamfit.form.stepOneLabel")}
             </Badge>
-            <h3 id="teamfit-step-lock-title" className="text-xl font-semibold tracking-[-0.03em] text-slate-950">
+            <h3
+              id="teamfit-step-lock-title"
+              className="text-xl font-semibold tracking-[-0.03em] text-slate-950"
+            >
               {t("teamfit.stepLock.title")}
             </h3>
             <p className="text-sm leading-6 text-slate-600">{t("teamfit.stepLock.body")}</p>
           </div>
 
           <div className="flex justify-end">
-            <Button type="button" onClick={onClose} className="bg-slate-950 text-white hover:bg-slate-800">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="bg-slate-950 text-white hover:bg-slate-800"
+            >
               {t("teamfit.stepLock.confirm")}
             </Button>
           </div>
@@ -531,26 +557,28 @@ export function TeamFitPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
-  const [dialogQuestion, setDialogQuestion] = useState<TeamFitInterviewQuestionResponse | null>(null);
+  const [dialogQuestion, setDialogQuestion] = useState<TeamFitInterviewQuestionResponse | null>(
+    null
+  );
   const [dialogTurns, setDialogTurns] = useState<TeamFitInterviewTurnDraft[]>([]);
   const [dialogAnswer, setDialogAnswer] = useState("");
   const [stepLockDialogOpen, setStepLockDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TeamFitViewTab>("profile");
   const [editableHistory, setEditableHistory] = useState<TeamFitInterviewTurn[]>([]);
-  const [recommendations, setRecommendations] = useState<TeamFitConversationPriorityResponse | null>(
-    null
-  );
+  const [recommendations, setRecommendations] =
+    useState<TeamFitConversationPriorityResponse | null>(null);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
   const [recommendationsRefreshKey, setRecommendationsRefreshKey] = useState(0);
-  const [candidateDirectory, setCandidateDirectory] = useState<TeamFitCandidateDirectoryResponse | null>(
-    null
-  );
+  const [candidateDirectory, setCandidateDirectory] =
+    useState<TeamFitCandidateDirectoryResponse | null>(null);
   const [candidateDirectoryLoading, setCandidateDirectoryLoading] = useState(false);
   const [candidateDirectoryError, setCandidateDirectoryError] = useState<string | null>(null);
   const [candidateFilter, setCandidateFilter] = useState<TeamFitCandidateFilter>("all");
-  const [candidateSort, setCandidateSort] = useState<TeamFitCandidateSort>("teamfit");
+  const [candidateSortDirection, setCandidateSortDirection] =
+    useState<TeamFitCandidateSortDirection>("desc");
   const [candidatePage, setCandidatePage] = useState(1);
+  const [deletingTurnId, setDeletingTurnId] = useState<number | null>(null);
   const [stepTwoTextareaMinHeight, setStepTwoTextareaMinHeight] = useState(220);
   const stepOneCardRef = useRef<HTMLDivElement | null>(null);
   const stepTwoCardRef = useRef<HTMLDivElement | null>(null);
@@ -571,6 +599,7 @@ export function TeamFitPage() {
     draft.sdgTags.length === 4;
   const step2Complete =
     draft.narrativeMarkdown.trim().length > 0 && draft.narrativeMarkdown.trim().length <= 800;
+  const stepTwoPrimaryBusy = busy && !dialogOpen;
   const filteredDirectoryCandidates = useMemo(() => {
     const items = candidateDirectory?.candidates ?? [];
     const filtered = items.filter((candidate) => {
@@ -587,31 +616,51 @@ export function TeamFitPage() {
     return [...filtered].sort((left, right) => {
       const leftCreatedAt = new Date(left.created_at).getTime();
       const rightCreatedAt = new Date(right.created_at).getTime();
+      const leftHasFitScore = typeof left.fit_score === "number";
+      const rightHasFitScore = typeof right.fit_score === "number";
 
-      if (candidateSort === "teamfit") {
-        const leftHasScore = typeof left.teamfit_score === "number";
-        const rightHasScore = typeof right.teamfit_score === "number";
-        if (leftHasScore !== rightHasScore) {
-          return leftHasScore ? -1 : 1;
-        }
-        if (leftHasScore && rightHasScore && left.teamfit_score !== right.teamfit_score) {
-          return (right.teamfit_score ?? 0) - (left.teamfit_score ?? 0);
-        }
-        if (left.has_teamfit_profile !== right.has_teamfit_profile) {
-          return left.has_teamfit_profile ? -1 : 1;
-        }
+      if (leftHasFitScore !== rightHasFitScore) {
+        return leftHasFitScore ? -1 : 1;
+      }
+
+      if (leftHasFitScore && rightHasFitScore && left.fit_score !== right.fit_score) {
+        return candidateSortDirection === "desc"
+          ? (right.fit_score ?? 0) - (left.fit_score ?? 0)
+          : (left.fit_score ?? 0) - (right.fit_score ?? 0);
+      }
+
+      const leftHasTeamfitScore = typeof left.teamfit_score === "number";
+      const rightHasTeamfitScore = typeof right.teamfit_score === "number";
+
+      if (leftHasTeamfitScore !== rightHasTeamfitScore) {
+        return leftHasTeamfitScore ? -1 : 1;
+      }
+
+      if (
+        leftHasTeamfitScore &&
+        rightHasTeamfitScore &&
+        left.teamfit_score !== right.teamfit_score
+      ) {
+        return (right.teamfit_score ?? 0) - (left.teamfit_score ?? 0);
+      }
+
+      if (left.has_teamfit_profile !== right.has_teamfit_profile) {
+        return left.has_teamfit_profile ? -1 : 1;
       }
 
       return rightCreatedAt - leftCreatedAt;
     });
-  }, [candidateDirectory?.candidates, candidateFilter, candidateSort]);
+  }, [candidateDirectory?.candidates, candidateFilter, candidateSortDirection]);
   const candidateTotalPages = Math.max(
     1,
     Math.ceil(filteredDirectoryCandidates.length / CANDIDATE_DIRECTORY_PAGE_SIZE)
   );
   const pagedDirectoryCandidates = useMemo(() => {
     const startIndex = (candidatePage - 1) * CANDIDATE_DIRECTORY_PAGE_SIZE;
-    return filteredDirectoryCandidates.slice(startIndex, startIndex + CANDIDATE_DIRECTORY_PAGE_SIZE);
+    return filteredDirectoryCandidates.slice(
+      startIndex,
+      startIndex + CANDIDATE_DIRECTORY_PAGE_SIZE
+    );
   }, [candidatePage, filteredDirectoryCandidates]);
 
   useLayoutEffect(() => {
@@ -643,8 +692,14 @@ export function TeamFitPage() {
     updateTextareaMinHeight();
 
     const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => updateTextareaMinHeight());
-    for (const node of [stepOneCardRef.current, stepTwoCardRef.current, stepTwoTextareaWrapRef.current]) {
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => updateTextareaMinHeight());
+    for (const node of [
+      stepOneCardRef.current,
+      stepTwoCardRef.current,
+      stepTwoTextareaWrapRef.current
+    ]) {
       if (node && observer) {
         observer.observe(node);
       }
@@ -698,7 +753,9 @@ export function TeamFitPage() {
         if (!isMounted) {
           return;
         }
-        setError(loadError instanceof Error ? loadError.message : t("teamfit.errors.profileLoadFailed"));
+        setError(
+          loadError instanceof Error ? loadError.message : t("teamfit.errors.profileLoadFailed")
+        );
       }
     }
 
@@ -720,7 +777,7 @@ export function TeamFitPage() {
 
   useEffect(() => {
     setCandidatePage(1);
-  }, [candidateFilter, candidateSort, candidateDirectory?.total_count]);
+  }, [candidateFilter, candidateSortDirection, candidateDirectory?.total_count]);
 
   useEffect(() => {
     let isMounted = true;
@@ -748,7 +805,9 @@ export function TeamFitPage() {
         }
         setRecommendations(EMPTY_RECOMMENDATIONS_RESPONSE);
         setRecommendationsError(
-          loadError instanceof Error ? loadError.message : t("teamfit.errors.recommendationsLoadFailed")
+          loadError instanceof Error
+            ? loadError.message
+            : t("teamfit.errors.recommendationsLoadFailed")
         );
       } finally {
         if (isMounted) {
@@ -788,9 +847,11 @@ export function TeamFitPage() {
         if (!isMounted) {
           return;
         }
-        setCandidateDirectory({ candidates: [], total_count: 0 });
+        setCandidateDirectory({ requires_approval: false, candidates: [], total_count: 0 });
         setCandidateDirectoryError(
-          loadError instanceof Error ? loadError.message : t("teamfit.errors.recommendationsLoadFailed")
+          loadError instanceof Error
+            ? loadError.message
+            : t("teamfit.errors.recommendationsLoadFailed")
         );
       } finally {
         if (isMounted) {
@@ -835,17 +896,27 @@ export function TeamFitPage() {
     setCurrentStep(2);
   }
 
-  function syncSavedProfile(nextProfile: TeamFitExplorerProfile) {
+  function syncSavedProfile(
+    nextProfile: TeamFitExplorerProfile,
+    options?: {
+      keepCurrentDraft?: boolean;
+      nextTab?: TeamFitViewTab;
+    }
+  ) {
     clearPersistedDraft();
     setMe((current) => ({
       profile: nextProfile,
-      active_profile_count: current.profile ? current.active_profile_count : current.active_profile_count + 1
+      active_profile_count: current.profile
+        ? current.active_profile_count
+        : current.active_profile_count + 1
     }));
-    setDraft(buildDraftFromProfile(nextProfile));
-    setMbtiAxisValues(normalizeStoredMbtiAxisValues(nextProfile.mbti_axis_values));
+    if (!options?.keepCurrentDraft) {
+      setDraft(buildDraftFromProfile(nextProfile));
+      setMbtiAxisValues(normalizeStoredMbtiAxisValues(nextProfile.mbti_axis_values));
+    }
     setEditableHistory(buildEditableHistoryFromProfile(nextProfile));
     setCurrentStep(2);
-    setActiveTab("recommendations");
+    setActiveTab(options?.nextTab ?? "recommendations");
     setRecommendationsRefreshKey((current) => current + 1);
   }
 
@@ -858,6 +929,39 @@ export function TeamFitPage() {
 
   function handleRecommendationFitSaved() {
     setRecommendationsRefreshKey((current) => current + 1);
+  }
+
+  async function handleDeleteEditableHistoryTurn(turnId: number) {
+    if (
+      busy ||
+      deletingTurnId !== null ||
+      editableHistory.length <= INITIAL_INTERVIEW_TURN_MINIMUM
+    ) {
+      return;
+    }
+
+    const confirmed =
+      typeof window === "undefined" ? true : window.confirm(t("teamfit.results.deleteTurnConfirm"));
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingTurnId(turnId);
+    setError(null);
+
+    try {
+      const savedProfile = await deleteTeamFitInterviewTurn(turnId);
+      syncSavedProfile(savedProfile, {
+        keepCurrentDraft: true,
+        nextTab: "profile"
+      });
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : t("teamfit.errors.deleteTurnFailed")
+      );
+    } finally {
+      setDeletingTurnId(null);
+    }
   }
 
   async function saveEditedProfile() {
@@ -877,7 +981,7 @@ export function TeamFitPage() {
       setError(t("teamfit.errors.step2Incomplete"));
       return;
     }
-    if (editableHistory.length < 3) {
+    if (editableHistory.length < INITIAL_INTERVIEW_TURN_MINIMUM) {
       setError(t("teamfit.errors.saveFailed"));
       return;
     }
@@ -894,9 +998,8 @@ export function TeamFitPage() {
         narrative_markdown: draft.narrativeMarkdown.trim(),
         history: editableHistory.map((turn) => ({
           question: turn.question,
-          answer: turn.answer,
-          phase: turn.phase,
-        })),
+          answer: turn.answer
+        }))
       });
       syncSavedProfile(savedProfile);
     } catch (saveError) {
@@ -939,7 +1042,9 @@ export function TeamFitPage() {
       setDialogQuestion(question);
     } catch (requestError) {
       resetDialogState();
-      setError(requestError instanceof Error ? requestError.message : t("teamfit.errors.interviewFailed"));
+      setError(
+        requestError instanceof Error ? requestError.message : t("teamfit.errors.interviewFailed")
+      );
     } finally {
       setBusy(false);
     }
@@ -958,7 +1063,9 @@ export function TeamFitPage() {
       setDialogQuestion(question);
     } catch (requestError) {
       resetDialogState();
-      setError(requestError instanceof Error ? requestError.message : t("teamfit.errors.interviewFailed"));
+      setError(
+        requestError instanceof Error ? requestError.message : t("teamfit.errors.interviewFailed")
+      );
     } finally {
       setBusy(false);
     }
@@ -979,7 +1086,10 @@ export function TeamFitPage() {
 
     try {
       if (dialogMode === "initial") {
-        const nextTurns = [...dialogTurns, { question: dialogQuestion.question, answer: trimmedAnswer }];
+        const nextTurns = [
+          ...dialogTurns,
+          { question: dialogQuestion.question, answer: trimmedAnswer }
+        ];
 
         if (nextTurns.length < 3) {
           const nextQuestion = await requestTeamFitInterviewQuestion({
@@ -1046,8 +1156,12 @@ export function TeamFitPage() {
         </div>
       ) : recommendations?.requires_approval ? (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/85 p-4">
-          <div className="text-sm font-semibold text-amber-800">{t("teamfit.recommendationV2.approvalTitle")}</div>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{t("teamfit.recommendationV2.approvalBody")}</p>
+          <div className="text-sm font-semibold text-amber-800">
+            {t("teamfit.recommendationV2.approvalTitle")}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            {t("teamfit.recommendationV2.approvalBody")}
+          </p>
         </div>
       ) : recommendations?.recommended_people.length ? (
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -1061,7 +1175,9 @@ export function TeamFitPage() {
         </div>
       ) : (
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-sm font-semibold text-slate-900">{t("teamfit.recommendationV2.emptyTitle")}</div>
+          <div className="text-sm font-semibold text-slate-900">
+            {t("teamfit.recommendationV2.emptyTitle")}
+          </div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {recommendations?.system_notes.limits || t("teamfit.recommendationV2.emptyBody")}
           </p>
@@ -1082,110 +1198,118 @@ export function TeamFitPage() {
               </Badge>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
-                {(
-                  [
-                    ["all", t("teamfit.directory.filter.all")],
-                    ["with_fit_record", t("teamfit.directory.filter.withFitRecord")],
-                    ["without_fit_record", t("teamfit.directory.filter.withoutFitRecord")],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setCandidateFilter(value)}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-medium transition",
-                      candidateFilter === value
-                        ? "bg-white text-slate-950 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
-                {(
-                  [
-                    ["teamfit", t("teamfit.directory.sort.teamfit")],
-                    ["recent", t("teamfit.directory.sort.recent")],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setCandidateSort(value)}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-medium transition",
-                      candidateSort === value
-                        ? "bg-white text-slate-950 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {candidateDirectoryLoading ? (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-5 text-sm text-slate-600">
-                {t("teamfit.directory.loading")}
-              </div>
-            ) : candidateDirectoryError ? (
-              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
-                {candidateDirectoryError}
-              </div>
-            ) : pagedDirectoryCandidates.length ? (
-              <>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {pagedDirectoryCandidates.map((candidate) => (
-                    <TeamFitCandidateDirectoryCard
-                      key={`directory-${candidate.candidate_id}`}
-                      candidate={candidate}
-                      onFitSaved={handleRecommendationFitSaved}
-                    />
-                  ))}
+            {candidateDirectory?.requires_approval ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/85 p-4">
+                <div className="text-sm font-semibold text-amber-800">
+                  {t("teamfit.recommendationV2.approvalTitle")}
                 </div>
-
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {t("teamfit.recommendationV2.approvalBody")}
+                </p>
+              </div>
+            ) : (
+              <>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-slate-600">
-                    {t("teamfit.directory.pageStatus", {
-                      page: candidatePage,
-                      total: candidateTotalPages
-                    })}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
+                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+                    {(
+                      [
+                        ["all", t("teamfit.directory.filter.all")],
+                        ["with_fit_record", t("teamfit.directory.filter.withFitRecord")],
+                        ["without_fit_record", t("teamfit.directory.filter.withoutFitRecord")]
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setCandidateFilter(value)}
+                        className={cn(
+                          "rounded-full px-4 py-2 text-sm font-medium transition",
+                          candidateFilter === value
+                            ? "bg-white text-slate-950 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCandidatePage((current) => Math.max(1, current - 1))}
-                      disabled={candidatePage === 1}
-                    >
-                      {t("teamfit.directory.prev")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
                       onClick={() =>
-                        setCandidatePage((current) => Math.min(candidateTotalPages, current + 1))
+                        setCandidateSortDirection((current) =>
+                          current === "desc" ? "asc" : "desc"
+                        )
                       }
-                      disabled={candidatePage >= candidateTotalPages}
+                      className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-950 shadow-sm transition hover:bg-slate-100"
                     >
-                      {t("teamfit.directory.next")}
-                    </Button>
+                      {candidateSortDirection === "desc"
+                        ? t("teamfit.directory.sort.fitScoreDesc")
+                        : t("teamfit.directory.sort.fitScoreAsc")}
+                    </button>
                   </div>
                 </div>
+
+                {candidateDirectoryLoading ? (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-5 text-sm text-slate-600">
+                    {t("teamfit.directory.loading")}
+                  </div>
+                ) : candidateDirectoryError ? (
+                  <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
+                    {candidateDirectoryError}
+                  </div>
+                ) : pagedDirectoryCandidates.length ? (
+                  <>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {pagedDirectoryCandidates.map((candidate) => (
+                        <TeamFitCandidateDirectoryCard
+                          key={`directory-${candidate.candidate_id}`}
+                          candidate={candidate}
+                          onFitSaved={handleRecommendationFitSaved}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm text-slate-600">
+                        {t("teamfit.directory.pageStatus", {
+                          page: candidatePage,
+                          total: candidateTotalPages
+                        })}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCandidatePage((current) => Math.max(1, current - 1))}
+                          disabled={candidatePage === 1}
+                        >
+                          {t("teamfit.directory.prev")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCandidatePage((current) =>
+                              Math.min(candidateTotalPages, current + 1)
+                            )
+                          }
+                          disabled={candidatePage >= candidateTotalPages}
+                        >
+                          {t("teamfit.directory.next")}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-5 text-sm text-slate-600">
+                    {t("teamfit.directory.empty")}
+                  </div>
+                )}
               </>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-5 text-sm text-slate-600">
-                {t("teamfit.directory.empty")}
-              </div>
             )}
           </div>
         </div>
@@ -1197,7 +1321,10 @@ export function TeamFitPage() {
     <div className="mt-5 space-y-5">
       <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-5">
-          <div ref={stepOneCardRef} className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-5">
+          <div
+            ref={stepOneCardRef}
+            className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-5"
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <Badge className="border-sky-200 bg-sky-50 text-sky-700" variant="outline">
@@ -1219,7 +1346,11 @@ export function TeamFitPage() {
 
             <div className="mt-5 space-y-5">
               <Field
-                label={<span className="font-semibold text-slate-950">{t("teamfit.fields.problemStatement")}</span>}
+                label={
+                  <span className="font-semibold text-slate-950">
+                    {t("teamfit.fields.problemStatement")}
+                  </span>
+                }
               >
                 <Input
                   value={draft.problemStatement}
@@ -1252,10 +1383,16 @@ export function TeamFitPage() {
                 <div className="rounded-[24px] border border-violet-200 bg-violet-50/70 p-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="border-violet-200 bg-white/90 text-violet-700">
+                      <Badge
+                        variant="outline"
+                        className="border-violet-200 bg-white/90 text-violet-700"
+                      >
                         {mbtiPreview || t("teamfit.mbti.placeholder")}
                       </Badge>
-                      <Badge variant="outline" className="border-violet-200 bg-violet-50/80 text-violet-700">
+                      <Badge
+                        variant="outline"
+                        className="border-violet-200 bg-violet-50/80 text-violet-700"
+                      >
                         {t("teamfit.mbti.selectionCount", {
                           count: selectedMbtiCount,
                           total: MBTI_AXES.length
@@ -1294,10 +1431,16 @@ export function TeamFitPage() {
                             )}
                           >
                             <div className="flex flex-col items-end">
-                              <span className="text-xs font-semibold" style={{ color: axis.leftColor }}>
+                              <span
+                                className="text-xs font-semibold"
+                                style={{ color: axis.leftColor }}
+                              >
                                 {t(`teamfit.mbtiDimensions.${axis.leftLabelKey}`)}
                               </span>
-                              <span className="text-sm font-semibold tabular-nums" style={{ color: axis.leftColor }}>
+                              <span
+                                className="text-sm font-semibold tabular-nums"
+                                style={{ color: axis.leftColor }}
+                              >
                                 {leftPercent}%
                               </span>
                             </div>
@@ -1324,7 +1467,9 @@ export function TeamFitPage() {
                               max={100}
                               step={1}
                               value={leftPercent}
-                              onChange={(event) => updateMbtiAxis(axis.id, Number(event.target.value))}
+                              onChange={(event) =>
+                                updateMbtiAxis(axis.id, Number(event.target.value))
+                              }
                               disabled={busy}
                               aria-label={`${t(`teamfit.mbtiDimensions.${axis.leftLabelKey}`)} / ${t(
                                 `teamfit.mbtiDimensions.${axis.rightLabelKey}`
@@ -1361,10 +1506,16 @@ export function TeamFitPage() {
                               {axis.right}
                             </span>
                             <div className="flex flex-col items-start">
-                              <span className="text-xs font-semibold" style={{ color: axis.rightColor }}>
+                              <span
+                                className="text-xs font-semibold"
+                                style={{ color: axis.rightColor }}
+                              >
                                 {t(`teamfit.mbtiDimensions.${axis.rightLabelKey}`)}
                               </span>
-                              <span className="text-sm font-semibold tabular-nums" style={{ color: axis.rightColor }}>
+                              <span
+                                className="text-sm font-semibold tabular-nums"
+                                style={{ color: axis.rightColor }}
+                              >
                                 {rightPercent}%
                               </span>
                             </div>
@@ -1379,8 +1530,13 @@ export function TeamFitPage() {
               <SdgCardGroup
                 label={
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-950">{t("teamfit.fields.sdgTags")}</span>
-                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                    <span className="font-semibold text-slate-950">
+                      {t("teamfit.fields.sdgTags")}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                    >
                       {t("teamfit.fields.sdgTagsCount", {
                         count: draft.sdgTags.length,
                         max: 4
@@ -1417,11 +1573,16 @@ export function TeamFitPage() {
               <button
                 type="button"
                 onClick={handleStepTwoCardClick}
-                aria-label={step1Complete ? t("teamfit.form.stepTwoLabel") : t("teamfit.stepLock.body")}
+                aria-label={
+                  step1Complete ? t("teamfit.form.stepTwoLabel") : t("teamfit.stepLock.body")
+                }
                 className="absolute inset-0 z-10 rounded-[28px]"
               />
             ) : null}
-            <Badge className="absolute right-5 top-5 border-slate-200 bg-slate-50 text-slate-700" variant="outline">
+            <Badge
+              className="absolute right-5 top-5 border-slate-200 bg-slate-50 text-slate-700"
+              variant="outline"
+            >
               {t("teamfit.fields.narrativeCount", {
                 count: draft.narrativeMarkdown.trim().length,
                 max: 800
@@ -1433,7 +1594,9 @@ export function TeamFitPage() {
                 <Badge className="border-amber-200 bg-amber-50 text-amber-700" variant="outline">
                   {t("teamfit.form.stepTwoLabel")}
                 </Badge>
-                <h3 className="mt-3 text-xl font-semibold text-slate-950">{t("teamfit.form.stepTwoTitle")}</h3>
+                <h3 className="mt-3 text-xl font-semibold text-slate-950">
+                  {t("teamfit.form.stepTwoTitle")}
+                </h3>
               </div>
             </div>
 
@@ -1476,49 +1639,62 @@ export function TeamFitPage() {
                 disabled={busy || (!profile && currentStep !== 2)}
                 className="bg-slate-950 text-white hover:bg-slate-800"
               >
-                {profile ? t("teamfit.form.saveEdits") : t("teamfit.form.startInterview")}
+                <span className="flex items-center gap-2">
+                  {stepTwoPrimaryBusy ? <SpinnerIcon className="h-4 w-4" /> : null}
+                  <span>
+                    {stepTwoPrimaryBusy
+                      ? profile
+                        ? t("teamfit.actions.saving")
+                        : t("teamfit.interview.submitting")
+                      : profile
+                        ? t("teamfit.form.saveEdits")
+                        : t("teamfit.form.startInterview")}
+                  </span>
+                </span>
               </Button>
             </div>
           </div>
-
-          {!profile ? (
-            <div className="rounded-[28px] border border-slate-200 bg-slate-50/85 p-5">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                {t("teamfit.recommendationV2.previewPill")}
-              </div>
-              <h3 className="mt-2 text-lg font-semibold text-slate-950">{t("teamfit.recommendationV2.previewTitle")}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {isGuest
-                  ? t("teamfit.recommendationV2.previewGuestBody")
-                  : t("teamfit.recommendationV2.previewMemberBody")}
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {(
-                  ["safe_fit", "complementary_fit", "wildcard_fit"] as Array<
-                    "safe_fit" | "complementary_fit" | "wildcard_fit"
-                  >
-                ).map((type) => (
-                  <div key={type} className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
-                    <div className="text-sm font-semibold text-slate-900">
-                      {t(`teamfit.recommendationV2.type.${type}`)}
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {t(`teamfit.recommendationV2.previewType.${type}`)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
+
+        {!profile ? (
+          <div className="rounded-[28px] border border-slate-200 bg-slate-50/85 p-5 lg:col-span-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              {t("teamfit.recommendationV2.previewPill")}
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {(
+                ["safe_fit", "complementary_fit", "wildcard_fit"] as Array<
+                  "safe_fit" | "complementary_fit" | "wildcard_fit"
+                >
+              ).map((type) => (
+                <div
+                  key={type}
+                  className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm"
+                >
+                  <div className="text-sm font-semibold text-slate-900">
+                    {t(`teamfit.recommendationV2.type.${type}`)}
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {t(`teamfit.recommendationV2.previewType.${type}`)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {profile ? (
         <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">{t("teamfit.results.transcriptTitle")}</h3>
+              <h3 className="text-lg font-semibold text-slate-950">
+                {t("teamfit.results.transcriptTitle")}
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                {t("teamfit.results.deleteRule")}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="border-slate-200 bg-white text-slate-700" variant="outline">
@@ -1536,20 +1712,71 @@ export function TeamFitPage() {
           </div>
 
           <div className="mt-5 space-y-4">
-            {editableHistory.map((turn) => (
-              <div key={turn.id} className="rounded-[24px] border border-slate-200 bg-white p-4">
-                <div className="space-y-3 text-sm leading-6 text-slate-800">
-                  <p className="whitespace-pre-wrap">
-                    <span className="font-semibold text-slate-500">Q : </span>
-                    {turn.question}
-                  </p>
-                  <p className="whitespace-pre-wrap text-slate-700">
-                    <span className="font-semibold text-slate-500">A : </span>
-                    {turn.answer}
-                  </p>
+            {editableHistory.map((turn, index) => {
+              const displayPhase = index < INITIAL_INTERVIEW_TURN_MINIMUM ? "initial" : "followup";
+              const hasMinimumOnly = editableHistory.length <= INITIAL_INTERVIEW_TURN_MINIMUM;
+              const canDeleteTurn = !busy && deletingTurnId === null && !hasMinimumOnly;
+              const isDeletingTurn = deletingTurnId === turn.id;
+              const deleteTurnLabel = isDeletingTurn
+                ? t("teamfit.results.deletingTurn")
+                : hasMinimumOnly
+                  ? t("teamfit.results.deleteTurnDisabled")
+                  : t("teamfit.results.deleteTurn");
+
+              return (
+                <div key={turn.id} className="rounded-[24px] border border-slate-200 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        className={cn(
+                          "border",
+                          displayPhase === "initial"
+                            ? "border-sky-200 bg-sky-50 text-sky-700"
+                            : "border-amber-200 bg-amber-50 text-amber-700"
+                        )}
+                        variant="outline"
+                      >
+                        {displayPhase === "initial"
+                          ? t("teamfit.results.initialTurn")
+                          : t("teamfit.results.followupTurn")}
+                      </Badge>
+                      <Badge
+                        className="border-slate-200 bg-slate-50 text-slate-700"
+                        variant="outline"
+                      >
+                        {t("teamfit.results.turnIndex", { count: index + 1 })}
+                      </Badge>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleDeleteEditableHistoryTurn(turn.id)}
+                      disabled={!canDeleteTurn}
+                      title={hasMinimumOnly ? t("teamfit.results.deleteRule") : undefined}
+                      className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 disabled:border-slate-200 disabled:text-slate-400"
+                    >
+                      <span className="flex items-center gap-2">
+                        {isDeletingTurn ? <SpinnerIcon className="h-4 w-4" /> : null}
+                        <span>{deleteTurnLabel}</span>
+                      </span>
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 space-y-3 text-sm leading-6 text-slate-800">
+                    <p className="whitespace-pre-wrap">
+                      <span className="font-semibold text-slate-500">Q : </span>
+                      {turn.question}
+                    </p>
+                    <p className="whitespace-pre-wrap text-slate-700">
+                      <span className="font-semibold text-slate-500">A : </span>
+                      {turn.answer}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -1625,7 +1852,11 @@ export function TeamFitPage() {
         turnCount={dialogTurns.length}
         t={t}
       />
-      <TeamFitStepLockDialog open={stepLockDialogOpen} onClose={() => setStepLockDialogOpen(false)} t={t} />
+      <TeamFitStepLockDialog
+        open={stepLockDialogOpen}
+        onClose={() => setStepLockDialogOpen(false)}
+        t={t}
+      />
     </div>
   );
 }

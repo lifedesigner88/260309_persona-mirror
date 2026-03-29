@@ -36,8 +36,16 @@ function getNavigationItemClasses(item: NavigationItem, isActive: boolean): stri
   if (item.to === "/ai/sejong") {
     return cn(
       FEATURED_NAV_BASE,
-      "border-rose-300/80 bg-[linear-gradient(135deg,rgba(255,241,242,1),rgba(255,247,237,0.98))] font-semibold text-rose-950 hover:border-rose-400/80 hover:bg-[linear-gradient(135deg,rgba(255,241,242,1),rgba(255,251,235,1))] hover:text-rose-950",
+      "border-rose-300/80 bg-[linear-gradient(135deg,rgba(255,241,242,1),rgba(255,247,237,0.98))] font-medium text-rose-950 hover:border-rose-400/80 hover:bg-[linear-gradient(135deg,rgba(255,241,242,1),rgba(255,251,235,1))] hover:text-rose-950",
       isActive && "ring-1 ring-rose-300/90 shadow-[0_14px_28px_rgba(244,63,94,0.14)]"
+    );
+  }
+
+  if (item.to === "/persona/sejong") {
+    return cn(
+      FEATURED_NAV_BASE,
+      "border-violet-200/80 bg-[linear-gradient(135deg,rgba(245,243,255,0.98),rgba(250,245,255,0.94))] font-medium text-violet-950 hover:border-violet-300/85 hover:bg-[linear-gradient(135deg,rgba(243,232,255,0.98),rgba(250,245,255,0.98))] hover:text-violet-950",
+      isActive && "ring-1 ring-violet-300/85 shadow-[0_12px_26px_rgba(139,92,246,0.14)]"
     );
   }
 

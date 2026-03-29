@@ -34,7 +34,6 @@ public_safe_fields:
   - "05_interests/"
   - "06_goals/"
   - "07_matching/"
-  - "08_ai_layer/outputs/"
 
 publishing_note: >
   공개용 프로필은 성장 서사와 현재 방향에 집중하고,

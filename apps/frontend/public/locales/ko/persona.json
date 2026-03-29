@@ -26,20 +26,11 @@
     "aiTitle": "AI를 활용해 생성된 페이지",
     "aiNote": "세종 휴포지토리의 데이터를 바탕으로 AI를 활용해 제작된 페이지입니다.",
     "aiSignature": "with Codex GPT 5.4",
-    "repoButton": "휴포지토리 보기",
-    "emailCopy": "복사",
-    "emailCopied": "복사됨"
+    "repoButton": "휴포지토리 보기"
   },
   "creatorPr": {
     "heroRole": "가장 강한 포지션",
-    "teamSectionLabel": "찾는 팀원",
-    "teamSectionTitle": "이런 역할의 두 분과 함께 팀을 만들어보고 싶습니다.",
-    "avoidMatches": "이 조합은 잘 안 맞을 가능성이 큽니다.",
-    "projectSectionLabel": "함께 만들 방향",
-    "whyNow": "선호 팀원 유형",
-    "whyMe": "제가 맡을 역할",
-    "ctaSectionLabel": "연락",
-    "contactButton": "메일 복사"
+    "projectSectionLabel": "함께 만들 방향"
   },
   "mbti": {
     "typeLabel": "MBTI 유형",

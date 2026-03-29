@@ -177,6 +177,7 @@
       "profileSaveFailed": "Failed to save your team-fit profile.",
       "recommendationsLoadFailed": "Failed to load recommendations.",
       "fitCheckSaveFailed": "Failed to save the fit score.",
+      "deleteTurnFailed": "Failed to delete the interview turn.",
       "loginRequired": "Log in to save your team-fit exploration interview.",
       "step1Incomplete": "Please complete every required step-1 field: one problem sentence, all 5 MBTI axes, and 4 SDGs.",
       "step2Incomplete": "Please write the step-2 narrative within 800 characters.",
@@ -251,7 +252,7 @@
       "sdgTags": "SDGs *",
       "sdgTagsHint": "SDGs are the 17 Sustainable Development Goals defined by the UN.",
       "sdgTagsCount": "{{count}} / {{max}} selected",
-      "narrativeMarkdownPlaceholder": "## Why do I want to solve this problem?\n\n## What role do I want to take in the team?\n\n## What can I contribute?\n\n## Who do I want to talk with first?\n\n## What collaboration fits me / what do I want to avoid?",
+      "narrativeMarkdownPlaceholder": "## Why do I want to solve this problem?\n\n\n## What role do I want to take in the team?\n\n\n## What can I contribute?\n\n\n## Who do I want to talk with first?\n\n\n## What collaboration fits me / what do I want to avoid?\n\n",
       "narrativeCount": "{{count}} / {{max}} chars"
     },
     "actions": {
@@ -324,7 +325,12 @@
       "turnIndex": "Turn {{count}}",
       "initialTurn": "Initial interview",
       "followupTurn": "Follow-up",
-      "followupCta": "Answer again"
+      "followupCta": "Answer again",
+      "deleteTurn": "Delete turn",
+      "deleteTurnDisabled": "Keep 3 turns",
+      "deletingTurn": "Deleting...",
+      "deleteTurnConfirm": "Delete this Q&A from the interview transcript right away?",
+      "deleteRule": "Deletion is available once you have extra follow-up turns. Keep at least 3 turns, and apply deletions to the server immediately."
     },
     "recommendationV2": {
       "pill": "3 people to talk to first",
@@ -367,9 +373,6 @@
       "saveFit": "Save fit score",
       "savingFit": "Saving fit score...",
       "previewPill": "Recommendation preview",
-      "previewTitle": "This is how recommendations appear after saving",
-      "previewGuestBody": "After profile saving and approval, the product shows 3 people worth talking to first, together with the reasons.",
-      "previewMemberBody": "Once your profile is saved, the system narrows first-conversation candidates using problem resonance, role complementarity, and collaboration signals.",
       "previewType": {
         "safe_fit": "A candidate whose problem framing is close enough to start a deep conversation right away.",
         "complementary_fit": "A candidate who is likely to fill a role or execution gap you do not currently cover.",
@@ -406,7 +409,7 @@
     "directory": {
       "pill": "All signed-up users",
       "title": "Currently signed-up users",
-      "description": "Below the top recommendations, browse all signed-up users together and narrow quickly by post-conversation fit-record status or team-fit order.",
+      "description": "Below the top recommendations, browse all signed-up users together and narrow quickly by post-conversation fit-record status or fit-score order.",
       "totalCount": "{{count}} total",
       "loading": "Loading signed-up users...",
       "empty": "There are no users for this filter.",
@@ -432,8 +435,8 @@
         "withoutFitRecord": "Without fit record"
       },
       "sort": {
-        "teamfit": "Team-fit order",
-        "recent": "Signup order"
+        "fitScoreDesc": "Fit score: high to low",
+        "fitScoreAsc": "Fit score: low to high"
       }
     },
     "comingSoon": {

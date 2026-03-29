@@ -244,6 +244,7 @@ export type TeamFitCandidateDirectoryItem = {
 };
 
 export type TeamFitCandidateDirectoryResponse = {
+  requires_approval: boolean;
   candidates: TeamFitCandidateDirectoryItem[];
   total_count: number;
 };

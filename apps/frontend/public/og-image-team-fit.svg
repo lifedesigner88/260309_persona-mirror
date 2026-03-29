@@ -1,0 +1,125 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="90" y1="60" x2="1110" y2="590" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF5E8" />
+      <stop offset="0.46" stop-color="#EFF8FF" />
+      <stop offset="1" stop-color="#F8F2FF" />
+    </linearGradient>
+    <linearGradient id="frame" x1="110" y1="92" x2="1090" y2="548" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.94" />
+      <stop offset="1" stop-color="#F8FBFF" stop-opacity="0.88" />
+    </linearGradient>
+    <filter id="shadow" x="70" y="54" width="1060" height="540" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feColorMatrix
+        in="SourceAlpha"
+        type="matrix"
+        values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+        result="hardAlpha"
+      />
+      <feOffset dy="20" />
+      <feGaussianBlur stdDeviation="24" />
+      <feColorMatrix
+        type="matrix"
+        values="0 0 0 0 0.0588235 0 0 0 0 0.0941176 0 0 0 0 0.160784 0 0 0 0.13 0"
+      />
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1" />
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape" />
+    </filter>
+    <filter id="blur" x="-40" y="-40" width="1280" height="710" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="36" />
+    </filter>
+    <style>
+      .ui {
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+      }
+    </style>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <g filter="url(#blur)">
+    <circle cx="206" cy="520" r="126" fill="#D7F3E4" fill-opacity="0.84" />
+    <circle cx="1000" cy="114" r="104" fill="#C8DEFF" fill-opacity="0.86" />
+    <circle cx="744" cy="528" r="112" fill="#E8D6FF" fill-opacity="0.76" />
+    <circle cx="430" cy="110" r="82" fill="#FFE5AD" fill-opacity="0.8" />
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="100" y="90" width="1000" height="450" rx="40" fill="url(#frame)" />
+    <rect x="100.75" y="90.75" width="998.5" height="448.5" rx="39.25" stroke="#FFFFFF" stroke-opacity="0.88" stroke-width="1.5" />
+  </g>
+
+  <rect x="150" y="128" width="86" height="34" rx="17" fill="#E1ECFF" />
+  <text x="193" y="151" text-anchor="middle" fill="#315C9A" class="ui" font-size="16" font-weight="700" letter-spacing="0.12em">
+    ASM17
+  </text>
+
+  <g>
+    <rect x="132" y="182" width="430" height="300" rx="32" fill="#FFFFFF" fill-opacity="0.92" />
+    <rect x="132.75" y="182.75" width="428.5" height="298.5" rx="31.25" stroke="#DCE8F4" stroke-width="1.5" />
+
+    <rect x="164" y="214" width="126" height="28" rx="14" fill="#F2F7FF" />
+    <rect x="180" y="223" width="44" height="10" rx="5" fill="#A7C5EA" />
+    <rect x="232" y="223" width="38" height="10" rx="5" fill="#B7E2CF" />
+
+    <rect x="164" y="260" width="366" height="86" rx="24" fill="#FBFDFF" stroke="#E4EDF6" />
+    <rect x="188" y="286" width="176" height="12" rx="6" fill="#BFD4EE" />
+    <rect x="188" y="310" width="232" height="12" rx="6" fill="#D6E2F3" />
+
+    <rect x="164" y="366" width="366" height="84" rx="24" fill="#FBFDFF" stroke="#E4EDF6" />
+    <rect x="188" y="388" width="94" height="12" rx="6" fill="#C7D8EE" />
+    <rect x="298" y="388" width="94" height="12" rx="6" fill="#C7D8EE" />
+    <rect x="408" y="388" width="94" height="12" rx="6" fill="#C7D8EE" />
+    <rect x="188" y="414" width="62" height="16" rx="8" fill="#E9F5EE" />
+    <rect x="260" y="414" width="62" height="16" rx="8" fill="#E9F5EE" />
+    <rect x="332" y="414" width="62" height="16" rx="8" fill="#E9F5EE" />
+    <rect x="404" y="414" width="62" height="16" rx="8" fill="#E9F5EE" />
+  </g>
+
+  <g opacity="0.84">
+    <path d="M586 278C632 278 646 238 690 238C748 238 748 312 812 312" stroke="#A5C6ED" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 20" />
+    <path d="M580 376C634 376 654 420 716 420C770 420 788 392 834 392" stroke="#B9A9EA" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 20" />
+  </g>
+
+  <g>
+    <rect x="646" y="166" width="422" height="320" rx="34" fill="#FFFFFF" fill-opacity="0.92" />
+    <rect x="646.75" y="166.75" width="420.5" height="318.5" rx="33.25" stroke="#E4DCF8" stroke-width="1.5" />
+
+    <rect x="676" y="202" width="360" height="76" rx="24" fill="#F8FBFF" stroke="#DDE8F5" />
+    <circle cx="720" cy="240" r="21" fill="#DCEBFF" />
+    <circle cx="720" cy="232" r="8" fill="#8CB4E9" />
+    <path d="M706 254C709 245 717 240 729 240C741 240 749 245 753 254" fill="#8CB4E9" />
+    <rect x="756" y="221" width="112" height="12" rx="6" fill="#C2D5EE" />
+    <rect x="756" y="244" width="200" height="12" rx="6" fill="#D6E2F3" />
+    <rect x="976" y="220" width="36" height="20" rx="10" fill="#EEF6FF" />
+    <rect x="985" y="225" width="18" height="10" rx="5" fill="#86B1E7" />
+
+    <rect x="676" y="292" width="360" height="76" rx="24" fill="#FFFFFF" stroke="#E6EDF7" />
+    <circle cx="720" cy="330" r="21" fill="#FFECC4" />
+    <circle cx="720" cy="322" r="8" fill="#D7A956" />
+    <path d="M706 344C709 335 717 330 729 330C741 330 749 335 753 344" fill="#D7A956" />
+    <rect x="756" y="311" width="126" height="12" rx="6" fill="#C9D8ED" />
+    <rect x="756" y="334" width="182" height="12" rx="6" fill="#DCE6F2" />
+    <rect x="972" y="309" width="40" height="20" rx="10" fill="#EDF8F0" />
+    <rect x="982" y="314" width="20" height="10" rx="5" fill="#7BC59E" />
+
+    <rect x="676" y="382" width="360" height="76" rx="24" fill="#FFFFFF" stroke="#E6EDF7" />
+    <circle cx="720" cy="420" r="21" fill="#EEE1FF" />
+    <circle cx="720" cy="412" r="8" fill="#A286E8" />
+    <path d="M706 434C709 425 717 420 729 420C741 420 749 425 753 434" fill="#A286E8" />
+    <rect x="756" y="401" width="140" height="12" rx="6" fill="#C9D8ED" />
+    <rect x="756" y="424" width="168" height="12" rx="6" fill="#DCE6F2" />
+    <rect x="968" y="399" width="44" height="20" rx="10" fill="#F1F5FF" />
+    <rect x="978" y="404" width="24" height="10" rx="5" fill="#8CB4E9" />
+  </g>
+
+  <rect x="152" y="502" width="112" height="18" rx="9" fill="#E2ECFA" />
+  <text x="208" y="515" text-anchor="middle" fill="#5074A6" class="ui" font-size="12" font-weight="700" letter-spacing="0.12em">
+    TEAM-FIT
+  </text>
+
+  <text x="1046" y="516" text-anchor="end" fill="#7A8799" class="ui" font-size="16" font-weight="500">
+    made by Sejong Park
+  </text>
+</svg>

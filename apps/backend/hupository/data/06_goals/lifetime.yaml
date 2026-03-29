@@ -18,8 +18,8 @@ age_convention: "만나이 (대한민국 법정 기준) — schema.yaml#conventi
 # 평생의 사명 (최상위 목표)
 # ─────────────────────────────────────────
 lifetime_mission: >
-  삶을 설계하는 질문을 붙잡고,
-  기술과 교육으로 더 많은 사람이 자신의 삶을 더 잘 설계하도록 돕는다.
+  사람의 가능성이 부족해서가 아니라 삶과 성장을 설계할 구조가 부족하다는 문제를 붙잡고,
+  기술과 교육으로 더 많은 사람이 자신의 삶과 성장을 스스로 설계하도록 돕는다.
 
 # ─────────────────────────────────────────
 # 10년 단위 사명
@@ -35,9 +35,11 @@ decades:
     decade_mission: >
       교육과 기술을 직접 만드는 사람이 된다.
       1인 창업자로서 세종클래스를 키우고,
+      사람이 삶과 성장을 설계할 수 있는 구조를 첫 제품과 서비스로 구현하며,
       AI 빌더 역량을 확보해 다음 10년의 기반을 만든다.
     key_themes:
       - "1인 창업 안착 (세종클래스)"
+      - "삶과 성장을 설계할 수 있는 구조의 첫 제품화"
       - "AI 빌더 역량 확보"
       - "수익 독립의 첫 증명"
     linked_to: "tree.yaml#G-LIFE"    # 하위 목표 트리 연결
@@ -109,7 +111,7 @@ goal_discovery_framework:
   when_to_use: >
     lifetime_mission 또는 decade_mission 이 비어있거나,
     사용자가 장기목표를 정하는 데 막막함을 느낄 때.
-  how: "ai/prompts/monthly_review.md 참조"
+  how: "private AI layer(/ai/prompts/monthly_review.md) 참조"
   current_sdg_alignment:
     # values.yaml · vectors.yaml 기준 현재 높은 공명 가능성
     - sdg: 4

@@ -94,6 +94,7 @@ export type PersonaProfile = {
   archetype: string;
   headline: string;
   one_liner: string;
+  identity_keywords?: string[];
   mbti: MbtiProfile;
   top3_values: string[];
   strengths: string[];

@@ -172,6 +172,7 @@
       "profileSaveFailed": "팀핏 프로필을 저장하지 못했습니다.",
       "recommendationsLoadFailed": "추천 결과를 불러오지 못했습니다.",
       "fitCheckSaveFailed": "핏 점수를 저장하지 못했습니다.",
+      "deleteTurnFailed": "인터뷰 기록을 삭제하지 못했습니다.",
       "loginRequired": "로그인하면 팀핏 탐색 인터뷰를 저장할 수 있습니다.",
       "step1Incomplete": "1단계의 필수 항목인 문제 한 문장, MBTI 5축, SDGs 4개를 모두 채워주세요.",
       "step2Incomplete": "2단계 본문을 800자 이내로 작성해 주세요.",
@@ -246,7 +247,7 @@
       "sdgTags": "SDGs *",
       "sdgTagsHint": "SDGs는 유엔이 제안한 17개의 지속가능발전목표입니다.",
       "sdgTagsCount": "{{count}} / {{max}} 선택",
-      "narrativeMarkdownPlaceholder": "## 왜 이 문제를 풀고 싶나\n\n## 내가 팀에서 맡고 싶은 역할\n\n## 내가 줄 수 있는 것\n\n## 같이 대화해보고 싶은 사람\n\n## 잘 맞는 협업 / 피하고 싶은 협업",
+      "narrativeMarkdownPlaceholder": "## 왜 이 문제를 풀고 싶나\n\n\n## 내가 팀에서 맡고 싶은 역할\n\n\n## 내가 줄 수 있는 것\n\n\n## 같이 대화해보고 싶은 사람\n\n\n## 잘 맞는 협업 / 피하고 싶은 협업\n\n",
       "narrativeCount": "{{count}} / {{max}}자"
     },
     "actions": {
@@ -319,7 +320,12 @@
       "turnIndex": "{{count}}번 질문",
       "initialTurn": "초기 인터뷰",
       "followupTurn": "추가 질문",
-      "followupCta": "다시 답변하기"
+      "followupCta": "다시 답변하기",
+      "deleteTurn": "기록 삭제",
+      "deleteTurnDisabled": "최소 3문답 유지",
+      "deletingTurn": "삭제 중...",
+      "deleteTurnConfirm": "이 문답을 인터뷰 기록에서 바로 삭제할까요?",
+      "deleteRule": "추가 문답이 있을 때만 삭제할 수 있습니다. 최소 3문답은 유지되며, 삭제 즉시 서버에 반영됩니다."
     },
     "recommendationV2": {
       "pill": "먼저 대화할 3명",
@@ -362,9 +368,6 @@
       "saveFit": "핏 점수 저장",
       "savingFit": "핏 점수 저장 중...",
       "previewPill": "추천 미리보기",
-      "previewTitle": "저장 후 이런 형태로 추천됩니다",
-      "previewGuestBody": "프로필 저장과 승인 이후에는 지금 먼저 대화해볼 3명을 이유와 함께 보여줍니다.",
-      "previewMemberBody": "프로필을 저장하면 문제 공명, 역할 보완, 협업 신호를 바탕으로 먼저 대화할 후보를 좁혀줍니다.",
       "previewType": {
         "safe_fit": "문제의식이 가깝고 바로 깊은 대화를 시작하기 쉬운 후보입니다.",
         "complementary_fit": "지금 부족한 역할이나 실행 관점을 보완해줄 가능성이 큰 후보입니다.",
@@ -401,7 +404,7 @@
     "directory": {
       "pill": "가입 유저 전체 보기",
       "title": "지금 가입된 유저들",
-      "description": "추천 후보 아래에서 전체 가입 유저를 함께 훑어보며, 대화 후 핏 기록 여부와 팀핏 순 정렬로 빠르게 좁혀볼 수 있습니다.",
+      "description": "추천 후보 아래에서 전체 가입 유저를 함께 훑어보며, 대화 후 핏 기록 여부와 핏 점수 순 정렬로 빠르게 좁혀볼 수 있습니다.",
       "totalCount": "전체 {{count}}명",
       "loading": "가입 유저 목록을 불러오는 중입니다.",
       "empty": "현재 조건에 맞는 유저가 없습니다.",
@@ -427,8 +430,8 @@
         "withoutFitRecord": "핏 기록 없음"
       },
       "sort": {
-        "teamfit": "팀핏 순",
-        "recent": "가입 순"
+        "fitScoreDesc": "핏 점수 높은 순",
+        "fitScoreAsc": "핏 점수 낮은 순"
       }
     },
     "comingSoon": {

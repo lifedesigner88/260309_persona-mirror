@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useRevalidator, useRouteLoaderData } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useNavigate, useRevalidator, useRouteLoaderData } from "react-router-dom";
 
 import { Button, ShellCard, StatusPill } from "@/common/components";
 import { Input } from "@/common/components/ui/input";
+import { deleteAccountRequest } from "@/features/auth/api";
 import type { RootLoaderData } from "@/features/auth/types";
 import { formatInterviewRoom, formatInterviewStartTime } from "@/lib/interview";
-import { applyVerification } from "../api";
+import { applyVerification, checkVerificationInviteCode } from "../api";
 
 const INTERVIEW_DATES = [
   { value: "2026-03-19", label: "3월 19일 (목)" },
@@ -40,26 +42,12 @@ type VerificationFormState = {
   interview_room: string;
 };
 
-function TeamTalkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
-      <path
-        fill="currentColor"
-        d="M12 4c-4.97 0-9 3.019-9 6.742 0 2.442 1.736 4.58 4.332 5.756L6.25 20l4.012-2.095c.566.084 1.145.126 1.738.126 4.97 0 9-3.02 9-6.743C21 7.02 16.97 4 12 4Z"
-      />
-      <circle cx="8.45" cy="10.75" r="1.05" fill="#FEE500" />
-      <circle cx="12" cy="10.75" r="1.05" fill="#FEE500" />
-      <circle cx="15.55" cy="10.75" r="1.05" fill="#FEE500" />
-    </svg>
-  );
+function sanitizeInviteCodeInput(value: string): string {
+  return value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase();
 }
 
-function TeamTalkBadge() {
-  return (
-    <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d6c76f] bg-[#fff2a8] text-[#3a2f08] shadow-[0_8px_20px_rgba(254,229,0,0.18)]">
-      <TeamTalkIcon />
-    </div>
-  );
+function normalizeEmailForComparison(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 function normalizeForm(form: VerificationFormState): VerificationFormState {
@@ -90,16 +78,26 @@ function createInitialForm(sessionUser: RootLoaderData["sessionUser"]): Verifica
 
 export function VerificationPage() {
   const rootData = useRouteLoaderData("root") as RootLoaderData;
+  const navigate = useNavigate();
   const revalidator = useRevalidator();
   const sessionUser = rootData.sessionUser;
   const [form, setForm] = useState<VerificationFormState>(() => createInitialForm(sessionUser));
+  const [statusOverride, setStatusOverride] = useState<string | null>(null);
+  const [inviteCodeStatus, setInviteCodeStatus] = useState<
+    "idle" | "checking" | "valid" | "invalid"
+  >("idle");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submittedMode, setSubmittedMode] = useState<"apply" | "edit" | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmationEmail, setDeleteConfirmationEmail] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setForm(createInitialForm(sessionUser));
+    setStatusOverride(null);
   }, [sessionUser]);
 
   if (!sessionUser) {
@@ -113,9 +111,60 @@ export function VerificationPage() {
     );
   }
 
-  const status = sessionUser.applicant_status ?? "none";
+  const status = statusOverride ?? sessionUser.applicant_status ?? "none";
   const isApproved = status === "approved";
   const isRejected = status === "rejected";
+  const inviteCodeRequired = !isApproved;
+  const trimmedInviteCode = form.invite_code.trim();
+  const inviteCodeNeedsValidation = inviteCodeRequired && trimmedInviteCode.length > 0;
+  const inviteCodeBlocksSubmit =
+    inviteCodeRequired &&
+    (trimmedInviteCode.length === 0 ||
+      inviteCodeStatus === "checking" ||
+      inviteCodeStatus === "invalid");
+  const showInviteCodeActivationHint = inviteCodeRequired && trimmedInviteCode.length === 0;
+  const sessionEmail = sessionUser.email;
+  const deleteConfirmationMatches =
+    normalizeEmailForComparison(deleteConfirmationEmail).length > 0 &&
+    normalizeEmailForComparison(deleteConfirmationEmail) ===
+      normalizeEmailForComparison(sessionEmail);
+
+  useEffect(() => {
+    if (!inviteCodeNeedsValidation) {
+      setInviteCodeStatus("idle");
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      setInviteCodeStatus("checking");
+      const result = await checkVerificationInviteCode(trimmedInviteCode);
+      if (cancelled) {
+        return;
+      }
+      setInviteCodeStatus(result.data?.matches_auto_approve_invite_code ? "valid" : "invalid");
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [inviteCodeNeedsValidation, trimmedInviteCode]);
+
+  useEffect(() => {
+    if (!deleteDialogOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deleteLoading) {
+        closeDeleteDialog();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteDialogOpen, deleteLoading]);
 
   function updateForm<K extends keyof VerificationFormState>(
     key: K,
@@ -129,28 +178,39 @@ export function VerificationPage() {
     }
   }
 
-  if (submittedMode === "apply" && successMessage) {
-    return (
-      <ShellCard>
-        <StatusPill label="신청 완료" tone="success" />
-        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">
-          인증 신청이 접수되었습니다
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">{successMessage}</p>
-      </ShellCard>
-    );
+  function openDeleteDialog() {
+    setDeleteDialogOpen(true);
+    setDeleteConfirmationEmail("");
+    setDeleteError(null);
   }
 
-  if (status === "pending") {
-    return (
-      <ShellCard>
-        <StatusPill label={STATUS_LABEL["pending"]} tone="warn" />
-        <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">인증 대기 중</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          24시간 내로 인증코드 확인 후 승인해드리겠습니다.
-        </p>
-      </ShellCard>
-    );
+  function closeDeleteDialog() {
+    if (deleteLoading) {
+      return;
+    }
+    setDeleteDialogOpen(false);
+    setDeleteConfirmationEmail("");
+    setDeleteError(null);
+  }
+
+  async function handleDeleteAccount() {
+    if (!deleteConfirmationMatches) {
+      return;
+    }
+
+    setDeleteLoading(true);
+    setDeleteError(null);
+    const result = await deleteAccountRequest(deleteConfirmationEmail.trim());
+    setDeleteLoading(false);
+
+    if (result.error) {
+      setDeleteError(result.error);
+      return;
+    }
+
+    closeDeleteDialog();
+    revalidator.revalidate();
+    navigate("/", { replace: true });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -168,6 +228,14 @@ export function VerificationPage() {
           ? "이름과 성별은 필수 입력 항목입니다."
           : "면접 날짜, 시작시간, 분과는 필수 입력 항목입니다."
       );
+      return;
+    }
+    if (inviteCodeRequired && !normalizedForm.invite_code) {
+      setError("합격자 초대코드는 필수 입력 항목입니다.");
+      return;
+    }
+    if (inviteCodeRequired && normalizedForm.invite_code && inviteCodeStatus !== "valid") {
+      setError("합격자 초대코드가 일치하지 않아 지금은 인증 신청을 제출할 수 없습니다.");
       return;
     }
     setForm(normalizedForm);
@@ -189,12 +257,17 @@ export function VerificationPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      const nextMode = isApproved ? "edit" : "apply";
+      const nextStatus = result.data?.applicant_status ?? status;
+      const nextIsApproved = nextStatus === "approved";
+      const nextMode = nextIsApproved ? "edit" : "apply";
+      setStatusOverride(nextStatus);
       setSubmittedMode(nextMode);
       setSuccessMessage(
-        nextMode === "edit"
-          ? "제출한 인증정보가 저장되었습니다."
-          : "24시간 내로 인증코드 확인 후 승인해드리겠습니다."
+        nextIsApproved && !isApproved
+          ? "합격자 초대코드가 확인되어 바로 인증되었습니다."
+          : nextMode === "edit"
+            ? "제출한 인증정보가 저장되었습니다."
+            : "24시간 내로 인증코드 확인 후 승인해드리겠습니다."
       );
       revalidator.revalidate();
     }
@@ -216,27 +289,180 @@ export function VerificationPage() {
     : isRejected
       ? "이전에 제출한 인증 정보가 거부되었습니다. 내용을 보완해서 다시 신청할 수 있습니다."
       : [
-          "확인이 되면 17기 팀톡방 가입 링크를 이메일로 보내드립니다.",
-          "서울 + 부산 450명의 향후 네트워크를 위해 운영해볼 생각입니다.",
+          "합격자 초대코드는 필수입니다. 코드가 맞으면 관리자 승인 없이 바로 인증됩니다.",
+          "서울 + 부산 450명의 향후 네트워크를 위해 운영해볼 생각입니다."
         ].join("\n");
   const submitLabel = isApproved
     ? "인증정보 저장"
     : isRejected
       ? "인증 다시 신청하기"
       : "인증 신청하기";
+  const accountDeletionCard = (
+    <ShellCard className="border-rose-200/70 bg-rose-50/40">
+      <StatusPill label="회원 탈퇴" tone="warn" />
+      <h3 className="mt-4 text-xl font-semibold tracking-[-0.03em]">계정을 완전히 삭제합니다</h3>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        이메일 인증만 완료된 회원도 여기서 바로 탈퇴할 수 있습니다. 탈퇴하면 인증 정보와 팀핏 기록이
+        함께 삭제되며 되돌릴 수 없습니다.
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs leading-5 text-slate-600">
+          보안을 위해 현재 로그인한 이메일을 한 번 더 입력했을 때만 삭제 버튼이 활성화됩니다.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={openDeleteDialog}
+          className="border-rose-200 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+        >
+          회원 탈퇴
+        </Button>
+      </div>
+    </ShellCard>
+  );
+  const deleteDialog =
+    deleteDialogOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
+            <button
+              type="button"
+              aria-label="회원 탈퇴 확인 닫기"
+              onClick={deleteLoading ? undefined : closeDeleteDialog}
+              className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+            />
+
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-account-dialog-title"
+              className="relative z-10 w-full max-w-lg"
+            >
+              <ShellCard className="space-y-5 rounded-[30px] border-white/80 bg-white/97 p-5 shadow-2xl sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <StatusPill label="회원 탈퇴 확인" tone="warn" />
+                    <h3
+                      id="delete-account-dialog-title"
+                      className="text-xl font-semibold tracking-[-0.03em] text-slate-950"
+                    >
+                      정말로 회원 탈퇴하시겠어요?
+                    </h3>
+                    <p className="text-sm leading-6 text-slate-600">
+                      이 작업은 되돌릴 수 없고, 현재 계정에 연결된 인증 정보와 팀핏 기록도 함께
+                      삭제됩니다.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={deleteLoading}
+                    onClick={closeDeleteDialog}
+                  >
+                    닫기
+                  </Button>
+                </div>
+
+                <div className="rounded-[26px] border border-rose-200/70 bg-rose-50/70 p-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">
+                      현재 로그인한 이메일을 입력해 주세요
+                    </label>
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      placeholder={sessionEmail}
+                      value={deleteConfirmationEmail}
+                      onChange={(event) => {
+                        setDeleteConfirmationEmail(event.target.value);
+                        setDeleteError(null);
+                      }}
+                    />
+                    <p className="text-xs leading-5 text-slate-600">
+                      현재 로그인 이메일: {sessionEmail}
+                    </p>
+                    <p className="text-xs leading-5 text-slate-500">
+                      이메일이 일치할 때만 삭제 버튼이 활성화됩니다.
+                    </p>
+                    {deleteConfirmationEmail.trim().length > 0 && !deleteConfirmationMatches ? (
+                      <p className="text-xs leading-5 text-rose-700">
+                        입력한 이메일이 현재 로그인한 이메일과 일치하지 않습니다.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {deleteError ? (
+                  <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {deleteError}
+                  </p>
+                ) : null}
+
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeDeleteDialog}
+                    disabled={deleteLoading}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={!deleteConfirmationMatches || deleteLoading}
+                    onClick={handleDeleteAccount}
+                    className="bg-rose-600 text-white hover:bg-rose-700"
+                  >
+                    {deleteLoading ? "삭제 중..." : "회원 탈퇴"}
+                  </Button>
+                </div>
+              </ShellCard>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  if (submittedMode === "apply" && successMessage) {
+    return (
+      <div className="space-y-6">
+        <ShellCard>
+          <StatusPill label="신청 완료" tone="success" />
+          <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">
+            인증 신청이 접수되었습니다
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{successMessage}</p>
+        </ShellCard>
+        {accountDeletionCard}
+        {deleteDialog}
+      </div>
+    );
+  }
+
+  if (status === "pending") {
+    return (
+      <div className="space-y-6">
+        <ShellCard>
+          <StatusPill label={STATUS_LABEL["pending"]} tone="warn" />
+          <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">인증 대기 중</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            24시간 내로 인증코드 확인 후 승인해드리겠습니다.
+          </p>
+        </ShellCard>
+        {accountDeletionCard}
+        {deleteDialog}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <ShellCard>
-        <div className="flex items-start justify-between gap-3">
-          <StatusPill label={headerLabel} tone={headerTone} />
-          <TeamTalkBadge />
-        </div>
+        <StatusPill label={headerLabel} tone={headerTone} />
         <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{heading}</h2>
-        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">{description}</p>
-        <div className="mt-4 space-y-3 rounded-2xl border border-border/70 bg-transparent px-4 py-3 text-sm leading-6 text-muted-foreground">
-          {!isApproved && <p>제출 전 기타 문의는 카카오톡 오픈채팅으로 연락해 주세요.</p>}
-        </div>
+        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
       </ShellCard>
 
       <ShellCard>
@@ -247,7 +473,8 @@ export function VerificationPage() {
                 이름, 성별, 생년월일, 거주지, 깃허브 주소, 노션 링크
               </h3>
               <p className="text-xs leading-6 text-muted-foreground">
-                이름과 성별은 필수이고, 나머지는 선택입니다. 입력한 항목만 가입 시 공개되는 데이터로 반영됩니다.
+                이름과 성별은 필수이고, 나머지는 선택입니다. 입력한 항목만 가입 시 공개되는 데이터로
+                반영됩니다.
               </p>
             </div>
 
@@ -326,15 +553,46 @@ export function VerificationPage() {
 
           <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-50/60 px-4 py-4 sm:px-5">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">합격자 초대코드 (선택)</label>
+              <label className="text-sm font-medium">
+                {inviteCodeRequired ? "합격자 초대코드 *" : "합격자 초대코드"}
+              </label>
               <Input
-                placeholder="합격자 노션에 있는 초대코드"
+                placeholder={inviteCodeRequired ? "합격자 노션에 있는 초대코드" : "------"}
                 value={form.invite_code}
-                onChange={(e) => updateForm("invite_code", e.target.value)}
+                autoCapitalize="characters"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                onChange={(e) => updateForm("invite_code", sanitizeInviteCodeInput(e.target.value))}
               />
               <p className="text-xs leading-5 text-emerald-700/80">
-                합격자들만 보는 노션에 올려둔 초대코드를 입력해 주세요.
+                {inviteCodeRequired
+                  ? "합격자들만 보는 노션에 올려둔 초대코드를 입력해 주세요. 일치하면 관리자 승인 없이 바로 인증됩니다."
+                  : "이미 승인된 상태라서 수정 시에는 초대코드를 비워도 됩니다."}
               </p>
+              {inviteCodeRequired ? (
+                <p className="text-xs leading-5 text-slate-500">
+                  영문, 숫자, 하이픈만 입력할 수 있습니다.
+                </p>
+              ) : null}
+              {inviteCodeRequired && inviteCodeStatus === "idle" ? (
+                <p className="text-xs leading-5 text-slate-500">
+                  초대코드를 입력해야 인증 신청 버튼이 활성화됩니다.
+                </p>
+              ) : null}
+              {inviteCodeRequired && inviteCodeStatus === "checking" ? (
+                <p className="text-xs leading-5 text-slate-500">초대코드를 확인하고 있습니다.</p>
+              ) : null}
+              {inviteCodeRequired && inviteCodeStatus === "valid" ? (
+                <p className="text-xs leading-5 text-sky-700">
+                  일치하는 초대코드입니다. 제출하면 바로 인증됩니다.
+                </p>
+              ) : null}
+              {inviteCodeRequired && inviteCodeStatus === "invalid" ? (
+                <p className="text-xs leading-5 text-rose-700">
+                  초대코드가 일치하지 않아 지금은 인증 신청 버튼이 비활성화됩니다.
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -403,11 +661,22 @@ export function VerificationPage() {
 
           {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-          <Button type="submit" disabled={loading} size="lg" className="w-full">
+          {showInviteCodeActivationHint ? (
+            <p className="text-center text-xs leading-5 text-slate-500">(초대코드 입력시 활성화)</p>
+          ) : null}
+
+          <Button
+            type="submit"
+            disabled={loading || inviteCodeBlocksSubmit}
+            size="lg"
+            className="w-full"
+          >
             {loading ? "저장 중..." : submitLabel}
           </Button>
         </form>
       </ShellCard>
+      {accountDeletionCard}
+      {deleteDialog}
     </div>
   );
 }

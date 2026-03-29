@@ -18,7 +18,12 @@ from sqlalchemy.orm import Session
 
 from app.features.auth.models import User
 
-from .models import TeamfitExplorerProfile, TeamfitExplorerTurn, TeamfitFitCheck, TeamfitProfile
+from .models import (
+    TeamfitExplorerProfile,
+    TeamfitExplorerTurn,
+    TeamfitFitCheck,
+    TeamfitProfile,
+)
 from .schemas import (
     TeamfitCandidateDirectoryItem,
     TeamfitCandidateDirectoryResponse,
@@ -68,8 +73,12 @@ MBTI_AXIS_LETTERS = {
 }
 DEFAULT_MBTI_LEFT_PERCENT = 74
 DEFAULT_MBTI_RIGHT_PERCENT = 26
-TEAMFIT_INTERVIEW_MODEL = os.getenv("ANTHROPIC_TEAMFIT_MODEL", "claude-haiku-4-5-20251001")
-TEAMFIT_EXTRACTION_MODEL = os.getenv("ANTHROPIC_TEAMFIT_EXTRACTION_MODEL", TEAMFIT_INTERVIEW_MODEL)
+TEAMFIT_INTERVIEW_MODEL = os.getenv(
+    "ANTHROPIC_TEAMFIT_MODEL", "claude-haiku-4-5-20251001"
+)
+TEAMFIT_EXTRACTION_MODEL = os.getenv(
+    "ANTHROPIC_TEAMFIT_EXTRACTION_MODEL", TEAMFIT_INTERVIEW_MODEL
+)
 INITIAL_INTERVIEW_QUESTION_LIMIT = 3
 EXTRACTION_VERSION = "conversation_priority_v2"
 SAFE_FIT_THRESHOLD = 0.58
@@ -206,27 +215,42 @@ def ensure_teamfit_explorer_schema(db: Session) -> None:
     if bind is None:
         return
 
-    extracted_at_type = "TIMESTAMP WITH TIME ZONE" if bind.dialect.name == "postgresql" else "DATETIME"
+    extracted_at_type = (
+        "TIMESTAMP WITH TIME ZONE" if bind.dialect.name == "postgresql" else "DATETIME"
+    )
 
     with bind.begin() as connection:
         inspector = inspect(connection)
         if not inspector.has_table("teamfit_explorer_profiles"):
             return
 
-        columns = {column["name"] for column in inspector.get_columns("teamfit_explorer_profiles")}
+        columns = {
+            column["name"]
+            for column in inspector.get_columns("teamfit_explorer_profiles")
+        }
         if "extracted_signals_json" not in columns:
-            connection.execute(text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN extracted_signals_json JSON"))
+            connection.execute(
+                text(
+                    "ALTER TABLE teamfit_explorer_profiles ADD COLUMN extracted_signals_json JSON"
+                )
+            )
         if "recommendation_embedding_input" not in columns:
             connection.execute(
-                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_input TEXT")
+                text(
+                    "ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_input TEXT"
+                )
             )
         if "recommendation_embedding_json" not in columns:
             connection.execute(
-                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_json JSON")
+                text(
+                    "ALTER TABLE teamfit_explorer_profiles ADD COLUMN recommendation_embedding_json JSON"
+                )
             )
         if "extraction_version" not in columns:
             connection.execute(
-                text("ALTER TABLE teamfit_explorer_profiles ADD COLUMN extraction_version VARCHAR(48)")
+                text(
+                    "ALTER TABLE teamfit_explorer_profiles ADD COLUMN extraction_version VARCHAR(48)"
+                )
             )
         if "extracted_at" not in columns:
             connection.execute(
@@ -383,7 +407,9 @@ def _normalize_mbti_axis_values(
             )
         normalized[axis_id] = axis_value
 
-    selected_axes_count = sum(1 for axis_value in normalized.values() if axis_value != 50)
+    selected_axes_count = sum(
+        1 for axis_value in normalized.values() if axis_value != 50
+    )
     if selected_axes_count == 0:
         return None
     if selected_axes_count != len(MBTI_AXIS_IDS):
@@ -460,7 +486,9 @@ def _normalize_interview_turns_for_save(
 ) -> list[TeamfitInterviewTurnSaveInput]:
     normalized_turns: list[TeamfitInterviewTurnSaveInput] = []
     for index, turn in enumerate(turns, start=1):
-        phase = turn.phase or ("initial" if index <= INITIAL_INTERVIEW_QUESTION_LIMIT else "followup")
+        phase = turn.phase or (
+            "initial" if index <= INITIAL_INTERVIEW_QUESTION_LIMIT else "followup"
+        )
         normalized_turns.append(
             TeamfitInterviewTurnSaveInput(
                 question=_normalize_text(turn.question, "질문", max_length=500),
@@ -469,13 +497,19 @@ def _normalize_interview_turns_for_save(
             )
         )
 
-    if any(turn.phase != "initial" for turn in normalized_turns[:INITIAL_INTERVIEW_QUESTION_LIMIT]):
+    if any(
+        turn.phase != "initial"
+        for turn in normalized_turns[:INITIAL_INTERVIEW_QUESTION_LIMIT]
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"처음 {INITIAL_INTERVIEW_QUESTION_LIMIT}개 문답은 초기 인터뷰여야 합니다.",
         )
 
-    if any(turn.phase != "followup" for turn in normalized_turns[INITIAL_INTERVIEW_QUESTION_LIMIT:]):
+    if any(
+        turn.phase != "followup"
+        for turn in normalized_turns[INITIAL_INTERVIEW_QUESTION_LIMIT:]
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="초기 인터뷰 이후 문답은 추가 질문으로 저장되어야 합니다.",
@@ -498,7 +532,9 @@ def _build_embedding_input(payload: TeamfitProfileUpsertRequest) -> str:
     ]
     if payload.one_liner:
         sections.append(("Intro", [payload.one_liner]))
-    return "\n".join(f"{label}: {', '.join(values)}" for label, values in sections if values)
+    return "\n".join(
+        f"{label}: {', '.join(values)}" for label, values in sections if values
+    )
 
 
 def _deterministic_embedding(text_value: str) -> list[float]:
@@ -510,7 +546,9 @@ def _deterministic_embedding(text_value: str) -> list[float]:
     for token in tokens:
         digest = hashlib.sha256(token.encode("utf-8")).digest()
         for offset in range(0, 24, 3):
-            index = int.from_bytes(digest[offset : offset + 2], "big") % VECTOR_DIMENSIONS
+            index = (
+                int.from_bytes(digest[offset : offset + 2], "big") % VECTOR_DIMENSIONS
+            )
             sign = 1.0 if digest[offset + 2] % 2 == 0 else -1.0
             weight = 1.0 + (digest[offset + 2] / 255.0) * 0.25
             vector[index] += sign * weight
@@ -575,14 +613,18 @@ def _normalize_required_mbti(
     mbti_axis_values: dict[str, int] | None,
 ) -> tuple[str, dict[str, int]]:
     normalized_mbti = _normalize_mbti(mbti)
-    normalized_axis_values = _normalize_mbti_axis_values(mbti_axis_values, normalized_mbti)
+    normalized_axis_values = _normalize_mbti_axis_values(
+        mbti_axis_values, normalized_mbti
+    )
     if normalized_axis_values is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="MBTI 5개 축을 모두 선택해야 합니다.",
         )
 
-    resolved_mbti = normalized_mbti or _format_mbti_from_axis_values(normalized_axis_values)
+    resolved_mbti = normalized_mbti or _format_mbti_from_axis_values(
+        normalized_axis_values
+    )
     if not resolved_mbti:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -599,7 +641,9 @@ def _normalize_explorer_payload(
     sdg_tags: Iterable[str],
     narrative_markdown: str,
 ) -> tuple[str, str, dict[str, int], list[str], str]:
-    resolved_mbti, normalized_axis_values = _normalize_required_mbti(mbti, mbti_axis_values)
+    resolved_mbti, normalized_axis_values = _normalize_required_mbti(
+        mbti, mbti_axis_values
+    )
     return (
         _normalize_text(problem_statement, "풀고 싶은 문제", max_length=80),
         resolved_mbti,
@@ -727,7 +771,10 @@ def _extract_work_style(text_value: str) -> TeamfitWorkStyleSignals:
     lowered = text_value.casefold()
 
     planning_style = "adaptive_planning"
-    if any(keyword in lowered for keyword in ("문서", "documentation", "structured", "구조")):
+    if any(
+        keyword in lowered
+        for keyword in ("문서", "documentation", "structured", "구조")
+    ):
         planning_style = "structured_planning"
     elif any(keyword in lowered for keyword in ("research", "리서치", "조사")):
         planning_style = "research_first"
@@ -745,7 +792,9 @@ def _extract_work_style(text_value: str) -> TeamfitWorkStyleSignals:
         decision_style = "evidence_driven"
 
     execution_speed = "steady_execution"
-    if any(keyword in lowered for keyword in ("빠르게", "fast", "speed", "신속", "즉시")):
+    if any(
+        keyword in lowered for keyword in ("빠르게", "fast", "speed", "신속", "즉시")
+    ):
         execution_speed = "fast_iteration"
     elif any(keyword in lowered for keyword in ("깊게", "deep", "차분", "steady")):
         execution_speed = "deep_and_steady"
@@ -813,11 +862,14 @@ def _fallback_extract_signals(
     why_this_problem_now = why_now or (history_answers[0] if history_answers else "")
     offered_role = _infer_role(role_section or strengths_section)
     wanted_teammate_role = _infer_role(teammate_section)
-    work_style_source = "\n".join(part for part in [collaboration_section, *history_answers] if part)
+    work_style_source = "\n".join(
+        part for part in [collaboration_section, *history_answers] if part
+    )
     work_style = _extract_work_style(work_style_source)
 
     core_strengths = _limit_unique(
-        _split_sentences(strengths_section) + _extract_theme_tokens(strengths_section, max_items=4),
+        _split_sentences(strengths_section)
+        + _extract_theme_tokens(strengths_section, max_items=4),
         max_items=4,
     )
     must_have_signals = _limit_unique(_split_sentences(teammate_section), max_items=4)
@@ -825,7 +877,10 @@ def _fallback_extract_signals(
         [
             sentence
             for sentence in _split_sentences(collaboration_section)
-            if any(keyword in sentence.casefold() for keyword in ("피하", "싫", "avoid", "not", "갈등"))
+            if any(
+                keyword in sentence.casefold()
+                for keyword in ("피하", "싫", "avoid", "not", "갈등")
+            )
         ],
         max_items=4,
     )
@@ -844,12 +899,17 @@ def _fallback_extract_signals(
             *[
                 sentence
                 for sentence in _split_sentences("\n".join(history_answers))
-                if any(keyword in sentence.casefold() for keyword in ("보완", "부족", "uncertain", "확인", "걱정"))
+                if any(
+                    keyword in sentence.casefold()
+                    for keyword in ("보완", "부족", "uncertain", "확인", "걱정")
+                )
             ],
         ],
         max_items=4,
     )
-    problem_themes = _extract_theme_tokens(problem_statement, why_this_problem_now, narrative_markdown, max_items=6)
+    problem_themes = _extract_theme_tokens(
+        problem_statement, why_this_problem_now, narrative_markdown, max_items=6
+    )
     value_themes = _limit_unique(
         [family for sdg in sdg_tags for family in SDG_FAMILIES.get(sdg, set())],
         max_items=6,
@@ -862,7 +922,13 @@ def _fallback_extract_signals(
         1.0 if must_have_signals else 0.0,
         1.0 if conversation_hooks else 0.0,
     ]
-    profile_clarity_score = round(min(1.0, sum(presence_scores) / len(presence_scores) + len(history_answers) * 0.05), 3)
+    profile_clarity_score = round(
+        min(
+            1.0,
+            sum(presence_scores) / len(presence_scores) + len(history_answers) * 0.05,
+        ),
+        3,
+    )
 
     signals = TeamfitExtractedSignals(
         problem_statement=problem_statement,
@@ -1030,7 +1096,9 @@ def _sync_explorer_profile_artifacts(
     )
     profile.extracted_signals_json = signals.model_dump(mode="python")
     profile.recommendation_embedding_input = embedding_input
-    profile.recommendation_embedding_json = embed_text(embedding_input, allow_fallback_on_error=True)
+    profile.recommendation_embedding_json = embed_text(
+        embedding_input, allow_fallback_on_error=True
+    )
     profile.extraction_version = EXTRACTION_VERSION
     profile.extracted_at = datetime.now(timezone.utc)
 
@@ -1049,8 +1117,12 @@ def _teamfit_interview_prompt(
         history_lines.append(f"Q{index}: {turn.question}")
         history_lines.append(f"A{index}: {turn.answer}")
 
-    phase_label = "initial 3-question interview" if phase == "initial" else "follow-up extension"
-    history_block = "\n".join(history_lines) if history_lines else "No prior interview turns yet."
+    phase_label = (
+        "initial 3-question interview" if phase == "initial" else "follow-up extension"
+    )
+    history_block = (
+        "\n".join(history_lines) if history_lines else "No prior interview turns yet."
+    )
 
     return f"""
 You are an interviewer helping a user build a team-fit exploration profile.
@@ -1080,7 +1152,9 @@ def _fallback_teamfit_question(
     history: list[TeamfitInterviewTurnInput] | list[TeamfitExplorerTurn],
     phase: str,
 ) -> str:
-    asked_questions = {turn.question.casefold().strip() for turn in history if turn.question}
+    asked_questions = {
+        turn.question.casefold().strip() for turn in history if turn.question
+    }
     initial_candidates = [
         "이 문제를 직접 풀고 싶은 가장 개인적인 이유는 무엇인가요?",
         "함께할 팀원을 고를 때 꼭 맞아야 하는 협업 장면이나 역할 조합은 무엇인가요?",
@@ -1100,6 +1174,22 @@ def _fallback_teamfit_question(
     return "이 문제를 함께 풀 사람과 실제로 대화해보면 가장 먼저 확인하고 싶은 기준은 무엇인가요?"
 
 
+def _finalize_generated_teamfit_question(
+    question: str, *, fallback_question: str
+) -> str:
+    cleaned = " ".join(question.split()).strip().strip("`\"'“”‘’")
+    if not cleaned:
+        return fallback_question
+    if cleaned.endswith(("?", "？")):
+        return cleaned
+
+    normalized = cleaned.rstrip(".!。！")
+    if normalized.endswith(("요", "죠", "까", "지")):
+        return f"{normalized}?"
+
+    return fallback_question
+
+
 def _generate_teamfit_question(
     *,
     problem_statement: str,
@@ -1109,18 +1199,19 @@ def _generate_teamfit_question(
     history: list[TeamfitInterviewTurnInput] | list[TeamfitExplorerTurn],
     phase: str,
 ) -> str:
+    fallback_question = _fallback_teamfit_question(
+        problem_statement=problem_statement,
+        history=history,
+        phase=phase,
+    )
     client = _anthropic_client()
     if client is None:
-        return _fallback_teamfit_question(
-            problem_statement=problem_statement,
-            history=history,
-            phase=phase,
-        )
+        return fallback_question
 
     try:
         response = client.messages.create(
             model=TEAMFIT_INTERVIEW_MODEL,
-            max_tokens=120,
+            max_tokens=220,
             system="Ask exactly one Korean question for a team-fit interview. Output only the question.",
             messages=[
                 {
@@ -1137,14 +1228,18 @@ def _generate_teamfit_question(
             ],
         )
         question = response.content[0].text.strip()
+        if getattr(response, "stop_reason", None) == "max_tokens":
+            question = fallback_question
     except Exception:  # noqa: BLE001
-        question = _fallback_teamfit_question(
-            problem_statement=problem_statement,
-            history=history,
-            phase=phase,
-        )
+        question = fallback_question
 
-    return _normalize_text(question, "추가 질문", max_length=500)
+    return _normalize_text(
+        _finalize_generated_teamfit_question(
+            question, fallback_question=fallback_question
+        ),
+        "추가 질문",
+        max_length=500,
+    )
 
 
 def _active_explorer_profile_count_query() -> Select[tuple[int]]:
@@ -1156,12 +1251,16 @@ def _load_explorer_turns(db: Session, user_id: int) -> list[TeamfitExplorerTurn]
         db.scalars(
             select(TeamfitExplorerTurn)
             .where(TeamfitExplorerTurn.user_id == user_id)
-            .order_by(TeamfitExplorerTurn.sequence_no.asc(), TeamfitExplorerTurn.id.asc())
+            .order_by(
+                TeamfitExplorerTurn.sequence_no.asc(), TeamfitExplorerTurn.id.asc()
+            )
         ).all()
     )
 
 
-def _explorer_turn_to_response(turn: TeamfitExplorerTurn) -> TeamfitInterviewTurnResponse:
+def _explorer_turn_to_response(
+    turn: TeamfitExplorerTurn,
+) -> TeamfitInterviewTurnResponse:
     return TeamfitInterviewTurnResponse(
         id=turn.id,
         sequence_no=turn.sequence_no,
@@ -1189,7 +1288,9 @@ def _explorer_profile_to_response(
     )
 
 
-def get_my_teamfit_explorer_profile(current_user: User, db: Session) -> TeamfitExplorerMeResponse:
+def get_my_teamfit_explorer_profile(
+    current_user: User, db: Session
+) -> TeamfitExplorerMeResponse:
     profile = db.get(TeamfitExplorerProfile, current_user.user_id)
     turns = _load_explorer_turns(db, current_user.user_id) if profile else []
     active_profile_count = int(db.scalar(_active_explorer_profile_count_query()) or 0)
@@ -1202,12 +1303,14 @@ def get_my_teamfit_explorer_profile(current_user: User, db: Session) -> TeamfitE
 def get_next_teamfit_interview_question(
     payload: TeamfitInterviewQuestionRequest,
 ) -> TeamfitInterviewQuestionResponse:
-    problem_statement, resolved_mbti, _, sdg_tags, narrative_markdown = _normalize_explorer_payload(
-        payload.problem_statement,
-        payload.mbti,
-        payload.mbti_axis_values,
-        payload.sdg_tags,
-        payload.narrative_markdown,
+    problem_statement, resolved_mbti, _, sdg_tags, narrative_markdown = (
+        _normalize_explorer_payload(
+            payload.problem_statement,
+            payload.mbti,
+            payload.mbti_axis_values,
+            payload.sdg_tags,
+            payload.narrative_markdown,
+        )
     )
     normalized_history = _normalize_interview_turns(payload.history)
 
@@ -1238,14 +1341,18 @@ def save_teamfit_explorer_profile(
     current_user: User,
     db: Session,
 ) -> TeamfitExplorerProfileResponse:
-    problem_statement, resolved_mbti, normalized_axis_values, sdg_tags, narrative_markdown = (
-        _normalize_explorer_payload(
-            payload.problem_statement,
-            payload.mbti,
-            payload.mbti_axis_values,
-            payload.sdg_tags,
-            payload.narrative_markdown,
-        )
+    (
+        problem_statement,
+        resolved_mbti,
+        normalized_axis_values,
+        sdg_tags,
+        narrative_markdown,
+    ) = _normalize_explorer_payload(
+        payload.problem_statement,
+        payload.mbti,
+        payload.mbti_axis_values,
+        payload.sdg_tags,
+        payload.narrative_markdown,
     )
     normalized_history = _normalize_interview_turns_for_save(payload.history)
 
@@ -1255,7 +1362,10 @@ def save_teamfit_explorer_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"초기 인터뷰 답변은 정확히 {INITIAL_INTERVIEW_QUESTION_LIMIT}개여야 합니다.",
         )
-    if profile is not None and len(normalized_history) < INITIAL_INTERVIEW_QUESTION_LIMIT:
+    if (
+        profile is not None
+        and len(normalized_history) < INITIAL_INTERVIEW_QUESTION_LIMIT
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"초기 인터뷰 답변은 최소 {INITIAL_INTERVIEW_QUESTION_LIMIT}개가 필요합니다.",
@@ -1293,6 +1403,55 @@ def save_teamfit_explorer_profile(
     db.commit()
     db.refresh(profile)
     return _explorer_profile_to_response(profile, turns)
+
+
+def delete_teamfit_explorer_turn(
+    turn_id: int,
+    current_user: User,
+    db: Session,
+) -> TeamfitExplorerProfileResponse:
+    profile = db.get(TeamfitExplorerProfile, current_user.user_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="저장된 팀핏 프로필이 없습니다.",
+        )
+
+    turns = _load_explorer_turns(db, current_user.user_id)
+    if len(turns) <= INITIAL_INTERVIEW_QUESTION_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"인터뷰 기록은 최소 {INITIAL_INTERVIEW_QUESTION_LIMIT}개를 유지해야 합니다.",
+        )
+
+    target_turn = next((turn for turn in turns if turn.id == turn_id), None)
+    if target_turn is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="삭제할 인터뷰 기록을 찾지 못했습니다.",
+        )
+
+    db.delete(target_turn)
+    db.flush()
+
+    remaining_turns = _load_explorer_turns(db, current_user.user_id)
+    if len(remaining_turns) < INITIAL_INTERVIEW_QUESTION_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"인터뷰 기록은 최소 {INITIAL_INTERVIEW_QUESTION_LIMIT}개를 유지해야 합니다.",
+        )
+
+    for index, turn in enumerate(remaining_turns, start=1):
+        turn.sequence_no = index
+        turn.phase = (
+            "initial" if index <= INITIAL_INTERVIEW_QUESTION_LIMIT else "followup"
+        )
+
+    db.flush()
+    _sync_explorer_profile_artifacts(profile, remaining_turns)
+    db.commit()
+    db.refresh(profile)
+    return _explorer_profile_to_response(profile, remaining_turns)
 
 
 def create_teamfit_followup_question(
@@ -1357,7 +1516,11 @@ def save_teamfit_followup_answer(
 
 
 def _active_profile_count_query() -> Select[tuple[int]]:
-    return select(func.count()).select_from(TeamfitProfile).where(TeamfitProfile.status == "active")
+    return (
+        select(func.count())
+        .select_from(TeamfitProfile)
+        .where(TeamfitProfile.status == "active")
+    )
 
 
 def _profile_to_response(profile: TeamfitProfile) -> TeamfitProfileResponse:
@@ -1374,7 +1537,8 @@ def _profile_to_response(profile: TeamfitProfile) -> TeamfitProfileResponse:
         tech_stack=list(profile.tech_stack or []),
         impact_tags=list(profile.impact_tags or []),
         mbti=profile.mbti,
-        mbti_axis_values=profile.mbti_axis_values or _default_mbti_axis_values_from_mbti(profile.mbti),
+        mbti_axis_values=profile.mbti_axis_values
+        or _default_mbti_axis_values_from_mbti(profile.mbti),
         one_liner=profile.one_liner,
         updated_at=profile.updated_at,
     )
@@ -1395,13 +1559,21 @@ def upsert_teamfit_profile(
     db: Session,
 ) -> TeamfitProfileResponse:
     normalized_mbti = _normalize_mbti(payload.mbti)
-    normalized_mbti_axis_values = _normalize_mbti_axis_values(payload.mbti_axis_values, normalized_mbti)
+    normalized_mbti_axis_values = _normalize_mbti_axis_values(
+        payload.mbti_axis_values, normalized_mbti
+    )
 
     normalized_payload = TeamfitProfileUpsertRequest(
         completion_stage=payload.completion_stage,
-        preferred_role=_normalize_text(payload.preferred_role, "선호 역할", max_length=80),
-        working_style=_normalize_text(payload.working_style, "작업 스타일", max_length=80),
-        commitment_pace=_normalize_text(payload.commitment_pace, "기대 페이스", max_length=80),
+        preferred_role=_normalize_text(
+            payload.preferred_role, "선호 역할", max_length=80
+        ),
+        working_style=_normalize_text(
+            payload.working_style, "작업 스타일", max_length=80
+        ),
+        commitment_pace=_normalize_text(
+            payload.commitment_pace, "기대 페이스", max_length=80
+        ),
         interests=_normalize_string_list(payload.interests, "관심사"),
         problem_focus=_normalize_string_list(payload.problem_focus, "풀고 싶은 문제"),
         domains=_normalize_string_list(payload.domains, "관심 도메인"),
@@ -1478,7 +1650,9 @@ def _safe_average(*values: float) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
-def _reason_tokens(viewer: TeamfitProfile, candidate: TeamfitProfile, bucket: str) -> tuple[list[str], list[str]]:
+def _reason_tokens(
+    viewer: TeamfitProfile, candidate: TeamfitProfile, bucket: str
+) -> tuple[list[str], list[str]]:
     codes: list[str] = []
 
     if _jaccard_similarity(viewer.problem_focus, candidate.problem_focus) > 0:
@@ -1495,7 +1669,10 @@ def _reason_tokens(viewer: TeamfitProfile, candidate: TeamfitProfile, bucket: st
         viewer.preferred_role.casefold() != candidate.preferred_role.casefold()
     ):
         codes.append("different_role")
-    if bucket in {"complementary", "unexpected"} and _jaccard_similarity(viewer.tech_stack, candidate.tech_stack) < 0.25:
+    if (
+        bucket in {"complementary", "unexpected"}
+        and _jaccard_similarity(viewer.tech_stack, candidate.tech_stack) < 0.25
+    ):
         codes.append("different_stack")
     if _jaccard_similarity(viewer.impact_tags, candidate.impact_tags) > 0:
         codes.append("shared_impact")
@@ -1529,12 +1706,16 @@ def _build_recommendation_payload(
     similarity_score: float,
     structured_fit_score: float,
 ) -> dict:
-    reason_codes, reason_chips = _reason_tokens(viewer_profile, candidate_profile, bucket)
+    reason_codes, reason_chips = _reason_tokens(
+        viewer_profile, candidate_profile, bucket
+    )
     return {
         "user_id": candidate_user.user_id,
         "bucket": bucket,
         "name": candidate_user.name or candidate_user.email.split("@", 1)[0],
-        "gender": candidate_user.gender if candidate_user.gender in {"M", "F"} else None,
+        "gender": candidate_user.gender
+        if candidate_user.gender in {"M", "F"}
+        else None,
         "preferred_role": candidate_profile.preferred_role,
         "working_style": candidate_profile.working_style,
         "commitment_pace": candidate_profile.commitment_pace,
@@ -1542,20 +1723,25 @@ def _build_recommendation_payload(
         "domains": candidate_profile.domains,
         "impact_tags": candidate_profile.impact_tags,
         "mbti": candidate_profile.mbti,
-        "mbti_axis_values": candidate_profile.mbti_axis_values or _default_mbti_axis_values_from_mbti(candidate_profile.mbti),
+        "mbti_axis_values": candidate_profile.mbti_axis_values
+        or _default_mbti_axis_values_from_mbti(candidate_profile.mbti),
         "one_liner": candidate_profile.one_liner,
         "reason_codes": reason_codes,
         "reason_chips": reason_chips,
         "similarity_score": round(similarity_score, 4),
         "structured_fit_score": round(structured_fit_score, 4),
         "is_verified": candidate_user.applicant_status == "approved",
-        "email": candidate_user.email if _can_share_email(viewer_user, candidate_user) else None,
+        "email": candidate_user.email
+        if _can_share_email(viewer_user, candidate_user)
+        else None,
         "github_address": candidate_user.github_address,
         "notion_url": candidate_user.notion_url,
     }
 
 
-def _fetch_pgvector_candidate_ids(db: Session, viewer_user_id: int, embedding: list[float]) -> list[int]:
+def _fetch_pgvector_candidate_ids(
+    db: Session, viewer_user_id: int, embedding: list[float]
+) -> list[int]:
     rows = db.execute(
         text(
             """
@@ -1577,10 +1763,14 @@ def _fetch_pgvector_candidate_ids(db: Session, viewer_user_id: int, embedding: l
     return [int(row[0]) for row in rows]
 
 
-def _fetch_candidate_profiles(db: Session, viewer_profile: TeamfitProfile) -> list[TeamfitProfile]:
+def _fetch_candidate_profiles(
+    db: Session, viewer_profile: TeamfitProfile
+) -> list[TeamfitProfile]:
     if viewer_profile.embedding_json and is_postgres_session(db):
         try:
-            candidate_ids = _fetch_pgvector_candidate_ids(db, viewer_profile.user_id, viewer_profile.embedding_json)
+            candidate_ids = _fetch_pgvector_candidate_ids(
+                db, viewer_profile.user_id, viewer_profile.embedding_json
+            )
         except Exception:  # noqa: BLE001
             candidate_ids = []
         if candidate_ids:
@@ -1590,7 +1780,11 @@ def _fetch_candidate_profiles(db: Session, viewer_profile: TeamfitProfile) -> li
                 .order_by(TeamfitProfile.updated_at.desc())
             ).all()
             profile_map = {profile.user_id: profile for profile in profiles}
-            return [profile_map[user_id] for user_id in candidate_ids if user_id in profile_map]
+            return [
+                profile_map[user_id]
+                for user_id in candidate_ids
+                if user_id in profile_map
+            ]
 
     profiles = db.scalars(
         select(TeamfitProfile).where(
@@ -1600,12 +1794,16 @@ def _fetch_candidate_profiles(db: Session, viewer_profile: TeamfitProfile) -> li
     ).all()
     return sorted(
         profiles,
-        key=lambda profile: _cosine_similarity(viewer_profile.embedding_json, profile.embedding_json),
+        key=lambda profile: _cosine_similarity(
+            viewer_profile.embedding_json, profile.embedding_json
+        ),
         reverse=True,
     )[:TOP_K_CANDIDATES]
 
 
-def _bucket_scores(viewer: TeamfitProfile, candidate: TeamfitProfile) -> dict[str, float]:
+def _bucket_scores(
+    viewer: TeamfitProfile, candidate: TeamfitProfile
+) -> dict[str, float]:
     cosine = _cosine_similarity(viewer.embedding_json, candidate.embedding_json)
     problem_overlap = _jaccard_similarity(viewer.problem_focus, candidate.problem_focus)
     domain_overlap = _jaccard_similarity(viewer.domains, candidate.domains)
@@ -1613,7 +1811,9 @@ def _bucket_scores(viewer: TeamfitProfile, candidate: TeamfitProfile) -> dict[st
     stack_overlap = _jaccard_similarity(viewer.tech_stack, candidate.tech_stack)
     style_match = _bool_similarity(viewer.working_style, candidate.working_style)
     pace_match = _bool_similarity(viewer.commitment_pace, candidate.commitment_pace)
-    role_diversity = 1.0 - _bool_similarity(viewer.preferred_role, candidate.preferred_role)
+    role_diversity = 1.0 - _bool_similarity(
+        viewer.preferred_role, candidate.preferred_role
+    )
     stack_diversity = 1.0 - stack_overlap
     core_overlap = _safe_average(problem_overlap, domain_overlap)
 
@@ -1637,7 +1837,13 @@ def _bucket_scores(viewer: TeamfitProfile, candidate: TeamfitProfile) -> dict[st
         + impact_overlap * 0.20
         + stack_diversity * 0.20
     )
-    structured_fit = min(1.0, core_overlap * 0.45 + stack_overlap * 0.15 + style_match * 0.20 + pace_match * 0.20)
+    structured_fit = min(
+        1.0,
+        core_overlap * 0.45
+        + stack_overlap * 0.15
+        + style_match * 0.20
+        + pace_match * 0.20,
+    )
 
     return {
         "cosine": cosine,
@@ -1713,7 +1919,9 @@ def _problem_resonance_score(
         viewer_profile.recommendation_embedding_json,
         candidate_profile.recommendation_embedding_json,
     )
-    theme_overlap = _jaccard_similarity(viewer_signals.problem_themes, candidate_signals.problem_themes)
+    theme_overlap = _jaccard_similarity(
+        viewer_signals.problem_themes, candidate_signals.problem_themes
+    )
     motivation_overlap = _text_similarity(
         viewer_signals.why_this_problem_now,
         candidate_signals.why_this_problem_now,
@@ -1738,24 +1946,41 @@ def _role_complementarity_score(
         else:
             wanted_match = 0.30
 
-    gap_bonus = 0.18 if viewer_offered and candidate_role and viewer_offered != candidate_role else 0.05
+    gap_bonus = (
+        0.18
+        if viewer_offered and candidate_role and viewer_offered != candidate_role
+        else 0.05
+    )
     clone_penalty = (
-        0.25 if viewer_offered and candidate_role and viewer_offered == candidate_role and viewer_wanted != candidate_role else 0.0
+        0.25
+        if viewer_offered
+        and candidate_role
+        and viewer_offered == candidate_role
+        and viewer_wanted != candidate_role
+        else 0.0
     )
     return max(0.0, min(1.0, wanted_match + gap_bonus - clone_penalty))
 
 
-def _work_style_match(viewer_signals: TeamfitExtractedSignals, candidate_signals: TeamfitExtractedSignals) -> float:
+def _work_style_match(
+    viewer_signals: TeamfitExtractedSignals, candidate_signals: TeamfitExtractedSignals
+) -> float:
     viewer_style = viewer_signals.work_style
     candidate_style = candidate_signals.work_style
     field_scores = [
         1.0 if viewer_style.planning_style == candidate_style.planning_style else 0.45,
-        1.0 if viewer_style.communication_style == candidate_style.communication_style else 0.45,
+        1.0
+        if viewer_style.communication_style == candidate_style.communication_style
+        else 0.45,
         1.0 if viewer_style.decision_style == candidate_style.decision_style else 0.45,
-        1.0 if viewer_style.execution_speed == candidate_style.execution_speed else 0.45,
+        1.0
+        if viewer_style.execution_speed == candidate_style.execution_speed
+        else 0.45,
     ]
     structured_match = _safe_average(*field_scores)
-    mbti_match = _mbti_soft_score(viewer_signals.model_dump().get("mbti_axis_values", {}), {})
+    mbti_match = _mbti_soft_score(
+        viewer_signals.model_dump().get("mbti_axis_values", {}), {}
+    )
     return structured_match, mbti_match
 
 
@@ -1769,18 +1994,26 @@ def _work_style_compatibility_score(
     candidate_style = candidate_signals.work_style
     field_scores = [
         1.0 if viewer_style.planning_style == candidate_style.planning_style else 0.45,
-        1.0 if viewer_style.communication_style == candidate_style.communication_style else 0.45,
+        1.0
+        if viewer_style.communication_style == candidate_style.communication_style
+        else 0.45,
         1.0 if viewer_style.decision_style == candidate_style.decision_style else 0.45,
-        1.0 if viewer_style.execution_speed == candidate_style.execution_speed else 0.45,
+        1.0
+        if viewer_style.execution_speed == candidate_style.execution_speed
+        else 0.45,
     ]
     structured_match = _safe_average(*field_scores)
-    mbti_match = _mbti_soft_score(viewer_profile.mbti_axis_values, candidate_profile.mbti_axis_values)
+    mbti_match = _mbti_soft_score(
+        viewer_profile.mbti_axis_values, candidate_profile.mbti_axis_values
+    )
     return min(1.0, structured_match * 0.7 + mbti_match * 0.3)
 
 
 def _sdg_family_overlap(left: list[str], right: list[str]) -> float:
     left_families = {family for sdg in left for family in SDG_FAMILIES.get(sdg, set())}
-    right_families = {family for sdg in right for family in SDG_FAMILIES.get(sdg, set())}
+    right_families = {
+        family for sdg in right for family in SDG_FAMILIES.get(sdg, set())
+    }
     if not left_families or not right_families:
         return 0.0
     return len(left_families & right_families) / len(left_families | right_families)
@@ -1793,7 +2026,9 @@ def _value_alignment_score(
     sdg_exact = _jaccard_similarity(viewer_signals.sdgs, candidate_signals.sdgs)
     sdg_family = _sdg_family_overlap(viewer_signals.sdgs, candidate_signals.sdgs)
     sdg_alignment = min(1.0, sdg_exact * 0.7 + sdg_family * 0.3)
-    value_overlap = _jaccard_similarity(viewer_signals.value_themes, candidate_signals.value_themes)
+    value_overlap = _jaccard_similarity(
+        viewer_signals.value_themes, candidate_signals.value_themes
+    )
     return min(1.0, sdg_alignment * 0.6 + value_overlap * 0.4)
 
 
@@ -1831,7 +2066,13 @@ def _recommendation_rejection_reason(
         return "문제 공명이나 협업 신호가 아직 충분히 강하지 않습니다."
     if safe_candidate_id and safe_candidate_id == candidate_profile.user_id:
         return "이미 더 높은 우선순위로 선택된 후보입니다."
-    if _cosine_similarity(viewer_profile.recommendation_embedding_json, candidate_profile.recommendation_embedding_json) > 0.92:
+    if (
+        _cosine_similarity(
+            viewer_profile.recommendation_embedding_json,
+            candidate_profile.recommendation_embedding_json,
+        )
+        > 0.92
+    ):
         return "이미 고른 후보와 너무 비슷해 대화 학습 가치가 낮습니다."
     return "현재 추천된 다른 후보들에 비해 역할 보완성이나 학습 가치가 낮았습니다."
 
@@ -1846,9 +2087,13 @@ def _recommendation_system_notes(
     if candidate_count < 3:
         limit_messages.append("승인된 저장 프로필 후보 수가 아직 적습니다.")
     if viewer_signals.profile_clarity_score < 0.45:
-        limit_messages.append("내 프로필 신호가 아직 약해 추천 품질이 보수적으로 계산되었습니다.")
+        limit_messages.append(
+            "내 프로필 신호가 아직 약해 추천 품질이 보수적으로 계산되었습니다."
+        )
     if len(recommended_people) < 3:
-        limit_messages.append("충분히 강한 신호를 가진 후보만 남겨서 3명보다 적게 반환했습니다.")
+        limit_messages.append(
+            "충분히 강한 신호를 가진 후보만 남겨서 3명보다 적게 반환했습니다."
+        )
     if fallback_count > 0:
         limit_messages.append(
             "추천 3명을 채우기 위해 상대적으로 불확실성이 큰 후보도 함께 포함했습니다."
@@ -1856,7 +2101,8 @@ def _recommendation_system_notes(
 
     return TeamfitRecommendationSystemNotes(
         scoring_explanation="최종 팀 확정이 아니라, 지금 먼저 이야기해볼 가치가 높은 순서로 추천했습니다.",
-        limits=" ".join(limit_messages) or "추천은 프로필 텍스트와 인터뷰 신호에 크게 의존하므로, 실제 대화 전까지는 불확실성이 남아 있습니다.",
+        limits=" ".join(limit_messages)
+        or "추천은 프로필 텍스트와 인터뷰 신호에 크게 의존하므로, 실제 대화 전까지는 불확실성이 남아 있습니다.",
         next_improvement="실제 대화 이후 피드백을 반영해 가중치와 질문 품질을 계속 보정할 예정입니다.",
     )
 
@@ -1971,7 +2217,9 @@ def _score_candidate_for_viewer(
     viewer_signals: TeamfitExtractedSignals,
     candidate_profile: TeamfitExplorerProfile,
 ) -> tuple[dict[str, float], float]:
-    candidate_signals = _restore_extracted_signals(candidate_profile.extracted_signals_json)
+    candidate_signals = _restore_extracted_signals(
+        candidate_profile.extracted_signals_json
+    )
     factor_scores = {
         "problem_resonance": _problem_resonance_score(
             viewer_profile,
@@ -1979,7 +2227,9 @@ def _score_candidate_for_viewer(
             viewer_signals,
             candidate_signals,
         ),
-        "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
+        "role_complementarity": _role_complementarity_score(
+            viewer_signals, candidate_signals
+        ),
         "work_style_compatibility": _work_style_compatibility_score(
             viewer_profile,
             candidate_profile,
@@ -2028,16 +2278,22 @@ def _build_conversation_priority_recommendation(
         sdgs=list(candidate_profile.sdg_tags or []),
         mbti=candidate_profile.mbti,
         base_score=round(base_score, 4),
-        reason_summary=_reason_summary(recommendation_type, candidate_name, strongest_factor),
+        reason_summary=_reason_summary(
+            recommendation_type, candidate_name, strongest_factor
+        ),
         reason_detail=_reason_detail(viewer_signals, candidate_signals, factor_scores),
-        first_question_to_ask=_first_question_to_ask(recommendation_type, candidate_role, strongest_factor),
+        first_question_to_ask=_first_question_to_ask(
+            recommendation_type, candidate_role, strongest_factor
+        ),
         uncertainty_note=_uncertainty_note(
             candidate_signals,
             weakest_factor,
             used_fallback=used_fallback,
         ),
         is_verified=candidate_user.applicant_status == "approved",
-        email=candidate_user.email if _can_share_email(viewer_user, candidate_user) else None,
+        email=candidate_user.email
+        if _can_share_email(viewer_user, candidate_user)
+        else None,
         github_address=candidate_user.github_address,
         notion_url=candidate_user.notion_url,
         history=[_explorer_turn_to_response(turn) for turn in candidate_turns],
@@ -2061,7 +2317,9 @@ def _build_rejected_candidate(
         sdgs=list(candidate_profile.sdg_tags or []),
         mbti=candidate_profile.mbti,
         is_verified=candidate_user.applicant_status == "approved",
-        email=candidate_user.email if _can_share_email(viewer_user, candidate_user) else None,
+        email=candidate_user.email
+        if _can_share_email(viewer_user, candidate_user)
+        else None,
         github_address=candidate_user.github_address,
         notion_url=candidate_user.notion_url,
     )
@@ -2075,7 +2333,8 @@ def _pick_recommendation_candidate(
 ) -> tuple[dict | None, bool]:
     def _eligible(item: dict) -> bool:
         return (
-            _average_confidence(item["signals"]) >= FALLBACK_RECOMMENDATION_CONFIDENCE_THRESHOLD
+            _average_confidence(item["signals"])
+            >= FALLBACK_RECOMMENDATION_CONFIDENCE_THRESHOLD
             and item["signals"].profile_clarity_score >= 0.40
             and item["factor_scores"]["conversation_potential"] >= 0.35
         )
@@ -2099,7 +2358,8 @@ def _pick_recommendation_candidate(
             for item in rows
             if item["base_score"] >= FALLBACK_RECOMMENDATION_SCORE_THRESHOLD
             and _eligible(item)
-            and item["factor_scores"]["problem_resonance"] >= min(problem_resonance_floor, 0.0)
+            and item["factor_scores"]["problem_resonance"]
+            >= min(problem_resonance_floor, 0.0)
         ),
         None,
     )
@@ -2109,10 +2369,14 @@ def _pick_recommendation_candidate(
     return None, False
 
 
-def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendationsResponse:
+def get_recommendations(
+    current_user: User, db: Session
+) -> TeamfitRecommendationsResponse:
     viewer_profile = db.get(TeamfitExplorerProfile, current_user.user_id)
     active_profile_count = int(db.scalar(_active_explorer_profile_count_query()) or 0)
-    viewer_approved = current_user.is_admin or current_user.applicant_status == "approved"
+    viewer_approved = (
+        current_user.is_admin or current_user.applicant_status == "approved"
+    )
     scored_candidate_ids = set(
         db.scalars(
             select(TeamfitFitCheck.target_user_id).where(
@@ -2202,7 +2466,9 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
         )
 
     users = db.scalars(
-        select(User).where(User.user_id.in_([profile.user_id for profile in candidates]))
+        select(User).where(
+            User.user_id.in_([profile.user_id for profile in candidates])
+        )
     ).all()
     user_map = {user.user_id: user for user in users}
 
@@ -2219,14 +2485,18 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
                 viewer_signals,
                 candidate_signals,
             ),
-            "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
+            "role_complementarity": _role_complementarity_score(
+                viewer_signals, candidate_signals
+            ),
             "work_style_compatibility": _work_style_compatibility_score(
                 viewer_profile,
                 candidate,
                 viewer_signals,
                 candidate_signals,
             ),
-            "value_alignment": _value_alignment_score(viewer_signals, candidate_signals),
+            "value_alignment": _value_alignment_score(
+                viewer_signals, candidate_signals
+            ),
             "conversation_potential": _conversation_potential_score(candidate_signals),
         }
         base_score = (
@@ -2283,28 +2553,38 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
             )
         )
 
-    complementary_rows = [item for item in scored_candidates if item["user"].user_id not in used_ids]
+    complementary_rows = [
+        item for item in scored_candidates if item["user"].user_id not in used_ids
+    ]
     if complementary_rows:
         safe_profile = safe_candidate["profile"] if safe_candidate else None
         complementary_rows.sort(
             key=lambda item: (
                 item["base_score"]
-                + (0.12 if _role_family(viewer_signals.offered_role) != _role_family(item["signals"].offered_role) else 0.0)
+                + (
+                    0.12
+                    if _role_family(viewer_signals.offered_role)
+                    != _role_family(item["signals"].offered_role)
+                    else 0.0
+                )
                 - (
                     _cosine_similarity(
                         safe_profile.recommendation_embedding_json,
                         item["profile"].recommendation_embedding_json,
-                    ) * 0.20
+                    )
+                    * 0.20
                     if safe_profile is not None
                     else 0.0
                 )
             ),
             reverse=True,
         )
-        complementary_candidate, complementary_used_fallback = _pick_recommendation_candidate(
-            complementary_rows,
-            threshold=COMPLEMENTARY_THRESHOLD,
-            problem_resonance_floor=0.20,
+        complementary_candidate, complementary_used_fallback = (
+            _pick_recommendation_candidate(
+                complementary_rows,
+                threshold=COMPLEMENTARY_THRESHOLD,
+                problem_resonance_floor=0.20,
+            )
         )
         if complementary_candidate is not None:
             used_ids.add(complementary_candidate["user"].user_id)
@@ -2316,7 +2596,9 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
                     viewer_profile=viewer_profile,
                     candidate_user=complementary_candidate["user"],
                     candidate_profile=complementary_candidate["profile"],
-                    candidate_turns=_candidate_turns(complementary_candidate["user"].user_id),
+                    candidate_turns=_candidate_turns(
+                        complementary_candidate["user"].user_id
+                    ),
                     viewer_signals=viewer_signals,
                     candidate_signals=complementary_candidate["signals"],
                     factor_scores=complementary_candidate["factor_scores"],
@@ -2325,16 +2607,36 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
                 )
             )
 
-    wildcard_rows = [item for item in scored_candidates if item["user"].user_id not in used_ids]
+    wildcard_rows = [
+        item for item in scored_candidates if item["user"].user_id not in used_ids
+    ]
     if wildcard_rows:
-        safe_embedding = safe_candidate["profile"].recommendation_embedding_json if safe_candidate else None
+        safe_embedding = (
+            safe_candidate["profile"].recommendation_embedding_json
+            if safe_candidate
+            else None
+        )
         wildcard_rows.sort(
             key=lambda item: (
                 item["base_score"]
-                + (1.0 - _cosine_similarity(viewer_profile.recommendation_embedding_json, item["profile"].recommendation_embedding_json)) * 0.15
+                + (
+                    1.0
+                    - _cosine_similarity(
+                        viewer_profile.recommendation_embedding_json,
+                        item["profile"].recommendation_embedding_json,
+                    )
+                )
+                * 0.15
                 + min(1.0, len(item["signals"].tension_points) / 3) * 0.10
                 + (
-                    (1.0 - _cosine_similarity(safe_embedding, item["profile"].recommendation_embedding_json)) * 0.10
+                    (
+                        1.0
+                        - _cosine_similarity(
+                            safe_embedding,
+                            item["profile"].recommendation_embedding_json,
+                        )
+                    )
+                    * 0.10
                     if safe_embedding is not None
                     else 0.0
                 )
@@ -2356,7 +2658,9 @@ def get_recommendations(current_user: User, db: Session) -> TeamfitRecommendatio
                     viewer_profile=viewer_profile,
                     candidate_user=wildcard_candidate["user"],
                     candidate_profile=wildcard_candidate["profile"],
-                    candidate_turns=_candidate_turns(wildcard_candidate["user"].user_id),
+                    candidate_turns=_candidate_turns(
+                        wildcard_candidate["user"].user_id
+                    ),
                     viewer_signals=viewer_signals,
                     candidate_signals=wildcard_candidate["signals"],
                     factor_scores=wildcard_candidate["factor_scores"],
@@ -2407,6 +2711,13 @@ def get_teamfit_candidate_directory(
     current_user: User,
     db: Session,
 ) -> TeamfitCandidateDirectoryResponse:
+    if not current_user.is_admin and current_user.applicant_status != "approved":
+        return TeamfitCandidateDirectoryResponse(
+            requires_approval=True,
+            candidates=[],
+            total_count=0,
+        )
+
     users = db.scalars(
         select(User)
         .where(User.user_id != current_user.user_id)
@@ -2414,11 +2725,17 @@ def get_teamfit_candidate_directory(
     ).all()
 
     if not users:
-        return TeamfitCandidateDirectoryResponse(candidates=[], total_count=0)
+        return TeamfitCandidateDirectoryResponse(
+            requires_approval=False,
+            candidates=[],
+            total_count=0,
+        )
 
     user_ids = [user.user_id for user in users]
     profiles = db.scalars(
-        select(TeamfitExplorerProfile).where(TeamfitExplorerProfile.user_id.in_(user_ids))
+        select(TeamfitExplorerProfile).where(
+            TeamfitExplorerProfile.user_id.in_(user_ids)
+        )
     ).all()
     profile_map = {profile.user_id: profile for profile in profiles}
     fit_checks = db.scalars(
@@ -2445,7 +2762,11 @@ def get_teamfit_candidate_directory(
 
     score_map: dict[int, float] = {}
     strongest_factor_map: dict[int, str] = {}
-    if viewer_profile and viewer_profile.recommendation_embedding_json and viewer_signals:
+    if (
+        viewer_profile
+        and viewer_profile.recommendation_embedding_json
+        and viewer_signals
+    ):
         for user in users:
             candidate_profile = profile_map.get(user.user_id)
             if (
@@ -2460,13 +2781,19 @@ def get_teamfit_candidate_directory(
                 candidate_profile=candidate_profile,
             )
             score_map[user.user_id] = round(base_score, 4)
-            strongest_factor_map[user.user_id] = max(factor_scores, key=factor_scores.get)
+            strongest_factor_map[user.user_id] = max(
+                factor_scores, key=factor_scores.get
+            )
 
     ranked_user_ids = [
         user_id
-        for user_id, _score in sorted(score_map.items(), key=lambda item: item[1], reverse=True)
+        for user_id, _score in sorted(
+            score_map.items(), key=lambda item: item[1], reverse=True
+        )
     ]
-    rank_map = {user_id: index for index, user_id in enumerate(ranked_user_ids, start=1)}
+    rank_map = {
+        user_id: index for index, user_id in enumerate(ranked_user_ids, start=1)
+    }
 
     items: list[TeamfitCandidateDirectoryItem] = []
     for user in users:
@@ -2483,53 +2810,85 @@ def get_teamfit_candidate_directory(
                 candidate_id=_candidate_id(user.user_id),
                 name=user.name or user.email.split("@", 1)[0],
                 has_teamfit_profile=has_teamfit_profile,
-                fit_score=fit_check_map.get(user.user_id).fit_score if fit_check_map.get(user.user_id) else None,
-                fit_note=fit_check_map.get(user.user_id).fit_note if fit_check_map.get(user.user_id) else None,
+                fit_score=fit_check_map.get(user.user_id).fit_score
+                if fit_check_map.get(user.user_id)
+                else None,
+                fit_note=fit_check_map.get(user.user_id).fit_note
+                if fit_check_map.get(user.user_id)
+                else None,
                 reason_summary=_directory_reason_summary(
                     viewer_profile_exists=viewer_profile is not None,
                     has_teamfit_profile=has_teamfit_profile,
                     strongest_factor=strongest_factor_map.get(user.user_id),
                 ),
                 reason_detail=(
-                    _reason_detail(viewer_signals, candidate_signals, {
-                        "problem_resonance": _problem_resonance_score(
-                            viewer_profile,
-                            candidate_profile,
-                            viewer_signals,
-                            candidate_signals,
-                        ),
-                        "role_complementarity": _role_complementarity_score(viewer_signals, candidate_signals),
-                        "work_style_compatibility": _work_style_compatibility_score(
-                            viewer_profile,
-                            candidate_profile,
-                            viewer_signals,
-                            candidate_signals,
-                        ),
-                        "value_alignment": _value_alignment_score(viewer_signals, candidate_signals),
-                        "conversation_potential": _conversation_potential_score(candidate_signals),
-                    })
-                    if viewer_profile and viewer_signals and candidate_profile and candidate_signals
+                    _reason_detail(
+                        viewer_signals,
+                        candidate_signals,
+                        {
+                            "problem_resonance": _problem_resonance_score(
+                                viewer_profile,
+                                candidate_profile,
+                                viewer_signals,
+                                candidate_signals,
+                            ),
+                            "role_complementarity": _role_complementarity_score(
+                                viewer_signals, candidate_signals
+                            ),
+                            "work_style_compatibility": _work_style_compatibility_score(
+                                viewer_profile,
+                                candidate_profile,
+                                viewer_signals,
+                                candidate_signals,
+                            ),
+                            "value_alignment": _value_alignment_score(
+                                viewer_signals, candidate_signals
+                            ),
+                            "conversation_potential": _conversation_potential_score(
+                                candidate_signals
+                            ),
+                        },
+                    )
+                    if viewer_profile
+                    and viewer_signals
+                    and candidate_profile
+                    and candidate_signals
                     else None
                 ),
-                problem_statement=candidate_profile.problem_statement if candidate_profile else "",
-                offered_role=_role_family(candidate_signals.offered_role) if candidate_signals else "",
-                sdgs=list(candidate_profile.sdg_tags or []) if candidate_profile else [],
+                problem_statement=candidate_profile.problem_statement
+                if candidate_profile
+                else "",
+                offered_role=_role_family(candidate_signals.offered_role)
+                if candidate_signals
+                else "",
+                sdgs=list(candidate_profile.sdg_tags or [])
+                if candidate_profile
+                else [],
                 mbti=candidate_profile.mbti if candidate_profile else None,
                 is_verified=user.applicant_status == "approved",
                 email=user.email if _can_share_email(current_user, user) else None,
                 github_address=user.github_address,
                 notion_url=user.notion_url,
-                history=[_explorer_turn_to_response(turn) for turn in _candidate_turns(user.user_id)]
+                history=[
+                    _explorer_turn_to_response(turn)
+                    for turn in _candidate_turns(user.user_id)
+                ]
                 if candidate_profile
                 else [],
                 created_at=user.created_at,
-                profile_updated_at=candidate_profile.updated_at if candidate_profile else None,
+                profile_updated_at=candidate_profile.updated_at
+                if candidate_profile
+                else None,
                 teamfit_score=score_map.get(user.user_id),
                 teamfit_rank=rank_map.get(user.user_id),
             )
         )
 
-    return TeamfitCandidateDirectoryResponse(candidates=items, total_count=len(items))
+    return TeamfitCandidateDirectoryResponse(
+        requires_approval=False,
+        candidates=items,
+        total_count=len(items),
+    )
 
 
 def set_teamfit_fit_check(
@@ -2557,7 +2916,10 @@ def set_teamfit_fit_check(
         )
     )
     if target_user is None or db.get(TeamfitExplorerProfile, target_user_id) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="대상 후보를 찾을 수 없습니다.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="대상 후보를 찾을 수 없습니다.",
+        )
 
     fit_check = db.scalar(
         select(TeamfitFitCheck).where(

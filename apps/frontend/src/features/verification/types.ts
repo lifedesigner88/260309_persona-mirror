@@ -11,6 +11,10 @@ export type VerificationApplyPayload = {
   interview_room: number;
 };
 
+export type VerificationInviteCodeCheckResponse = {
+  matches_auto_approve_invite_code: boolean;
+};
+
 export type VerificationStatusResponse = {
   applicant_status: string;
   name: string | null;

@@ -1,9 +1,9 @@
 ---
 session: 2026-W12
-period: "2026-03-16 ~ 2026-03-22"
-generated_on: "2026-03-22"
+period: "2026-03-16(월) ~ 2026-03-22(일)"
+generated_on: "2026-03-22(일)"
 based_on:
-  daily_files: "2026-03-16 ~ 2026-03-22 (7일 전수)"
+  daily_files: "2026-03-16(월) ~ 2026-03-22(일) (7일 전수)"
   prev_session: null     # 첫 번째 세션
 ---
 
@@ -88,7 +88,7 @@ assigned_goals:
   - id: 1
     goal: "3/24(화) 19:00 은평청년네트워크 일자리창업분과 모임 참석"
     linked_to: "G-LIFE"
-    done_criteria: "참석 후 인상적인 내용 또는 연결된 사람을 daily(2026-03-24.md)에 기록"
+    done_criteria: "참석 후 인상적인 내용 또는 연결된 사람을 daily(2026-03-24(화).md)에 기록"
     result: null
 
   - id: 2

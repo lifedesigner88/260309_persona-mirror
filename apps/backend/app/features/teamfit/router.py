@@ -19,6 +19,7 @@ from .schemas import (
 )
 from .service import (
     create_teamfit_followup_question,
+    delete_teamfit_explorer_turn,
     get_teamfit_candidate_directory,
     get_my_teamfit_explorer_profile,
     get_next_teamfit_interview_question,
@@ -39,7 +40,9 @@ def teamfit_me(
     return get_my_teamfit_explorer_profile(current_user, db)
 
 
-@router.post("/interview/next-question", response_model=TeamfitInterviewQuestionResponse)
+@router.post(
+    "/interview/next-question", response_model=TeamfitInterviewQuestionResponse
+)
 def teamfit_next_question(
     payload: TeamfitInterviewQuestionRequest,
     current_user: User = Depends(get_current_user),
@@ -56,6 +59,17 @@ def save_teamfit_profile(
     return save_teamfit_explorer_profile(payload, current_user, db)
 
 
+@router.delete(
+    "/me/interview-turns/{turn_id}", response_model=TeamfitExplorerProfileResponse
+)
+def delete_teamfit_profile_turn(
+    turn_id: int = Path(..., ge=1),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TeamfitExplorerProfileResponse:
+    return delete_teamfit_explorer_turn(turn_id, current_user, db)
+
+
 @router.post("/interview/follow-up", response_model=TeamfitInterviewQuestionResponse)
 def teamfit_followup_question(
     current_user: User = Depends(get_current_user),
@@ -64,7 +78,9 @@ def teamfit_followup_question(
     return create_teamfit_followup_question(current_user, db)
 
 
-@router.post("/interview/follow-up-answer", response_model=TeamfitExplorerProfileResponse)
+@router.post(
+    "/interview/follow-up-answer", response_model=TeamfitExplorerProfileResponse
+)
 def teamfit_followup_answer(
     payload: TeamfitFollowupAnswerRequest,
     current_user: User = Depends(get_current_user),

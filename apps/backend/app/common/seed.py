@@ -46,9 +46,14 @@ _DATA_ENG: dict = {
         },
     },
     "one_liner": (
-        "I'm Park Sejong, an educator-turned-developer. I want to directly build AI services "
-        "and products that help people grow and help teams get started."
+        "An educator-developer who wants to build structures that help people design their own lives."
     ),
+    "identity_keywords": [
+        "Life Designer",
+        "Growth Structure Designer",
+        "Education x Technology Builder",
+        "Community Planner",
+    ],
     "top3_values": ["User Understanding", "Community", "Education x Technology"],
     "strengths": [
         "Strongest in the founder-PM lane: problem framing, user understanding, scope, priorities, and narrative",
@@ -285,9 +290,14 @@ _DATA_KOR: dict = {
         },
     },
     "one_liner": (
-        "교육자에서 개발자로 전환한 박세종입니다. 사람의 성장과 팀의 시작을 돕는 AI 서비스와 제품을 "
-        "직접 만들고 싶습니다."
+        "사람들이 자신의 삶을 스스로 설계할 수 있는 구조를 만들고 싶은 교육자형 개발자"
     ),
+    "identity_keywords": [
+        "라이프디자이너",
+        "성장 구조 설계자",
+        "교육×기술 빌더",
+        "커뮤니티 기획자",
+    ],
     "top3_values": ["사용자 이해", "커뮤니티", "교육 x 기술"],
     "strengths": [
         "Founder-PM 포지션에서 문제 정의, 사용자 이해, 우선순위, 제품 서사를 잡는 데 가장 강합니다.",

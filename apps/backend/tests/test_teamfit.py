@@ -2,7 +2,12 @@ from sqlalchemy import select
 
 from app.common.db import SessionLocal
 from app.features.auth.models import User
-from app.features.teamfit.models import TeamfitExplorerProfile, TeamfitExplorerTurn, TeamfitFitCheck
+from app.features.teamfit.service import _finalize_generated_teamfit_question
+from app.features.teamfit.models import (
+    TeamfitExplorerProfile,
+    TeamfitExplorerTurn,
+    TeamfitFitCheck,
+)
 
 VALID_AXIS_VALUES = {
     "mind": 74,
@@ -96,6 +101,19 @@ def seed_saved_profile(client, signup_user, login_user):
     return response
 
 
+def seed_saved_profile_with_followup_turns(client, signup_user, login_user):
+    response = seed_saved_profile(client, signup_user, login_user)
+    followup_response = client.post(
+        "/team-fit/interview/follow-up-answer",
+        json={
+            "question": "같이 풀 사람에게 꼭 기대하는 태도는 무엇인가요?",
+            "answer": "문제를 끝까지 밀고 가면서도 빠르게 실험하는 태도를 기대합니다.",
+        },
+    )
+    assert followup_response.status_code == 200
+    return response, followup_response
+
+
 def update_user(
     email: str,
     *,
@@ -169,7 +187,9 @@ def test_teamfit_v2_routes_require_login(client):
     assert candidates_response.status_code == 401
 
 
-def test_teamfit_next_question_generates_first_question(client, signup_user, login_user, monkeypatch):
+def test_teamfit_next_question_generates_first_question(
+    client, signup_user, login_user, monkeypatch
+):
     signup_user(email="teamfit-question@example.com")
     login_user("teamfit-question@example.com")
     monkeypatch.setattr(
@@ -177,7 +197,9 @@ def test_teamfit_next_question_generates_first_question(client, signup_user, log
         lambda **_: "이 문제를 직접 풀고 싶은 가장 개인적인 이유는 무엇인가요?",
     )
 
-    response = client.post("/team-fit/interview/next-question", json=build_payload(history=[]))
+    response = client.post(
+        "/team-fit/interview/next-question", json=build_payload(history=[])
+    )
 
     assert response.status_code == 200
     assert response.json() == {
@@ -199,7 +221,9 @@ def test_teamfit_next_question_limits_initial_interview_to_three_answers(
     assert "최대 3개" in response.json()["detail"]
 
 
-def test_teamfit_save_requires_exactly_three_initial_answers(client, signup_user, login_user):
+def test_teamfit_save_requires_exactly_three_initial_answers(
+    client, signup_user, login_user
+):
     signup_user(email="teamfit-history-rule@example.com")
     login_user("teamfit-history-rule@example.com")
 
@@ -209,7 +233,9 @@ def test_teamfit_save_requires_exactly_three_initial_answers(client, signup_user
     assert "정확히 3개" in response.json()["detail"]
 
 
-def test_teamfit_save_persists_explorer_profile_and_history(client, signup_user, login_user):
+def test_teamfit_save_persists_explorer_profile_and_history(
+    client, signup_user, login_user
+):
     signup_user(email="teamfit-save@example.com")
     login_user("teamfit-save@example.com")
 
@@ -277,7 +303,9 @@ def test_teamfit_save_validates_step1_and_step2_rules(client, signup_user, login
     assert too_long_narrative_response.status_code == 422
 
 
-def test_teamfit_me_returns_saved_profile_and_active_count(client, signup_user, login_user):
+def test_teamfit_me_returns_saved_profile_and_active_count(
+    client, signup_user, login_user
+):
     seed_saved_profile(client, signup_user, login_user)
 
     response = client.get("/team-fit/me")
@@ -342,7 +370,9 @@ def test_teamfit_followup_question_and_answer_append_history(
         assert turns[-1].phase == "followup"
 
 
-def test_teamfit_saved_profile_can_be_edited_with_existing_history(client, signup_user, login_user):
+def test_teamfit_saved_profile_can_be_edited_with_existing_history(
+    client, signup_user, login_user
+):
     save_response = seed_saved_profile(client, signup_user, login_user)
     profile = save_response.json()
 
@@ -376,7 +406,7 @@ def test_teamfit_saved_profile_can_be_edited_with_existing_history(client, signu
             "mbti": profile["mbti"],
             "mbti_axis_values": profile["mbti_axis_values"],
             "sdg_tags": profile["sdg_tags"],
-            "narrative_markdown": f'{profile["narrative_markdown"]}\n\n추가 메모: 실제 대화 전환율도 보고 싶습니다.',
+            "narrative_markdown": f"{profile['narrative_markdown']}\n\n추가 메모: 실제 대화 전환율도 보고 싶습니다.",
             "history": edited_history,
         },
     )
@@ -389,7 +419,9 @@ def test_teamfit_saved_profile_can_be_edited_with_existing_history(client, signu
     assert "추가 메모" in body["narrative_markdown"]
 
 
-def test_teamfit_recommendations_require_approved_viewer(client, signup_user, login_user):
+def test_teamfit_recommendations_require_approved_viewer(
+    client, signup_user, login_user
+):
     signup_user(email="recommendation-viewer@example.com")
     login_user("recommendation-viewer@example.com")
     save_response = client.put("/team-fit/me", json=build_payload())
@@ -404,6 +436,23 @@ def test_teamfit_recommendations_require_approved_viewer(client, signup_user, lo
     assert body["recommended_people"] == []
 
 
+def test_teamfit_candidate_directory_requires_approved_viewer(
+    client, signup_user, login_user
+):
+    signup_user(email="directory-unapproved@example.com")
+    login_user("directory-unapproved@example.com")
+    save_response = client.put("/team-fit/me", json=build_payload())
+    assert save_response.status_code == 200
+
+    response = client.get("/team-fit/candidates")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requires_approval"] is True
+    assert body["candidates"] == []
+    assert body["total_count"] == 0
+
+
 def test_teamfit_recommendations_return_conversation_priority_cards_and_skip_unapproved_candidates(
     client, signup_user, login_user
 ):
@@ -416,7 +465,9 @@ def test_teamfit_recommendations_return_conversation_priority_cards_and_skip_una
         why_now="팀빌딩을 촉이 아니라 더 나은 대화 시작 구조로 풀고 싶습니다.",
     )
     signup_user(email="viewer@example.com")
-    viewer_id = update_user("viewer@example.com", applicant_status="approved", name="Viewer")
+    viewer_id = update_user(
+        "viewer@example.com", applicant_status="approved", name="Viewer"
+    )
     login_user("viewer@example.com")
     viewer_save = client.put("/team-fit/me", json=viewer_payload)
     assert viewer_save.status_code == 200
@@ -522,7 +573,9 @@ def test_teamfit_recommendations_return_conversation_priority_cards_and_skip_una
 
     recommended_ids = {item["candidate_id"] for item in body["recommended_people"]}
     recommended_types = [item["type"] for item in body["recommended_people"]]
-    rejected_ids = {item["candidate_id"] for item in body["rejected_or_low_signal_candidates"]}
+    rejected_ids = {
+        item["candidate_id"] for item in body["rejected_or_low_signal_candidates"]
+    }
     rejected_map = {
         item["candidate_id"]: item for item in body["rejected_or_low_signal_candidates"]
     }
@@ -559,7 +612,9 @@ def test_teamfit_fit_check_excludes_scored_candidate_from_future_recommendations
         why_now="팀빌딩을 촉이 아니라 더 나은 대화 시작 구조로 풀고 싶습니다.",
     )
     signup_user(email="fit-viewer@example.com")
-    viewer_id = update_user("fit-viewer@example.com", applicant_status="approved", name="Fit Viewer")
+    viewer_id = update_user(
+        "fit-viewer@example.com", applicant_status="approved", name="Fit Viewer"
+    )
     login_user("fit-viewer@example.com")
     viewer_save = client.put("/team-fit/me", json=viewer_payload)
     assert viewer_save.status_code == 200
@@ -669,7 +724,11 @@ def test_teamfit_candidate_directory_returns_all_signed_up_users_with_teamfit_me
         why_now="팀빌딩을 촉이 아니라 더 나은 대화 시작 구조로 풀고 싶습니다.",
     )
     signup_user(email="directory-viewer@example.com")
-    update_user("directory-viewer@example.com", applicant_status="approved", name="Directory Viewer")
+    update_user(
+        "directory-viewer@example.com",
+        applicant_status="approved",
+        name="Directory Viewer",
+    )
     login_user("directory-viewer@example.com")
     viewer_save = client.put("/team-fit/me", json=viewer_payload)
     assert viewer_save.status_code == 200
@@ -735,3 +794,65 @@ def test_teamfit_candidate_directory_returns_all_signed_up_users_with_teamfit_me
     assert empty_item["reason_detail"] is None
     assert empty_item["history"] == []
     assert empty_item["teamfit_rank"] is None
+
+
+def test_teamfit_delete_interview_turn_removes_turn_and_resequences_history(
+    client, signup_user, login_user
+):
+    _, followup_response = seed_saved_profile_with_followup_turns(
+        client, signup_user, login_user
+    )
+
+    followup_turn_id = followup_response.json()["history"][-1]["id"]
+
+    response = client.delete(f"/team-fit/me/interview-turns/{followup_turn_id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["history"]) == 3
+    assert [turn["sequence_no"] for turn in body["history"]] == [1, 2, 3]
+    assert all(turn["phase"] == "initial" for turn in body["history"])
+
+    with SessionLocal() as db:
+        turns = db.scalars(
+            select(TeamfitExplorerTurn)
+            .where(TeamfitExplorerTurn.user_id == body["user_id"])
+            .order_by(
+                TeamfitExplorerTurn.sequence_no.asc(), TeamfitExplorerTurn.id.asc()
+            )
+        ).all()
+        assert len(turns) == 3
+        assert [turn.sequence_no for turn in turns] == [1, 2, 3]
+
+
+def test_teamfit_delete_interview_turn_rejects_when_only_initial_three_exist(
+    client, signup_user, login_user
+):
+    response = seed_saved_profile(client, signup_user, login_user)
+    turn_id = response.json()["history"][0]["id"]
+
+    delete_response = client.delete(f"/team-fit/me/interview-turns/{turn_id}")
+
+    assert delete_response.status_code == 400
+    assert "최소 3개" in delete_response.json()["detail"]
+
+
+def test_teamfit_generated_question_is_normalized_to_end_with_question_mark():
+    result = _finalize_generated_teamfit_question(
+        "같이 일할 때 가장 먼저 확인하고 싶은 기준은 무엇인가요",
+        fallback_question="fallback question?",
+    )
+
+    assert result == "같이 일할 때 가장 먼저 확인하고 싶은 기준은 무엇인가요?"
+
+
+def test_teamfit_generated_question_falls_back_when_output_looks_truncated():
+    result = _finalize_generated_teamfit_question(
+        "그분들의 답변이 당신의 문제 프레이밍과 얼마나 빠르게 맞",
+        fallback_question="이 문제를 함께 풀 사람과 실제로 대화해보면 가장 먼저 확인하고 싶은 기준은 무엇인가요?",
+    )
+
+    assert (
+        result
+        == "이 문제를 함께 풀 사람과 실제로 대화해보면 가장 먼저 확인하고 싶은 기준은 무엇인가요?"
+    )

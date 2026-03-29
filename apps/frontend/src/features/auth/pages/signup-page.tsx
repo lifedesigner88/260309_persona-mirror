@@ -6,12 +6,14 @@ import { Button, Field, Input, ShellCard, StatusPill } from "@/common/components
 
 import { resendVerificationCode, verifyOtp } from "../api";
 import type { AuthActionData } from "../types";
+import { localizeAuthError } from "../utils/localize-auth-error";
 
 export function SignupPage() {
   const { t } = useTranslation("auth");
   const actionData = useActionData() as AuthActionData | undefined;
   const navigate = useNavigate();
   const [showPin, setShowPin] = useState(false);
+  const localizedError = localizeAuthError(actionData?.error, t);
 
   // OTP verification state
   const [otp, setOtp] = useState("");
@@ -89,14 +91,15 @@ export function SignupPage() {
             />
           </Field>
           <p className="text-xs leading-6 text-muted-foreground">{t("signup.resendHint")}</p>
-          {otpError ? (
-            <p className="text-sm text-red-600">{otpError}</p>
-          ) : null}
-          {resendNotice ? (
-            <p className="text-sm text-emerald-700">{resendNotice}</p>
-          ) : null}
+          {otpError ? <p className="text-sm text-red-600">{otpError}</p> : null}
+          {resendNotice ? <p className="text-sm text-emerald-700">{resendNotice}</p> : null}
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button disabled={resending || verifying} onClick={handleResend} type="button" variant="outline">
+            <Button
+              disabled={resending || verifying}
+              onClick={handleResend}
+              type="button"
+              variant="outline"
+            >
               {resending ? t("signup.resending") : t("signup.resend")}
             </Button>
             <Button disabled={otp.length !== 6 || verifying || resending} onClick={handleVerify}>
@@ -146,15 +149,18 @@ export function SignupPage() {
         </div>
       </Form>
 
-      {actionData?.error ? (
+      {localizedError ? (
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionData.error}
+          {localizedError}
         </div>
       ) : null}
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("signup.alreadyHaveAccount")}{" "}
-        <Link className="font-medium text-primary underline-offset-4 hover:underline" to="/auth/login">
+        <Link
+          className="font-medium text-primary underline-offset-4 hover:underline"
+          to="/auth/login"
+        >
           {t("signup.login")}
         </Link>
       </p>

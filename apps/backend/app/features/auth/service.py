@@ -23,6 +23,7 @@ from app.common.security import (
 from .email import send_otp_email, send_reset_pin_email
 from .models import User
 from .schemas import (
+    DeleteAccountRequest,
     LoginRequest,
     ResendVerificationRequest,
     ResetPinConfirm,
@@ -45,7 +46,7 @@ def _read_admin_seed_password() -> str:
 
 ADMIN_SEED_PASSWORD = _read_admin_seed_password()
 ADMIN_SEED_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "parksejong88@gmail.com")
-LEGACY_ADMIN_SEED_EMAILS = ("admin@example.com",)
+LEGACY_ADMIN_SEED_EMAILS: tuple[str, ...] = ()
 
 
 def _default_gender_for_identity(identity: str | int) -> str:
@@ -246,6 +247,17 @@ def clear_session_cookie(response: Response) -> Response:
         samesite=str(cookie_settings["samesite"]),
     )
     return response
+
+
+def delete_current_user_account(payload: DeleteAccountRequest, current_user: User, db: Session) -> None:
+    if payload.email.strip().casefold() != current_user.email.strip().casefold():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="현재 로그인한 이메일을 입력해야 회원 탈퇴할 수 있습니다.",
+        )
+
+    db.delete(current_user)
+    db.commit()
 
 
 def get_current_user(

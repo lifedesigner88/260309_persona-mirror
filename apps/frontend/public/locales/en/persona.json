@@ -26,20 +26,11 @@
     "aiTitle": "AI-generated page",
     "aiNote": "This page was created with AI based on data from Sejong's Hupository.",
     "aiSignature": "with Codex GPT 5.4",
-    "repoButton": "View Hupository",
-    "emailCopy": "Copy",
-    "emailCopied": "Copied"
+    "repoButton": "View Hupository"
   },
   "creatorPr": {
     "heroRole": "Strongest role",
-    "teamSectionLabel": "Looking for teammates",
-    "teamSectionTitle": "I would love to build a team with these two kinds of partners.",
-    "avoidMatches": "Probably not a fit",
-    "projectSectionLabel": "What to build",
-    "whyNow": "Preferred teammate type",
-    "whyMe": "What I can own",
-    "ctaSectionLabel": "Contact",
-    "contactButton": "Copy email"
+    "projectSectionLabel": "What to build"
   },
   "mbti": {
     "typeLabel": "MBTI type",

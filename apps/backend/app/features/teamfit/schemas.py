@@ -140,7 +140,9 @@ class TeamfitExtractedSignals(BaseModel):
     conversation_hooks: list[str] = Field(default_factory=list)
     tension_points: list[str] = Field(default_factory=list)
     profile_clarity_score: float = Field(default=0.0, ge=0.0, le=1.0)
-    signal_confidence: TeamfitSignalConfidence = Field(default_factory=TeamfitSignalConfidence)
+    signal_confidence: TeamfitSignalConfidence = Field(
+        default_factory=TeamfitSignalConfidence
+    )
     summary_for_embedding: str = ""
 
 
@@ -233,6 +235,7 @@ class TeamfitCandidateDirectoryItem(BaseModel):
 
 
 class TeamfitCandidateDirectoryResponse(BaseModel):
+    requires_approval: bool = False
     candidates: list[TeamfitCandidateDirectoryItem] = Field(default_factory=list)
     total_count: int
 
@@ -241,6 +244,10 @@ class TeamfitRecommendationsResponse(BaseModel):
     requires_profile: bool = False
     requires_approval: bool = False
     active_profile_count: int
-    recommended_people: list[TeamfitConversationPriorityRecommendation] = Field(default_factory=list)
-    rejected_or_low_signal_candidates: list[TeamfitRejectedCandidate] = Field(default_factory=list)
+    recommended_people: list[TeamfitConversationPriorityRecommendation] = Field(
+        default_factory=list
+    )
+    rejected_or_low_signal_candidates: list[TeamfitRejectedCandidate] = Field(
+        default_factory=list
+    )
     system_notes: TeamfitRecommendationSystemNotes

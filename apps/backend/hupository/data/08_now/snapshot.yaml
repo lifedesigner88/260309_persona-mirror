@@ -2,7 +2,7 @@
 # 이벤트 발생 시 갱신하고, 월간 리뷰 때 한 번 더 정리합니다.
 # 과거 스냅샷은 history/{YYYY-MM}.yaml 로 보관합니다.
 
-as_of: "2026-03-25"
+as_of: "2026-03-29"
 
 # ─────────────────────────────────────────
 # 진행 중인 트랙
@@ -27,7 +27,7 @@ active_tracks:
       total: "52강 (52주)"
       structure: "4계절 × 3개월 × 월 4~5강 (ISO 주차 기준, 총 ~52강)"
       started: "2026-03-22"
-    notes: "사업자 미등록 데모 운영. 인생 카테고리 2026 주간 리뷰 시리즈를 시작했고, 초기 업로드 리듬을 안정화하는 단계."
+    notes: "사업자 미등록 데모 운영. 인생 카테고리 2026 주간 리뷰 시리즈를 시작했고, W12 에피소드 업로드를 완료했다. 오늘은 세종클래스 주차별 유튜브 업로드를 실제 공개물로 다시 잇는 쪽으로 정리했고, 다음 공개물은 `휴포지토리 사용법` 콘텐츠로 이어갈 계획이다."
 
   sw_maestro_17:
     status: pending               # not_applied | applied | coding_test_passed | interview_scheduled | pending | accepted | rejected
@@ -36,8 +36,12 @@ active_tracks:
     coding_test_passed_on: "2026-03-11"
     interview_datetime: "2026-03-20T09:30:00+09:00"
     interview_completed: "2026-03-20"
-    result: null                  # 결과 발표 3/25 오후 2시
-    notes: "면접 완료(3/20). 결과 발표 3/25 오후 2시 전 대기 중."
+    result_announced_on: "2026-03-25"
+    result: "waitlisted"          # 최종 결과: 예비 3번
+    waitlist_rank: 3
+    overall_rank: 303
+    first_registration_deadline: "2026-03-30"
+    notes: "최종 결과 예비 3번(303등). 1차 서류 등록 마감(3/30) 이후 추가합격 연락 가능성 대기 중. 전화가 오면 바로 올릴 수 있는 `귀인` one-pager 기반 자기소개 노션 구조와 링크 패키지는 오늘 기준으로 미리 준비해두었다."
 
   algorithm_study:
     status: paused           # 목표 달성 후 일시 중단
@@ -83,24 +87,51 @@ active_tracks:
     notes: "온라인 지원 완료(3/20). 결과 대기 중."
 
   class101_opportunity:
-    status: scheduled
+    status: active
     description: "클래스101 — 소마 코딩테스트 준비 알고리즘 강의 제작 제안"
     interview_datetime: "2026-03-27T15:00:00+09:00"
+    first_meeting_completed: "2026-03-27T15:00:00+09:00"
+    next_event: "2026-03-30T10:00:00+09:00 1:1 카카오톡방 링크 수신 예정"
     trigger: "유튜브 알고리즘 풀이 영상 → 소마 지원자 유입 → 클래스101 발견"
     strategy:
       goal: "수익 극대화보다 팬 확보 우선 — 소마 이후 마케팅 채널로 활용"
-      production: "PD 제작 지원 수령 검토 (아웃바운드 케이스라 가능성 있음) — 3/27 미팅에서 확인"
+      relationship_mode: "문은 열어두되 기대와 투자 수준은 낮게 유지 — 존중/응답성 확인 전 파트너십으로 과대해석하지 않음"
+      production: "PD 제작 지원 여부는 기획 미팅 단계에서 추가 확인 필요. 3/27 1차 미팅에서 제작 일정 단축 가능 답변 수령"
       launch_target: "2026년 5월 말 — 소마 본과정(6월) 시작 전 출시 완료"
       launch_plan: "소마 합격/불합격 관계없이 4~5월에 기획·제작·출시 집중"
       revenue_note: >
         소마 본 연수과정(6~11월) 중 수동적 수익 발생은 그레이존.
         문제 시 정산 시점을 12월 이후로 조율하는 방향으로 클래스101과 협의 가능.
+        3/27 1차 미팅에서 수익 발생 시점 조율 가능하다는 답변을 받음.
       long_term: "소마 팀 제품 홍보 채널 + 세종클래스 외 수익 채널"
-    notes: "3/27 미팅 핵심 확인 포인트: PD 지원 여부, 수익 배분 구조, 개별판매 vs 구독형, 소마 병행 시 정산/출시 조건."
+    notes: >
+      3/27 1차 오픈 미팅 27분 진행.
+      오늘 만난 담당자는 주로 재택근무 환경에서 일정 조율을 맡는 코디 역할에 가까웠고,
+      실제 커리큘럼/기획 판단은 다음 단계의 기획 미팅에서 더 구체화될 가능성이 높다.
+      첫 미팅 당시 안내된 `내일 오전 10시`는 주말 다음 영업일 기준으로 해석하는 편이 자연스러워,
+      현재는 3/30(월) 오전 10시에 1:1 카카오톡방 링크를 전달받을 예정인 상태로 본다.
+      1차 커리큘럼 초안 전달 시 기획 미팅 담당자와의 후속 미팅 연결이 예상된다.
+      다만 3/27 밤 대화 기준, 먼저 가능성을 본 듯한 신호에 비해 정성스럽게 보낸 메일과
+      커리큘럼 의견에 대한 후속 응답성이 약하다는 인상이 남아 현재 접점의 신뢰도는 낮게 두는 편이 맞다고 정리했다.
+      따라서 클래스101은 당분간 함께 비전을 만드는 파트너보다 조건이 맞을 때 활용 가능한 유통 채널 후보로 대하며,
+      실제 의사결정자 연결, 응답성, 포지셔닝 존중이 확인되기 전까지는 브랜드 가치 훼손 우려가 있는 추가 제작 투자를 서두르지 않는다.
 
   ai_agent_dev:
     status: active           # exploring | active | paused | done
-    current_project: "PersonaMirror first public use case — ASM 17 Community / Creator PR context"
+    current_project: "team-fit — who-to-talk-to-first exploration root + conversation-priority demo"
+    project_name_history:
+      - name: "PersonaMirror"
+        period: "~2026-03-24"
+        note: "Hupository 기반 첫 공개 유즈케이스를 설명하던 초기 이름"
+      - name: "sejong-pr"
+        period: "2026-03-25 ~ 2026-03-27"
+        note: "800명 단체카톡방 운영자와 대화 후, 공유 링크의 front door를 박세종 PR 중심으로 급하게 pivot하며 사용한 이름"
+      - name: "find-team-feat"
+        period: "2026-03-28"
+        note: "팀빌딩 문제를 전면에 둔 이름이었지만, 당일 기준 너무 길다고 판단해 다시 축약"
+      - name: "team-fit"
+        period: "2026-03-28 ~"
+        note: "현재 공개용 데모 프로젝트명"
     mvp_deadline: "2026-03-25"
     stack: "React 19 / FastAPI / LangGraph / OpenAI API (GPT-5.4 family) / PostgreSQL / Redis"
     progress:
@@ -109,15 +140,54 @@ active_tracks:
         - "Creator PR 페이지 /persona/sejong (최신 Hupository 데이터 기반)"
         - "Seoul Dashboard 운영 보드 (verification-aware access / preview mode / reviewed-member tracking)"
         - "AI Sejong login-only multi-turn chat (DB history / grounding / session control / rate limit)"
+        - "루트 `/`를 ASM17 커뮤니티 툴 중심에서 박세종 PR 중심 front door로 재구성"
+        - "AI Sejong / 유튜브 / 블로그 / PR 프로젝트 / 서울 대시보드를 박세종을 이해시키는 증거 자산 순서로 재배치"
+        - "홈/PR 화면을 30초 설득용 구조로 압축하고 핵심 섹션(히어로/포트폴리오/연락/팀원상/SDGs) 중심으로 정리"
+        - "AI Sejong 전용 페이지 설명과 grounding 데이터, 세션 리셋, 질문 제한, placeholder, quota 표시를 실제 동작 기준으로 정리"
+        - "README, OG 메타데이터, changelog를 현재 방향과 동기화"
+        - "team-fit(구 Team-fit Explorer)를 PR-first shell 안의 stable v1 surface로 정리"
+        - "team-fit에 guest preview / 2-step profile intake / optional signal 규칙 강화 / approval-gated recommendations / richer detail dialogs를 반영"
+        - "로컬 startup/demo 기본 동작과 기본 설명을 실제 shipping 범위 기준으로 더 안전하게 정리"
+        - "제품 front door를 Sejong-first PR surface에서 `누구와 먼저 대화할지 좁히는 team-fit exploration root`로 재구성"
+        - "기존 checklist intake를 `문제 한 문장 + MBTI 5축 + SDGs 최대 3개 + 800자 Markdown + AI 후속 질문 3회` 흐름으로 교체"
+        - "추천 결과를 `final teammate certainty`가 아닌 `conversation priority` 기준의 3인 추천으로 재설계"
+        - "저장 상태를 recommendation 결과, fit-score feedback, broader candidate directory, lighter transcript UI를 포함한 editable workspace로 정리"
+        - "repo 브랜딩, 문서, demo seed data, runtime behavior를 현재 제품 방향과 동기화"
+        - "첫 `팀핏 탐색` demo를 root `/`의 team-fit flow 기준으로 다시 조여, 가입 → 검증 → 프로필 → AI 후속 질문 → 추천 검토 → 계정 관리까지 이어지는 end-to-end 동선을 정리"
+        - "추천 검토, verification/access control, creator/profile polish를 포함해 공개 데모의 핵심 surface를 한 번에 설명 가능한 수준으로 다듬음"
+        - "로드맵을 chronological pivots와 code-reading hierarchy를 함께 보여주는 study-oriented map으로 재작성"
+        - "top-level README intro를 larger `귀인` 프로젝트 안의 team-building demo이자 `10일 바이브코딩 첫 데모`로 압축"
       in_progress:
-        - "공개 entry flow와 공유 링크 품질 정리"
-        - "합격 직후 공유용 카피/링크 패키지 정리"
+        - "team-fit 공개용 최소 리팩토링 및 기능 동결"
+        - "예비 대기/독립 공유 겸용 카피·링크 패키지 정리"
+        - "관심자 연결용 팀 카카오톡방 준비"
       not_started:
         - "실제 유입 반응 반영 및 팀 매칭/운영 확장"
+        - "추천/팀 유사도 기능 — 프로젝트 해부·도메인 학습 후 재검토"
     notes: >
-      Hupository 기반 PersonaMirror의 첫 공개 유즈케이스다.
-      단기 목적은 ASM 17 Community / Creator PR 맥락에서 팀빌딩 자기소개와 실행력 증명을 동시에 보여주는 front door를 만드는 것이다.
+      Hupository 기반 team-fit의 첫 공개 유즈케이스다.
+      현재 제품의 정체성은 박세종 PR을 보조 신뢰 레이어로 두고,
+      팀빌딩에서 `누구와 먼저 대화할지`를 좁히는 문제를 탐색하는 root experience에 더 가깝다.
+      단기 목적은 team-fit 데모를 실제로 보여줄 수 있는 구조로 리팩토링해,
+      문제 정의, 입력 흐름, 추천 철학, 결과 workspace를 한 번에 이해시키는 것이다.
       장기 목적은 라이프디자인/퍼스널 AI 서비스의 공개 진입점으로 확장하는 것이다.
+      3/26 기준 팀 유사도/사람 추천 기능은 당장 붙이지 않고 보류했다.
+      예비 3번 상태로 소마 커뮤니티 기능의 즉시성이 약해졌고, 사람 추천은 pgvector/임베딩만으로 해결되지 않으며
+      신뢰, 설명 가능성, 대화 후 피드백 구조까지 함께 다뤄야 하는 도메인이라는 판단이 생겼다.
+      3/25에는 800명 단체카톡방 운영자와 대화 후 공유 링크의 front door를 박세종 PR 중심으로 급하게 pivot하며 `sejong-pr` 감각이 생겼고,
+      3/28에는 독자가 먼저 마주하는 팀빌딩 문제를 전면에 두는 방향으로 `find-team-feat`까지 갔다가,
+      이름이 길다고 판단해 같은 날 현재 공개 프로젝트명을 `team-fit`으로 다시 축약했다.
+      기존 asm17.huposit.kr 방향은 PR 신뢰 레이어를 유지하되, root의 메인 약속을 팀 빌딩 문제 자체에 더 가깝게 두는 쪽으로 정리됐다.
+      3/28 작업 기준 intake는 `문제 한 문장 + MBTI 5축 + SDGs 최대 3개 + 800자 Markdown + AI 후속 질문 3회`의 interview-first flow로 바뀌었고,
+      추천 결과는 `최적 팀원 확정`이 아니라 `우선 대화해볼 3명`을 제안하는 conversation-priority 철학으로 재구성됐다.
+      저장 상태도 recommendation 결과, fit-score feedback, broader candidate directory, lighter transcript UI를 포함한 editable workspace로 옮겨갔다.
+      repo 브랜딩, 문서, demo seed data, runtime behavior도 이 방향에 맞춰 함께 정리되었다.
+      3/29 작업 기준으로는 첫 `팀핏 탐색` demo의 root `/` 흐름을 예전 creator-PR 설명보다 team-fit exploration 중심으로 더 조였고,
+      가입 → 검증 → 프로필 작성 → AI 후속 질문 → 추천 검토 → 계정 관리까지 이어지는 end-to-end 동선이 한 번에 보이도록 다듬었다.
+      또한 roadmap은 chronological pivots와 code-reading hierarchy를 함께 보여주는 학습용 지도로 다시 작성했고,
+      top-level README는 현재 repo를 larger `귀인` 프로젝트 안의 team-building demo이자 `10일 바이브코딩 첫 데모`로 압축해 소개하는 방향으로 정리했다.
+      다음 단계는 예비합격 공개용 최소 리팩토링 후, team-fit을 해부하며 Python/FastAPI/Nx/Docker/배포 구조와
+      사람-사람 매칭/팀핏/코칭 도메인을 함께 학습하는 것이다.
 
 # ─────────────────────────────────────────
 # 현재 제약 조건
@@ -134,32 +204,33 @@ constraints:
 # 현재 집중 우선순위 (1 = 가장 중요)
 # ─────────────────────────────────────────
 focus_priority:
-  1: "sw_maestro_17 — 결과 발표 대기 (3/25 오후 2시)"
-  2: "ai_agent_dev — 공개 entry flow와 공유 링크 정리"
-  3: "class101_opportunity — 미팅 준비 (3/27)"
-  4: "sejongclass — 첫 유료 수강생 확보"
+  1: "sw_maestro_17 — 예비 3번 대기 + 즉시 대응 준비"
+  2: "sejongclass — 주차별 유튜브 업로드 리듬 + `휴포지토리 사용법` 콘텐츠"
+  3: "ai_agent_dev — team-fit 독립 공유용 카피·링크 패키지 정리"
+  4: "class101_opportunity — 낮은 기대치 후속 대기"
 
 # ─────────────────────────────────────────
 # 대기 중인 외부 이벤트 (결과에 따라 전략 분기)
 # ─────────────────────────────────────────
 pending_decisions:
-  - trigger: "SW마에스트로 17기 합격 발표 (3/25 오후 2시)"
-    if_accepted: >
-      내부 합격자 노션에 PR 링크를 가장 먼저 공유.
+  - trigger: "SW마에스트로 17기 추가합격 연락 여부 (1차 등록 마감 3/30 이후)"
+    if_called: >
+      즉시 등록 및 팀빌딩/네트워킹 준비.
+      `귀인` 노션 링크와 팀원 모집 문안을 바로 공유.
       4~5월 예비과정 + 클래스101 강의 기획·제작 병행.
       6월 본과정 시작 전 강의 출시 완료 목표.
       소마 팀빌딩에서 알고리즘 강의 채널 보유 강점으로 활용.
-      세종클래스는 소마 종료(11월) 이후 재개.
-    if_rejected: >
-      4~5월 클래스101 강의 제작 + PersonaMirror 독립 서비스 전환 병행.
+    if_not_called: >
+      이번 주는 예비 대기 상태를 유지하되,
+      4~5월 클래스101 강의 제작 + team-fit 독립 서비스 전환을 계속 진행.
       PR/AI 데모 링크는 개인 프로젝트 홍보 자산으로 재사용.
-      세종클래스 재개 및 수익화 집중.
+      세종클래스 수익화는 병행 우선순위로 유지.
 
-  - trigger: "클래스101 미팅 결과 (3/27)"
+  - trigger: "클래스101 1차 커리큘럼 초안 전달 및 기획 미팅 연결"
     if_accepted: >
-      4~5월 강의 기획·제작 착수. PD 지원 여부 확정.
-      합격/불합격 관계없이 5월 말 출시 목표.
-    if_rejected: "유튜브 자체 채널로 콘텐츠 전환 검토."
+      4~5월 강의 기획·제작 착수. PD 지원 여부와 실제 제작 일정 단축 가능 범위 확정.
+      합격/불합격 관계없이 5월 말 출시 가능성 재산정.
+    if_rejected: "클래스101은 보류하고 유튜브·세종클래스 채널에서 기존 자산화 흐름 유지."
 
   - trigger: "세종클래스 첫 유료 수강생 발생"
     if_yes: "마케팅 채널 확장, 콘텐츠 증설"

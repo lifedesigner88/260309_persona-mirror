@@ -28,6 +28,10 @@ class LoginRequest(BaseModel):
     password: LoginPasswordValue
 
 
+class DeleteAccountRequest(BaseModel):
+    email: EmailStr
+
+
 class VerifyRequest(BaseModel):
     email: EmailStr
     otp: str

@@ -24,7 +24,6 @@ import {
   requestPersonaChatReset
 } from "../utils/api";
 import type {
-  CreatorPrProfile,
   MbtiProfile,
   PersonaChatQuota,
   PersonaProfile,
@@ -43,6 +42,11 @@ function buildProfileMarkdown(p: import("../utils/types").PersonaProfile): strin
   lines.push(p.one_liner);
   lines.push("");
 
+  if (p.identity_keywords && p.identity_keywords.length > 0) {
+    lines.push(`**Identity keywords:** ${p.identity_keywords.join(" · ")}`);
+    lines.push("");
+  }
+
   lines.push(`## Top Values`);
   p.top3_values.forEach((v) => lines.push(`- ${v}`));
   lines.push("");
@@ -60,37 +64,13 @@ function buildProfileMarkdown(p: import("../utils/types").PersonaProfile): strin
       lines.push("");
     }
 
-    if (p.creator_pr.teammate_roles.length > 0) {
-      lines.push(`**Target teammate roles:**`);
-      p.creator_pr.teammate_roles.forEach((role) => {
-        lines.push(`- ${role.title}: ${role.summary}`);
-        role.bullets.forEach((bullet) => lines.push(`  - ${bullet}`));
-      });
-      lines.push("");
-    }
-
-    if (p.creator_pr.avoid_matches.length > 0) {
-      lines.push(`**Probably not a fit:**`);
-      p.creator_pr.avoid_matches.forEach((item) => lines.push(`- ${item}`));
-      lines.push("");
-    }
-
-    [
-      { label: "Project", section: p.creator_pr.project },
-      { label: "Why now", section: p.creator_pr.why_now },
-      { label: "Why me", section: p.creator_pr.why_me }
-    ].forEach(({ label, section }) => {
+    [{ label: "Project", section: p.creator_pr.project }].forEach(({ label, section }) => {
       lines.push(`### ${label} — ${section.title}`);
       lines.push(section.summary);
       lines.push("");
       section.bullets.forEach((bullet) => lines.push(`- ${bullet}`));
       lines.push("");
     });
-
-    lines.push(`**CTA:** ${p.creator_pr.cta.title}`);
-    lines.push("");
-    lines.push(p.creator_pr.cta.body);
-    lines.push("");
   }
 
   if (p.mbti) {
@@ -176,8 +156,6 @@ export type PersonaLoaderData = {
   title: string;
   dataEng: PersonaProfile;
   dataKor: PersonaProfile | null;
-  email: string | null;
-  githubAddress: string | null;
   notionUrl: string | null;
 };
 
@@ -655,7 +633,9 @@ function SdgOverviewLink() {
         <span className="block text-sm font-semibold text-slate-900">
           {t("sdg.allGoalsLinkTitle")}
         </span>
-        <span className="block text-xs leading-5 text-slate-500">{t("sdg.allGoalsLinkCaption")}</span>
+        <span className="block text-xs leading-5 text-slate-500">
+          {t("sdg.allGoalsLinkCaption")}
+        </span>
       </span>
       <span className="sr-only">{t("sdg.allGoalsLinkLabel")}</span>
     </a>
@@ -689,53 +669,6 @@ function HupositoryButton({ className }: { className?: string }) {
         <path d="M9 7h8v8" />
       </svg>
     </a>
-  );
-}
-
-function GmailIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <rect x="3.25" y="5.5" width="17.5" height="13" rx="2.5" fill="white" />
-      <path
-        d="M4.75 8.25 12 13.4l7.25-5.15"
-        stroke="#EA4335"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.75 8.35v8.4"
-        stroke="#34A853"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      />
-      <path
-        d="M19.25 8.35v8.4"
-        stroke="#4285F4"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      />
-      <path
-        d="M4.75 16.75h14.5"
-        stroke="#FBBC05"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function SpinnerIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cn("animate-spin", className)}>
-      <circle cx="12" cy="12" r="8.5" className="stroke-emerald-200" strokeWidth="2.4" />
-      <path
-        d="M20.5 12a8.5 8.5 0 0 0-8.5-8.5"
-        className="stroke-emerald-600"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 
@@ -867,198 +800,6 @@ function TeamUpCard({ profile }: { profile: PersonaProfile }) {
   );
 }
 
-function CreatorPrRolesCard({ data }: { data: CreatorPrProfile }) {
-  const { t } = useTranslation("persona");
-
-  return (
-    <Card
-      className={cn(
-        SECTION_CARD_BASE,
-        "border-slate-200 bg-[linear-gradient(145deg,rgba(244,249,252,0.98),rgba(246,250,252,0.95))]"
-      )}
-    >
-      <CardHeader className={SECTION_HEADER_BASE}>
-        <SectionEyebrow className="text-sky-700/80">
-          {t("creatorPr.teamSectionLabel")}
-        </SectionEyebrow>
-        <CardTitle className={cn(SECTION_TITLE_BASE, "max-w-4xl text-slate-950")}>
-          {t("creatorPr.teamSectionTitle")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className={SECTION_CONTENT_BASE}>
-        <div className="grid gap-4 xl:grid-cols-2">
-          {data.teammate_roles.map((role, index) => (
-            <SectionPanel
-              key={role.title}
-              label={role.title}
-              labelClassName={index === 0 ? "text-sky-700/80" : "text-violet-700/80"}
-              className="bg-white/82"
-            >
-              <p className="text-sm leading-6 text-slate-800">{role.summary}</p>
-              <ul className="mt-3 space-y-1.5">
-                {role.bullets.map((bullet) => (
-                  <li key={bullet} className="flex gap-2 text-sm leading-6 text-slate-700">
-                    <span
-                      className={cn(
-                        "mt-2 h-1.5 w-1.5 shrink-0 rounded-full",
-                        index === 0 ? "bg-sky-400" : "bg-violet-400"
-                      )}
-                    />
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
-            </SectionPanel>
-          ))}
-        </div>
-        {data.avoid_matches.length > 0 ? (
-          <SectionPanel label={t("creatorPr.avoidMatches")} labelClassName="text-amber-700/80">
-            <ul className="space-y-1.5">
-              {data.avoid_matches.map((item) => (
-                <li key={item} className="flex gap-2 text-sm leading-6 text-slate-700">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </SectionPanel>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function CreatorPrWhyCard({
-  label,
-  section,
-  accent,
-  bulletInset = false
-}: {
-  label: string;
-  section: CreatorPrProfile["why_now"];
-  accent: "sky" | "emerald";
-  bulletInset?: boolean;
-}) {
-  const accentClasses =
-    accent === "sky"
-      ? {
-          eyebrow: "text-sky-700/80",
-          title: "text-sky-950",
-          summary: "text-sky-900/80",
-          dot: "bg-sky-400"
-        }
-      : {
-          eyebrow: "text-emerald-700/80",
-          title: "text-emerald-950",
-          summary: "text-emerald-900/80",
-          dot: "bg-emerald-400"
-        };
-
-  return (
-    <Card className={cn(SECTION_CARD_BASE, "bg-white/94")}>
-      <CardHeader className={SECTION_HEADER_BASE}>
-        <SectionEyebrow className={accentClasses.eyebrow}>{label}</SectionEyebrow>
-        <CardTitle className={cn(SECTION_TITLE_BASE, accentClasses.title)}>
-          {section.title}
-        </CardTitle>
-        <p className={cn("text-sm leading-7", accentClasses.summary)}>{section.summary}</p>
-      </CardHeader>
-      <CardContent className={SECTION_CONTENT_BASE}>
-        <ul className={cn("space-y-1.5", bulletInset ? "pl-3" : null)}>
-          {section.bullets.map((bullet) => (
-            <li key={bullet} className="flex gap-2 text-sm leading-6 text-slate-700">
-              <span className={cn("mt-2 h-1.5 w-1.5 shrink-0 rounded-full", accentClasses.dot)} />
-              {bullet}
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CreatorPrCtaCard({
-  data,
-  email,
-  emailCopying,
-  emailCopied,
-  onEmailCopy
-}: {
-  data: CreatorPrProfile;
-  email: string | null;
-  emailCopying: boolean;
-  emailCopied: boolean;
-  onEmailCopy: () => Promise<void>;
-}) {
-  const { t } = useTranslation("persona");
-  const ctaLines = data.cta.body
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return (
-    <Card
-      className={cn(
-        SECTION_CARD_BASE,
-        "border-slate-200 bg-[linear-gradient(155deg,rgba(240,249,245,0.98),rgba(245,250,248,0.95))]"
-      )}
-    >
-      <CardHeader className={cn(SECTION_HEADER_BASE, "pb-0")}>
-        <SectionEyebrow className="text-emerald-700/80">{t("creatorPr.ctaSectionLabel")}</SectionEyebrow>
-      </CardHeader>
-      <CardContent className={cn(SECTION_CONTENT_BASE, "pt-4")}>
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_320px] md:items-stretch">
-          <div className="rounded-[24px] border border-white/80 bg-white/72 px-5 py-5 shadow-sm">
-            <CardTitle className={cn(SECTION_TITLE_BASE, "max-w-4xl whitespace-pre-line text-emerald-950")}>
-              {data.cta.title}
-            </CardTitle>
-            <ul className="mt-3 space-y-1.5 pl-3">
-              {ctaLines.map((line) => (
-                <li key={line} className="flex gap-2 text-sm leading-7 text-emerald-900/80">
-                  <span className="mt-0.5 shrink-0 font-semibold text-emerald-600">*</span>
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {email ? (
-            <button
-              type="button"
-              onClick={() => {
-                void onEmailCopy();
-              }}
-              disabled={emailCopying}
-              className="group flex h-full min-h-[168px] flex-col items-center justify-center rounded-[24px] border border-emerald-200/90 bg-white px-5 py-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50/70"
-            >
-              <div className="flex flex-col items-center justify-center gap-4">
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-200 bg-white shadow-sm transition group-hover:border-emerald-300">
-                  {emailCopying ? (
-                    <SpinnerIcon className="h-8 w-8" />
-                  ) : (
-                    <GmailIcon className="h-8 w-8" />
-                  )}
-                </span>
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold leading-7 text-slate-950">
-                    {t("creatorPr.contactButton")}
-                  </p>
-                  <p className="break-all text-xs leading-6 font-medium text-slate-600">{email}</p>
-                </div>
-              </div>
-              <div className="mt-5">
-                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 transition group-hover:border-emerald-300 group-hover:bg-white">
-                  {emailCopied ? t("creatorIntro.emailCopied") : t("creatorIntro.emailCopy")}
-                </span>
-              </div>
-            </button>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ─── Q&A panel (auth-gated) ───────────────────────────────────────────────────
 
 function PersonaChatHowItWorksButton({ compact = false }: { compact?: boolean }) {
@@ -1108,7 +849,9 @@ function PersonaChatHowItWorksButton({ compact = false }: { compact?: boolean })
               <Card className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[30px] border-white/80 bg-white/97 shadow-2xl">
                 <CardHeader className="gap-3 px-5 pt-5 pb-0 pr-16 sm:px-6 sm:pt-6 sm:pr-20">
                   <div className="space-y-2">
-                    <SectionEyebrow className="text-sky-600">{t("qa.howItWorksBadge")}</SectionEyebrow>
+                    <SectionEyebrow className="text-sky-600">
+                      {t("qa.howItWorksBadge")}
+                    </SectionEyebrow>
                     <CardTitle
                       id="persona-chat-how-title"
                       className="text-xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-[1.45rem]"
@@ -1409,12 +1152,12 @@ function PersonaQAPanel({
     const resetTime = new Intl.DateTimeFormat(lang.startsWith("ko") ? "ko-KR" : "en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: false
     }).format(new Date(quota.reset_at));
 
     return t("qa.quotaStatusWithReset", {
       count: quota.remaining_questions,
-      time: resetTime,
+      time: resetTime
     });
   }
 
@@ -1534,8 +1277,7 @@ function PersonaQAPanel({
 
 export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode }) {
   const { t, i18n } = useTranslation("persona");
-  const { personaId, title, dataEng, dataKor, email, notionUrl } =
-    useLoaderData() as PersonaLoaderData;
+  const { personaId, title, dataEng, dataKor, notionUrl } = useLoaderData() as PersonaLoaderData;
   const rootData = useRouteLoaderData("root") as RootLoaderData;
   const sessionUser = rootData?.sessionUser ?? null;
 
@@ -1560,39 +1302,15 @@ export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode })
     return `linear-gradient(${deg}deg, ${a}0f, ${b}0a, rgba(255,255,255,0.94))`;
   }
 
-  const [emailCopied, setEmailCopied] = useState(false);
-  const [emailCopying, setEmailCopying] = useState(false);
-  const handleEmailCopy = useCallback(async () => {
-    if (!email || emailCopying) return;
-    setEmailCopying(true);
-    setEmailCopied(false);
-
-    const startedAt = performance.now();
-
-    try {
-      await navigator.clipboard.writeText(email);
-      const elapsed = performance.now() - startedAt;
-      const remaining = Math.max(0, 420 - elapsed);
-
-      window.setTimeout(() => {
-        setEmailCopying(false);
-        setEmailCopied(true);
-        window.setTimeout(() => setEmailCopied(false), 2000);
-      }, remaining);
-    } catch {
-      setEmailCopying(false);
-    }
-  }, [email, emailCopying]);
-
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(buildProfileMarkdown(profile));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [profile]);
-  const [heroHealthStatus, setHeroHealthStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
+  const [heroHealthStatus, setHeroHealthStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [heroHealthLatencyMs, setHeroHealthLatencyMs] = useState<number | null>(null);
   const handleHeroHealthCheck = useCallback(async () => {
     setHeroHealthStatus("loading");
@@ -1762,6 +1480,19 @@ export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode })
               {profile.archetype}
             </CardTitle>
             <p className={cn(SECTION_TEXT_BASE, "max-w-3xl")}>{profile.one_liner}</p>
+            {profile.identity_keywords && profile.identity_keywords.length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {profile.identity_keywords.map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    variant="outline"
+                    className="border-sky-200 bg-sky-50/90 text-sky-700"
+                  >
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </CardHeader>
@@ -1868,6 +1599,9 @@ export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode })
         <TechStackCard items={profile.tech_stack} />
       ) : null}
 
+      {/* SDG alignment */}
+      {showFullProfile ? sdgSection : null}
+
       {/* MBTI */}
       {showFullProfile && profile.mbti ? (
         <Card
@@ -1938,25 +1672,6 @@ export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode })
         </Card>
       ) : null}
 
-      {showFullProfile && isCreatorProfile ? sdgSection : null}
-
-      {showFullProfile && creatorPr ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <CreatorPrWhyCard
-            label={t("creatorPr.whyNow")}
-            section={creatorPr.why_now}
-            accent="sky"
-            bulletInset
-          />
-          <CreatorPrWhyCard
-            label={t("creatorPr.whyMe")}
-            section={creatorPr.why_me}
-            accent="emerald"
-            bulletInset
-          />
-        </div>
-      ) : null}
-
       {showExtendedPersonaSections ? <TeamUpCard profile={profile} /> : null}
 
       {/* Tech Stack */}
@@ -2019,23 +1734,8 @@ export function PersonaPage({ pageMode = "pr" }: { pageMode?: PersonaPageMode })
         </Card>
       ) : null}
 
-      {/* SDG alignment */}
-      {!isCreatorProfile ? sdgSection : null}
-
       {/* Identity shifts timeline */}
       {!isCreatorProfile ? timelineSection : null}
-
-      {showFullProfile && creatorPr ? <CreatorPrRolesCard data={creatorPr} /> : null}
-
-      {showFullProfile && creatorPr ? (
-        <CreatorPrCtaCard
-          data={creatorPr}
-          email={email}
-          emailCopying={emailCopying}
-          emailCopied={emailCopied}
-          onEmailCopy={handleEmailCopy}
-        />
-      ) : null}
 
       {/* Strengths + weaknesses — compact */}
       {showExtendedPersonaSections ? (
